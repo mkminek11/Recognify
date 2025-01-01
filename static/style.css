@@ -1,0 +1,289 @@
+@import url('https://fonts.googleapis.com/css2?family=Radio+Canada:ital,wght@0,300..700;1,300..700&display=swap');
+
+:root {
+    --c-primary: #0b2545;
+    --c-secondary: #2c64b3;
+    --c-tertiary: #134074;
+    --c-disabled: #a9a9a9;
+    --c-text: #eef4ed;
+    --c-text-secondary: #0b2545;
+    --c-text-grey: #c4c4c4;
+}
+
+html, body {
+    margin:  0px;
+    padding: 0px;
+    width:  100%;
+    height: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
+
+    font-family: 'Radio Canada', sans-serif;
+}
+
+body {
+    max-height: 100vh;
+    background-color: var(--c-primary);
+    color: var(--c-text);
+    display: flex;
+    flex-direction: column;
+}
+
+h1, h2 {
+    text-align: center;
+    margin: 20px 0px;
+}
+
+.img {
+    flex: 1 1 auto;
+    min-height: 0px;
+    padding-bottom: 20px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-height: calc(100% - 95px);
+
+    & img {
+        display: block;
+        margin: 0 auto;
+        max-width: 100%;
+        max-height: 100%;
+        border-radius: 10px;
+    }
+}
+
+#edit_content {
+    display: grid;
+    grid-template-columns: 400px 1fr 400px;
+    grid-template-rows: 1fr;
+    flex: 1 1 auto;
+    max-height: calc(100% - 130px);
+    /* overflow: hidden; */
+}
+
+main {
+    display: flex;
+    flex-direction: column;
+    min-height: 0px;
+    min-width:  0px;
+}
+
+aside {
+    min-height: 0px;
+    overflow: hidden;
+
+    & .form {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 10px;
+
+        & label {user-select: none;}
+    }
+
+    & ul {
+        list-style-type: none;
+        overflow: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        max-height: calc(100% - 88px);
+        margin: 0px;
+
+        & li {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            cursor: pointer;
+            gap: 10px;
+
+            & p {
+                user-select: none;
+                width: 30px;
+                text-align: center;
+                margin: 0px;
+            }
+
+            & .img_preview {
+                width: 50px;
+                height: 30px;
+
+                & img {
+                    display: block;
+                    max-width: 100%;
+                    max-height: 100%;
+                    border-radius: 5px;
+                }
+            }
+
+            & label {cursor: pointer;}
+        }
+    }
+}
+
+h1 {
+    display: grid;
+    grid-template-columns: 1fr 4fr 1fr;
+    gap: 10px;
+    align-items: flex-start;
+
+    & .left   {text-align: left;}
+    & .center {
+        text-align: center;
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        height: 38px;
+
+    }
+    & .right  {text-align: right;}
+
+    & > div {
+        padding: 0px 20px;
+    }
+}
+
+footer {
+    height: 50px;
+    flex: 0 0 auto;
+}
+
+a, a:visited {
+    color: var(--c-text);
+}
+
+.options {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    gap: 10px;
+    height: 29px;
+    overflow-x: auto;
+    padding: 10px;
+
+    & .option {
+        background-color: var(--c-tertiary);
+        padding: 5px 10px;
+        border-radius: 5px;
+        
+        user-select: none;
+        cursor: pointer;
+        text-wrap: nowrap;
+        
+        flex-shrink: 0;
+        /* width: fit-content; */
+        max-width: 250px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+#text_input {
+    padding: 5px;
+    border: none;
+    border-bottom: 2px solid var(--c-text);
+    /* color: var(--c-tertiary); */
+    background-color: transparent;
+    color: var(--c-text);
+    font-family: inherit;
+    width: 300px;
+    transition: 0.3s ease;
+
+    &:focus {
+        outline: none;
+        border-bottom-color: var(--c-secondary);
+    }
+}
+
+#title {
+    max-width: 500px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.controls {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+
+    & button {
+        background-color: var(--c-tertiary);
+        padding: 5px 15px;
+        border-radius: 5px;
+        border: none;
+        color: var(--c-text);
+        cursor: pointer;
+        font-family: inherit;
+        transition: 0.3s ease;
+
+        &:disabled {
+            background-color: var(--c-disabled);
+            color: var(--c-text-secondary);
+            cursor: default;
+        }
+
+        &:hover:not(:disabled) {
+            background-color: var(--c-secondary);
+        }
+    }
+}
+
+h1 i {
+    cursor: pointer;
+    font-size: 20px;
+    margin: 0px 15px;
+    color: var(--c-text-grey);
+    vertical-align: middle;
+}
+
+.title_input {
+    position: absolute;
+    left: 0px;
+    width: 100%;
+    padding: 0px;
+    background-color: transparent;
+    border: none;
+    vertical-align: middle;
+
+    font-size: 32px;
+    font-family: inherit;
+    font-weight: 700;
+    color: var(--c-text);
+    
+    outline: none;
+    border-bottom: 2px solid var(--c-text);
+    transition: 0.3s ease;
+
+    &:focus {
+        border-bottom-color: var(--c-secondary);
+    }
+}
+
+#size_callibration {
+    font-family: inherit;
+    font-size: 32px;
+    font-weight: 700;
+    height: 0px;
+
+    visibility: hidden;
+    white-space: pre;
+}
+
+.title_input_parent {
+    position: relative;
+    min-width: 1em;
+    width: min-content;
+    height: 40px;
+    display: inline-block;
+    max-width: 500px;
+}
+
+.title_label {
+    display: inline-block;
+    margin-bottom: 2px;
+}

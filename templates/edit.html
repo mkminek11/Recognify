@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Document</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename = 'style.css') }}">
+        <script src="https://kit.fontawesome.com/cc609a1703.js" crossorigin="anonymous"></script>
+    </head>
+    <body onload="set_index(0)">
+        <h1>
+            <div class="left">
+                <i class="fa-solid fa-home" onclick="window.location.href = '/'"></i>
+            </div>
+
+            <div class="center">
+                <span class="title_label">Edit presentation -&nbsp;</span>
+                <span id="title" title="{{ title }}">{{ title }}</span>
+                <div class="title_input_parent">
+                    <input type="text" id="title_input" value="{{ title }}" class="title_input">
+                    <span id="size_callibration"></span>
+                </div>
+                <i class="fa-solid fa-pencil" id="edit_title" onclick="edit_title()"></i>
+            </div>
+
+            <div class="right"></div>
+        </h1>
+
+        <div id="edit_content">
+            <aside>
+                <h2>Images</h2>
+                <ul id="previews">
+                    {% for image in range(images_count) %}
+                        <li onclick="set_index('{{ image }}')">
+                            <p>{{ image + 1}}</p>
+                            <div class="img_preview">
+                                <img src="{{ url_for('static', filename = 'img/question_mark.png') }}" alt="">
+                            </div>
+                            <label></label>
+                        </li>
+                    {% endfor %}
+                </ul>
+                <input type="hidden" id="images_count" value="{{ images_count }}">
+            </aside>
+            <main>
+                <div class="img">
+                    <img id="image" src="" alt="Loading image...">
+                </div>
+            
+                <div class="controls">
+                    <button id="btn_l" onclick="move(-1)"><i class="fa-solid fa-caret-left"></i></button>
+
+                    <input type="text" id="text_input" placeholder="Describe the picture...">
+                    <button id="btn_accept" onclick="save()">Save</button>
+                    <button id="btn_delete" onclick="skip()">Skip</button>
+
+                    <button id="btn_r" onclick="move(+1)"><i class="fa-solid fa-caret-right"></i></button>
+                </div>
+                
+                <div class="options"></div>
+            </main>
+            <aside>
+                <h2>Options</h2>
+
+                <div class="form">
+                    <input type="checkbox" id="ignore_numbers" checked>
+                    <label for="ignore_numbers">Ignore numbers</label>
+    
+                    <input type="checkbox" id="ignore_symbols" checked>
+                    <label for="ignore_symbols">Ignore symbols</label>
+    
+                    <input type="checkbox" id="strip_whitespace" checked>
+                    <label for="strip_whitespace">Strip whitespace</label>
+    
+                    <input type="checkbox" id="skip_links" checked>
+                    <label for="skip_links">Skip links</label>
+
+                    <input type="checkbox" id="split_symbols" checked>
+                    <label for="split_symbols">Split on symbols (,;:.-)</label>
+    
+                    <input type="checkbox" id="split_brackets">
+                    <label for="split_brackets">Split brackets</label>
+
+                    <input type="checkbox" id="capitalize" checked>
+                    <label for="capitalize">Capitalize</label>
+                </div>
+
+                <button id="btn_save" onclick="submit()">Save</button>
+            </aside>
+        </div>
+        <footer></footer>
+
+        <script src="{{ url_for('static', filename = 'cards.js') }}"></script>
+        <script src="{{ url_for('static', filename = 'edit_title.js') }}"></script>
+    </body>
+</html>
