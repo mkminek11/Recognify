@@ -32,6 +32,9 @@ function edit_title() {
  */
 function save_title() {
     const new_title = document.getElementById("title_input").value;
+
+    if (new_title.match(/^\s*$/)) {new_title = title.innerHTML;}
+
     title.style.display = "inline-block";
     title.innerHTML = new_title;
     title.title = new_title;
@@ -57,6 +60,12 @@ function update_size() {
 
 title_input.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
+        save_title();
+        title_input.blur();
+    }
+
+    if (event.key === "Escape") {
+        title_input.value = title.innerHTML;
         save_title();
         title_input.blur();
     }

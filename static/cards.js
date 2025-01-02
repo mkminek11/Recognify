@@ -174,7 +174,7 @@ function skip() {
 
 document.addEventListener("keydown", (event) => {
     if (document.activeElement === text_input) {
-        if (event.key === "Enter") {save(); move(+1);}
+        if (event.key === "Enter") {text_input.blur();}
         if (event.key === "Escape") {text_input.blur();}
     } else {
         if (event.key === "ArrowRight") {move(+1);}
