@@ -64,7 +64,7 @@ function get_image_data(image) {
  * @param {number} amount The amount to move the index by.
  */
 function move(amount) {
-    save();
+    save_image_title();
 
     if (index + amount < 0) {
         index = 0;
@@ -146,7 +146,7 @@ function update_options(image_data) {
 
 
 
-function save(element = null) {
+function save_image_title(element = null) {
     if (element) text_input.value = element.title;
 
     data[index] = text_input.value;
@@ -165,9 +165,19 @@ function save(element = null) {
 
 
 
-function skip() {
+function skip_image() {
     text_input.value = "";
-    save();
+    save_image_title();
+}
+
+
+
+function submit() {
+    const xhr = new XMLHttpRequest();
+
+    xhr.open("POST", `/edit/${uuid}/save`, false);
+    xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+    xhr.send("data=" + encodeURIComponent(JSON.stringify(data)));
 }
 
 
@@ -179,11 +189,11 @@ document.addEventListener("keydown", (event) => {
     } else {
         if (event.key === "ArrowRight") {move(+1);}
         if (event.key === "ArrowLeft" ) {move(-1);}
-        if (event.key === ",") {skip();}
+        if (event.key === ",") {skip_image();}
 
         if (!isNaN(+event.key) && parseInt(event.key) == parseFloat(event.key)) {
             if (+event.key < document.querySelector(".options").children.length) {
-                save(document.querySelector(".options").children[+event.key]);
+                save_image_title(document.querySelector(".options").children[+event.key]);
             }
         }
 

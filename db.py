@@ -33,6 +33,7 @@ class Image(db.Model):
     file:         Mapped[str] = mapped_column(db.Integer, nullable = False)
     presentation: Mapped[int] = mapped_column(db.Integer, db.ForeignKey("presentation.id"), nullable = False)
     slide:        Mapped[int] = mapped_column(db.Integer, nullable = False)
+    title:        Mapped[str] = mapped_column(db.String(100), nullable = False)
 
     def __repr__(self):
         return f"<Image {self.id}>"

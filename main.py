@@ -1,6 +1,7 @@
 from flask import render_template, request, redirect, session, url_for
 from werkzeug.utils import secure_filename
 from shutil import rmtree
+from uuid import uuid4
 import json
 from lib import *
 
@@ -65,6 +66,24 @@ def edit_title(uuid: str):
     presentation.title = title
     db.session.commit()
     return ""
+
+
+
+@app.route("/edit/<string:uuid>/save", methods = ['POST'])
+def save_presentation(uuid: str):
+    if "data" not in request.form: return ""
+
+    titles = json.loads(request.form["data"])
+    presentation = Presentation.query.filter_by(uuid = uuid).first()
+    images = Image.query.filter_by(presentation = presentation.id).limit(1)
+
+    for i, t in titles.items():
+        images.offset(i).first().title = t
+
+    db.session.commit()
+
+    return ""
+
 
 
 
