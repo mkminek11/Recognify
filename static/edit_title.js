@@ -42,6 +42,12 @@ function save_title() {
 
     title_edit_btn.classList.replace("fa-check", "fa-pencil");
     title_edit_btn.onclick = edit_title;
+
+    const xhr = new XMLHttpRequest();
+    
+    xhr.open("POST", `/edit/${uuid}/title`, false);
+    xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+    xhr.send("title=" + encodeURIComponent(new_title));
 }
 
 

@@ -17,7 +17,8 @@ def upload():
     if 'file' not in request.files: return redirect("/")
 
     file = request.files['file']
-    uuid = upload_file(app.root_path, file)
+    uuid = uuid4().hex
+    upload_file(app.root_path, file, uuid)
     if not uuid: return redirect("/")
 
     success = extract_images(file, uuid)
@@ -38,7 +39,7 @@ def edit(uuid: str):
 
 
 
-@app.route('/getimage/<string:uuid>/<int:index>')
+@app.route('/edit/<string:uuid>/image/<int:index>')
 def get_image(uuid: str, index: int):
     presentation = Presentation.query.filter_by(uuid = uuid).first()
     if not isinstance(presentation, Presentation): return "Presentation not found"
@@ -52,6 +53,18 @@ def get_image(uuid: str, index: int):
     labels = Label.query.filter_by(presentation = presentation.id, slide = image.slide).all()
 
     return json.dumps({"image": image_data, "options": [option.text for option in labels]})
+
+
+
+@app.route('/edit/<string:uuid>/title', methods = ['POST'])
+def edit_title(uuid: str):
+    if "title" not in request.form: return ""
+
+    title = request.form["title"]
+    presentation = Presentation.query.filter_by(uuid = uuid).first()
+    presentation.title = title
+    db.session.commit()
+    return ""
 
 
 

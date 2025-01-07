@@ -31,7 +31,7 @@ def _iter_shapes(slide: PPTXSlide) -> Generator[BaseShape, None, None]:
 
 
 
-def upload_file(root_path: str, file: FileStorage) -> str:
+def upload_file(root_path: str, file: FileStorage, uuid: str) -> str:
     """
     Creates a subdirectory in `user_upload` and saves it under a unique name (uuid4).
     The file is then saved in the subdirectory.
@@ -45,16 +45,9 @@ def upload_file(root_path: str, file: FileStorage) -> str:
     """
 
     uploads_dir = os.path.join(root_path, "user_upload")
-
-    pres_uuid = uuid4().hex
-    base_dir_path = os.path.join(uploads_dir, pres_uuid)
-
+    base_dir_path = os.path.join(uploads_dir, uuid)
     os.makedirs(base_dir_path, exist_ok = True)
-
-    file.save(os.path.join(base_dir_path, "presentation.pptx"))
-
-    return pres_uuid
-
+    # file.save(os.path.join(base_dir_path, "presentation.pptx"))
 
 
 def extract_images(pres_file: FileStorage, pres_uuid: str) -> bool:

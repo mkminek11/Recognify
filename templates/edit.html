@@ -1,18 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Editting {{ title }} | recognify</title>
-        <link rel="stylesheet" href="{{ url_for('static', filename = 'style.css') }}">
-        <script src="https://kit.fontawesome.com/cc609a1703.js" crossorigin="anonymous"></script>
+        {% include "_head.html" %}
+        <title>Editting {{ title }} | recognify.</title>
     </head>
     <body onload="set_index(0)">
         <h1 id="header">
-            <div class="logo">
+            <a href="{{ url_for('index') }}" class="logo">
                 <img src="{{ url_for('static', filename = 'img/logo.svg') }}" alt="<o>">
                 <span>recognify.</span>
-            </div>
+            </a>
 
             <div class="header_title">
                 <span>Edit presentation -&nbsp;</span>

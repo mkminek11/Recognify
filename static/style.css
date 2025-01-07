@@ -101,6 +101,7 @@ h1#header {
         gap: 15px;
         color: var(--c4);
         user-select: none;
+        text-decoration: none;
 
         & img {
             height: 24px;

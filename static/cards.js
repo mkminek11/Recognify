@@ -28,7 +28,7 @@ let images = {};
 
 
 /**
- * Makes a GET request to /getimage/${uuid}/${image} and returns the parsed response.
+ * Makes a GET request to /edit/${uuid}/image/${image} and returns the parsed response.
  * The response should be a JSON object with two properties: "image", which is a base64 encoded string
  * of the image data, and "options", which is an array of strings, each of which is a label
  * for the image.
@@ -41,7 +41,7 @@ function get_image_data(image) {
 
     const xhr = new XMLHttpRequest();
 
-    xhr.open("GET", `/getimage/${uuid}/${image}`, false);
+    xhr.open("GET", `/edit/${uuid}/image/${image}`, false);
     xhr.send();
 
     img_data = JSON.parse(xhr.responseText);
