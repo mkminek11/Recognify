@@ -13,7 +13,11 @@
         <a href="/clearall">Clear all</a>
         <ul>
             {% for presentation in presentations %}
-                <li><a href="/edit/{{ presentation.uuid }}">{{ presentation.title }}</a></li>
+                <li>
+                    <a href="/p/{{ presentation.uuid }}/edit">Edit</a>
+                    <a href="/p/{{ presentation.uuid }}/delete">Delete</a>
+                    <span>{{ presentation.title }}</span>
+                </li>
             {% endfor %}
         </ul>
     </body>

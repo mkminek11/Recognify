@@ -26,21 +26,21 @@ def upload():
     if not success: return redirect("/")
     # if not Presentation.query.filter_by(uuid = uuid).first(): return redirect("/")
 
-    return redirect(f"/edit/{uuid}")
+    return redirect(f"/p/{uuid}/edit")
 
 
 
-@app.route('/edit/<string:uuid>')
+@app.route('/p/<string:uuid>/edit')
 def edit(uuid: str):
     presentation = Presentation.query.filter_by(uuid = uuid).first()
     if not isinstance(presentation, Presentation): return redirect("/")
 
     img_count = len(Image.query.filter_by(presentation = presentation.id).all())
-    return render_template('edit.html', uuid = uuid, images_count = img_count, title = presentation.title)
+    return render_template('edit.html', uuid = uuid, images_count = img_count, title = presentation.title, images = Image.query.filter_by(presentation = presentation.id).all())
 
 
 
-@app.route('/edit/<string:uuid>/image/<int:index>')
+@app.route('/p/<string:uuid>/image/<int:index>')
 def get_image(uuid: str, index: int):
     presentation = Presentation.query.filter_by(uuid = uuid).first()
     if not isinstance(presentation, Presentation): return "Presentation not found"
@@ -57,7 +57,7 @@ def get_image(uuid: str, index: int):
 
 
 
-@app.route('/edit/<string:uuid>/title', methods = ['POST'])
+@app.route('/p/<string:uuid>/title', methods = ['POST'])
 def edit_title(uuid: str):
     if "title" not in request.form: return ""
 
@@ -69,7 +69,7 @@ def edit_title(uuid: str):
 
 
 
-@app.route("/edit/<string:uuid>/save", methods = ['POST'])
+@app.route("/p/<string:uuid>/save", methods = ['POST'])
 def save_presentation(uuid: str):
     if "data" not in request.form: return ""
 
@@ -84,6 +84,20 @@ def save_presentation(uuid: str):
 
     return ""
 
+
+
+@app.route('/p/<string:uuid>/delete')
+def delete_presentation(uuid: str):
+    presentation = Presentation.query.filter_by(uuid = uuid).first()
+    if not isinstance(presentation, Presentation): return redirect("/")
+
+    rmtree(os.path.join(app.root_path, "user_upload", uuid))
+    Presentation.query.filter_by(uuid = uuid).delete()
+    Image.query.filter_by(presentation = presentation.id).delete()
+    Label.query.filter_by(presentation = presentation.id).delete()
+    db.session.commit()
+
+    return redirect("/?m=Presentation deleted")
 
 
 

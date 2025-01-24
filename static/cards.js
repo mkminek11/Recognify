@@ -3,7 +3,7 @@ const image      = document.getElementById("image");
 const text_input = document.getElementById("text_input");
 const options    = document.querySelector(".options");
 
-const uuid = location.pathname.split("/").pop();
+const uuid = location.pathname.split("/").slice(-2)[0];
 const images_count = parseInt(document.getElementById("images_count").value);
 
 let index = 0;
@@ -28,7 +28,7 @@ let images = {};
 
 
 /**
- * Makes a GET request to /edit/${uuid}/image/${image} and returns the parsed response.
+ * Makes a GET request to /p/${uuid}/image/${image} and returns the parsed response.
  * The response should be a JSON object with two properties: "image", which is a base64 encoded string
  * of the image data, and "options", which is an array of strings, each of which is a label
  * for the image.
@@ -41,7 +41,7 @@ function get_image_data(image) {
 
     const xhr = new XMLHttpRequest();
 
-    xhr.open("GET", `/edit/${uuid}/image/${image}`, false);
+    xhr.open("GET", `/p/${uuid}/image/${image}`, false);
     xhr.send();
 
     img_data = JSON.parse(xhr.responseText);
@@ -175,7 +175,7 @@ function skip_image() {
 function submit() {
     const xhr = new XMLHttpRequest();
 
-    xhr.open("POST", `/edit/${uuid}/save`, false);
+    xhr.open("POST", `/p/${uuid}/save`, false);
     xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
     xhr.send("data=" + encodeURIComponent(JSON.stringify(data)));
 }

@@ -32,7 +32,7 @@
                             <div class="img_preview">
                                 <img src="{{ url_for('static', filename = 'img/question_mark.png') }}" alt="">
                             </div>
-                            <label></label>
+                            <label>{{ images[image].title }}</label>
                         </li>
                     {% endfor %}
                 </ul>

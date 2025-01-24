@@ -46,7 +46,7 @@ def upload_file(root_path: str, file: FileStorage, uuid: str) -> str:
     uploads_dir = os.path.join(root_path, "user_upload")
     base_dir_path = os.path.join(uploads_dir, uuid)
     os.makedirs(base_dir_path, exist_ok = True)
-    # file.save(os.path.join(base_dir_path, "presentation.pptx"))
+    file.save(os.path.join(base_dir_path, "presentation.pptx"))
 
 
 def extract_images(pres_file: FileStorage, pres_uuid: str) -> bool:
@@ -92,7 +92,7 @@ def extract_images(pres_file: FileStorage, pres_uuid: str) -> bool:
                 image_index += 1
                 if not image_path: continue
 
-                db.session.add(Image(file = image_path, slide = slide_n, presentation = pres_id))
+                db.session.add(Image(file = image_path, slide = slide_n, presentation = pres_id, title = ""))
 
             elif shape.has_text_frame:
                 if not hasattr(shape, "text"): continue
