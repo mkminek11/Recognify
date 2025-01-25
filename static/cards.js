@@ -8,19 +8,29 @@ const images_count = parseInt(document.getElementById("images_count").value);
 
 let index = 0;
 
-let ignore_numbers =   document.getElementById("ignore_numbers"  ).checked;
-let ignore_symbols =   document.getElementById("ignore_symbols"  ).checked;
-let strip_whitespace = document.getElementById("strip_whitespace").checked;
-let skip_links =       document.getElementById("skip_links"      ).checked;
-let split_brackets =   document.getElementById("split_brackets"  ).checked;
-let capitalize =       document.getElementById("capitalize"      ).checked;
+if (document.getElementById("ignore_numbers")) {
+    var ignore_numbers   = document.getElementById("ignore_numbers"  ).checked;
+    var ignore_symbols   = document.getElementById("ignore_symbols"  ).checked;
+    var strip_whitespace = document.getElementById("strip_whitespace").checked;
+    var skip_links       = document.getElementById("skip_links"      ).checked;
+    var split_brackets   = document.getElementById("split_brackets"  ).checked;
+    var capitalize       = document.getElementById("capitalize"      ).checked;
+    
+    document.getElementById("ignore_numbers")  .onchange = () => { ignore_numbers   = document.getElementById("ignore_numbers"  ).checked; };
+    document.getElementById("ignore_symbols")  .onchange = () => { ignore_symbols   = document.getElementById("ignore_symbols"  ).checked; };
+    document.getElementById("strip_whitespace").onchange = () => { strip_whitespace = document.getElementById("strip_whitespace").checked; };
+    document.getElementById("skip_links")      .onchange = () => { skip_links       = document.getElementById("skip_links"      ).checked; };
+    document.getElementById("split_brackets")  .onchange = () => { split_brackets   = document.getElementById("split_brackets"  ).checked; };
+    document.getElementById("capitalize")      .onchange = () => { capitalize       = document.getElementById("capitalize"      ).checked; };
+} else {
+    var ignore_numbers   = false;
+    var ignore_symbols   = false;
+    var strip_whitespace = false;
+    var skip_links       = false;
+    var split_brackets   = false;
+    var capitalize       = false;
+}
 
-document.getElementById("ignore_numbers")  .onchange = () => { ignore_numbers   = document.getElementById("ignore_numbers"  ).checked; };
-document.getElementById("ignore_symbols")  .onchange = () => { ignore_symbols   = document.getElementById("ignore_symbols"  ).checked; };
-document.getElementById("strip_whitespace").onchange = () => { strip_whitespace = document.getElementById("strip_whitespace").checked; };
-document.getElementById("skip_links")      .onchange = () => { skip_links       = document.getElementById("skip_links"      ).checked; };
-document.getElementById("split_brackets")  .onchange = () => { split_brackets   = document.getElementById("split_brackets"  ).checked; };
-document.getElementById("capitalize")      .onchange = () => { capitalize       = document.getElementById("capitalize"      ).checked; };
 
 
 let data = {};
@@ -177,6 +187,15 @@ function submit() {
 
     xhr.open("POST", `/p/${uuid}/save`, false);
     xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+
+    xhr.onload = () => {
+        if (xhr.status == 200) {
+            window.location.href = "/";
+        } else {
+            alert(`Error saving presentation: ${xhr.status} ${xhr.statusText}`);
+        }
+    };
+
     xhr.send("data=" + encodeURIComponent(JSON.stringify(data)));
 }
 

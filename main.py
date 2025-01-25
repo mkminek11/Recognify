@@ -77,6 +77,8 @@ def save_presentation(uuid: str):
     presentation = Presentation.query.filter_by(uuid = uuid).first()
     images = Image.query.filter_by(presentation = presentation.id).limit(1)
 
+    presentation.visible = 1
+
     for i, t in titles.items():
         images.offset(i).first().title = t
 
@@ -98,6 +100,17 @@ def delete_presentation(uuid: str):
     db.session.commit()
 
     return redirect("/?m=Presentation deleted")
+
+
+
+@app.route('/p/<string:uuid>/play')
+def play(uuid: str):
+    presentation = Presentation.query.filter_by(uuid = uuid).first()
+    if not isinstance(presentation, Presentation): return redirect("/")
+
+    images = Image.query.filter_by(presentation = presentation.id).all()
+
+    return render_template('play.html', presentation = presentation, images = images)
 
 
 

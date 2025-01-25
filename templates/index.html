@@ -1,24 +1,21 @@
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        {% include "_head.html" %}
-        <title>recognify.</title>
-    </head>
-    <body>
-        <h1>Select a presentation</h1>
-        <form action="/upload" method="post" enctype="multipart/form-data">
-            <input type="file" name="file">
-            <input type="submit" value="Submit">
-        </form>
-        <a href="/clearall">Clear all</a>
-        <ul>
-            {% for presentation in presentations %}
-                <li>
-                    <a href="/p/{{ presentation.uuid }}/edit">Edit</a>
-                    <a href="/p/{{ presentation.uuid }}/delete">Delete</a>
-                    <span>{{ presentation.title }}</span>
-                </li>
-            {% endfor %}
-        </ul>
-    </body>
-</html>
+{% extends "_template.html" %}
+
+{% block header %}Select a presentation{% endblock %}
+
+{% block content %}
+    <form action="/upload" method="post" enctype="multipart/form-data">
+        <input type="file" name="file">
+        <input type="submit" value="Submit">
+    </form>
+    <a href="/clearall">Clear all</a>
+    <ul>
+        {% for presentation in presentations %}
+            <li>
+                <a href="/p/{{ presentation.uuid }}/edit">Edit</a>
+                <a href="/p/{{ presentation.uuid }}/delete">Delete</a>
+                <a href="/p/{{ presentation.uuid }}/play">Play</a>
+                <span>{{ presentation.title }}</span>
+            </li>
+        {% endfor %}
+    </ul>
+{% endblock %}
