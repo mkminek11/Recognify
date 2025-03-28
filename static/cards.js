@@ -8,7 +8,9 @@ const images_count = parseInt(document.getElementById("images_count").value);
 
 let index = 0;
 
-if (document.getElementById("ignore_numbers")) {
+const edit = document.getElementById("previews") != null;
+
+if (edit) {
     var ignore_numbers   = document.getElementById("ignore_numbers"  ).checked;
     var ignore_symbols   = document.getElementById("ignore_symbols"  ).checked;
     var strip_whitespace = document.getElementById("strip_whitespace").checked;
@@ -22,13 +24,6 @@ if (document.getElementById("ignore_numbers")) {
     document.getElementById("skip_links")      .onchange = () => { skip_links       = document.getElementById("skip_links"      ).checked; };
     document.getElementById("split_brackets")  .onchange = () => { split_brackets   = document.getElementById("split_brackets"  ).checked; };
     document.getElementById("capitalize")      .onchange = () => { capitalize       = document.getElementById("capitalize"      ).checked; };
-} else {
-    var ignore_numbers   = false;
-    var ignore_symbols   = false;
-    var strip_whitespace = false;
-    var skip_links       = false;
-    var split_brackets   = false;
-    var capitalize       = false;
 }
 
 
@@ -58,10 +53,13 @@ function get_image_data(image) {
 
     images[image] = img_data;
 
-    const img = document.getElementById("previews").children[image].querySelector("img");
-    document.getElementById("previews").scrollTo(0, 40 * index - 100);
+    if (edit) {
+        const img = document.getElementById("previews").children[image].querySelector("img");
+        document.getElementById("previews").scrollTo(0, 40 * index - 100);
 
-    img.src = `data:image/png;base64,${img_data["image"]}`;
+        img.src = `data:image/png;base64,${img_data["image"]}`;
+    }
+
     return img_data;
 }
 
@@ -74,7 +72,7 @@ function get_image_data(image) {
  * @param {number} amount The amount to move the index by.
  */
 function move(amount) {
-    save_image_title();
+    if (edit) save_image_title();
 
     if (index + amount < 0) {
         index = 0;
@@ -115,12 +113,12 @@ function update_cards() {
     const image_data = get_image_data(index);
 
     image.src = `data:image/png;base64,${image_data["image"]}`;
-    text_input.value = index in data ? data[index] : "";
+    if (edit) text_input.value = index in data ? data[index] : "";
 
     document.getElementById("btn_l").disabled = index == 0;
     document.getElementById("btn_r").disabled = index == images_count - 1;
 
-    update_options(image_data);
+    if (edit) update_options(image_data);
 }
 
 

@@ -9,10 +9,12 @@ app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///db.sqlite"
 app.config["SECRET_KEY"] = "My Very Secret Key 1234"
 
+
 class Base(DeclarativeBase): pass
 
 db = SQLAlchemy(model_class = Base)
 db.init_app(app)
+
 
 
 class Presentation(db.Model):

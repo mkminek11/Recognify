@@ -5,11 +5,13 @@
 {% block content %}
     <main>
         <div class="img">
-            <img id="image" src="" alt="Loading image...">
+            <img id="image" src="" alt="Loading image..." onclick="click">
         </div>
 
         <div class="controls">
             <button id="btn_l" class="light" onclick="move(-1)"><i class="fa-solid fa-caret-left"></i></button>
+            <button class="light" onclick=""><i class="fa-solid fas fa-check"></i></button>
+            <button class="light" onclick=""><i class="fa-solid fas fa-xmark"></i></button>
             <button id="btn_r" class="light" onclick="move(1)"><i class="fa-solid fa-caret-right"></i></button>
         </div>
     </main>
@@ -21,5 +23,16 @@
     <script src="{{ url_for('static', filename = 'cards.js') }}"></script>
     <script>
         document.body.onload = () => {set_index(0);};
+
+        function click(event) {
+            event.preventDefault(); // Prevent the context menu from opening
+            if (event.button === 0) {
+                // Left button
+                
+            } else if (event.button === 2) {
+                console.log("Right button clicked");
+                // Add your logic for right button click here
+            }
+        }
     </script>
 {% endblock %}

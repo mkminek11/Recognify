@@ -29,7 +29,6 @@ def _iter_shapes(slide: PPTXSlide) -> Generator[BaseShape, None, None]:
         yield shape
 
 
-
 def upload_file(root_path: str, file: FileStorage, uuid: str) -> str:
     """
     Creates a subdirectory in `user_upload` and saves it under a unique name (uuid4).
@@ -107,7 +106,6 @@ def extract_images(pres_file: FileStorage, pres_uuid: str) -> bool:
     return True
 
 
-
 def _save_image(image: PPTXImage, last_slide: list[list[bytes]], img_n: int, target_dir: str) -> str | Literal[False]:
     """
     Saves an image to the target directory, but only if it has not been already saved in the current slide or the previous one.
@@ -146,7 +144,6 @@ def _save_image(image: PPTXImage, last_slide: list[list[bytes]], img_n: int, tar
     return image_path
 
 
-
 def get_image_data(image_path: str, presentation_uuid: str) -> str:
     """
     Retrieves and encodes image data as a base64 string.
@@ -161,3 +158,5 @@ def get_image_data(image_path: str, presentation_uuid: str) -> str:
 
     with open(image_path, "rb") as f:
         return base64.b64encode(f.read()).decode('ascii')
+
+

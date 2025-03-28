@@ -14,69 +14,71 @@
 
 
 {% block content %}
-    <div class="sidebar">
-        <h2>Images</h2>
-        <ul id="previews">
-            {% for image in range(images_count) %}
-                <li onclick="set_index('{{ image }}')">
-                    <p>{{ image + 1}}</p>
-                    <div class="img_preview">
-                        <img src="{{ url_for('static', filename = 'img/question_mark.png') }}" alt="">
-                    </div>
-                    <label>{{ images[image].title }}</label>
-                </li>
-            {% endfor %}
-        </ul>
-        <input type="hidden" id="images_count" value="{{ images_count }}">
-    </div>
-
-
-    <main>
-        <div class="img">
-            <img id="image" src="" alt="Loading image...">
+    <div id="content">
+        <div class="sidebar">
+            <h2>Images</h2>
+            <ul id="previews">
+                {% for image in range(images_count) %}
+                    <li onclick="set_index('{{ image }}')">
+                        <p>{{ image + 1}}</p>
+                        <div class="img_preview">
+                            <img src="{{ url_for('static', filename = 'img/question_mark.png') }}" alt="">
+                        </div>
+                        <label>{{ images[image].title }}</label>
+                    </li>
+                {% endfor %}
+            </ul>
+            <input type="hidden" id="images_count" value="{{ images_count }}">
         </div>
 
-        <div class="controls">
-            <button id="btn_l" class="light" onclick="move(-1)"><i class="fa-solid fa-caret-left"></i></button>
 
-            <input type="text" id="text_input" placeholder="Describe the picture...">
-            <button id="btn_accept" onclick="save_image_title()">Save</button>
-            <button id="btn_delete" onclick="skip_image()      ">Skip</button>
+        <main>
+            <div class="img">
+                <img id="image" src="" alt="Loading image...">
+            </div>
 
-            <button id="btn_r" class="light" onclick="move(+1)"><i class="fa-solid fa-caret-right"></i></button>
+            <div class="controls">
+                <button id="btn_l" class="light" onclick="move(-1)"><i class="fa-solid fa-caret-left"></i></button>
+
+                <input type="text" id="text_input" placeholder="Describe the picture...">
+                <button id="btn_accept" onclick="save_image_title()">Save</button>
+                <button id="btn_delete" onclick="skip_image()      ">Skip</button>
+
+                <button id="btn_r" class="light" onclick="move(+1)"><i class="fa-solid fa-caret-right"></i></button>
+            </div>
+            
+            <div class="options"></div>
+        </main>
+
+
+        <div class="sidebar">
+            <h2>Options</h2>
+
+            <div class="form">
+                <input type="checkbox" id="ignore_numbers" checked>
+                <label for="ignore_numbers">Ignore numbers</label>
+
+                <input type="checkbox" id="ignore_symbols" checked>
+                <label for="ignore_symbols">Ignore symbols</label>
+
+                <input type="checkbox" id="strip_whitespace" checked>
+                <label for="strip_whitespace">Strip whitespace</label>
+
+                <input type="checkbox" id="skip_links" checked>
+                <label for="skip_links">Skip links</label>
+
+                <input type="checkbox" id="split_symbols" checked>
+                <label for="split_symbols">Split on symbols (,;:.-)</label>
+
+                <input type="checkbox" id="split_brackets">
+                <label for="split_brackets">Split brackets</label>
+
+                <input type="checkbox" id="capitalize" checked>
+                <label for="capitalize">Capitalize</label>
+            </div>
+
+            <button id="btn_save" class="light" onclick="submit()">Save</button>
         </div>
-        
-        <div class="options"></div>
-    </main>
-
-
-    <div class="sidebar">
-        <h2>Options</h2>
-
-        <div class="form">
-            <input type="checkbox" id="ignore_numbers" checked>
-            <label for="ignore_numbers">Ignore numbers</label>
-
-            <input type="checkbox" id="ignore_symbols" checked>
-            <label for="ignore_symbols">Ignore symbols</label>
-
-            <input type="checkbox" id="strip_whitespace" checked>
-            <label for="strip_whitespace">Strip whitespace</label>
-
-            <input type="checkbox" id="skip_links" checked>
-            <label for="skip_links">Skip links</label>
-
-            <input type="checkbox" id="split_symbols" checked>
-            <label for="split_symbols">Split on symbols (,;:.-)</label>
-
-            <input type="checkbox" id="split_brackets">
-            <label for="split_brackets">Split brackets</label>
-
-            <input type="checkbox" id="capitalize" checked>
-            <label for="capitalize">Capitalize</label>
-        </div>
-
-        <button id="btn_save" class="light" onclick="submit()">Save</button>
     </div>
 {% endblock %}
 
