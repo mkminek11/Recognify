@@ -11,9 +11,9 @@
     <ul>
         {% for presentation in presentations %}
             <li>
-                <a href="/p/{{ presentation.uuid }}/edit">Edit</a>
-                <a href="/p/{{ presentation.uuid }}/delete">Delete</a>
-                <a href="/p/{{ presentation.uuid }}/play">Play</a>
+                <a href="/set/{{ presentation.uuid }}/edit">Edit</a>
+                <a href="/set/{{ presentation.uuid }}/delete">Delete</a>
+                <a href="/set/{{ presentation.uuid }}/play">Play</a>
                 <span>{{ presentation.title }}</span>
             </li>
         {% endfor %}

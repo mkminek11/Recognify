@@ -11,57 +11,26 @@ from pptx.shapes.base import BaseShape
 from pptx.shapes.picture import Picture as PPTXPicture
 from pptx.enum.shapes import MSO_SHAPE_TYPE
 
-from db import Presentation, Image, Label, app, db
+from db import Presentation, Image, Label
+from app import app, db
+
+
+
+UPLOADS_DIR = os.path.join(app.root_path, "uploads")
 
 
 def _iter_shapes(slide: PPTXSlide) -> Generator[BaseShape, None, None]:
-    """
-    Yields all picture shapes in a slide.
-
-    Args:
-        slide: `Slide` - The slide to yield shapes from.
-
-    Yields:
-        `BaseShape` - Shapes of type `MSO_SHAPE_TYPE.PICTURE`.
-    """
-
     for shape in slide.shapes:
         yield shape
 
 
 def upload_file(root_path: str, file: FileStorage, uuid: str) -> str:
-    """
-    Creates a subdirectory in `user_upload` and saves it under a unique name (uuid4).
-    The file is then saved in the subdirectory.
-
-    Args:
-        root_path: `str` - The root path of the application.
-        file: `FileStorage` - The file to be saved.
-
-    Returns:
-        `str` - The unique id of the presentation, also the name of the subdirectory.
-    """
-
-    uploads_dir = os.path.join(root_path, "user_upload")
-    base_dir_path = os.path.join(uploads_dir, uuid)
+    base_dir_path = os.path.join(UPLOADS_DIR, uuid)
     os.makedirs(base_dir_path, exist_ok = True)
     file.save(os.path.join(base_dir_path, "presentation.pptx"))
 
 
 def extract_images(pres_file: FileStorage, pres_uuid: str) -> bool:
-    """
-    Extracts images from a presentation and saves them to a directory.
-    The images are saved in a subdirectory named after the uuid of the presentation.
-    The images are named after the image order in the presentation.
-
-    Args:
-        presentation: `FileStorage` - The presentation file to extract images from.
-        pres_uuid: `str` - The uuid of the presentation.
-
-    Returns:
-        `bool` - Whether the extraction was successful.
-    """
-
     pres_file_name = pres_file.filename
     if not pres_file_name or not pres_file_name.endswith(".pptx"): return False
     pres_title = os.path.splitext(os.path.basename(pres_file_name))[0].capitalize()
@@ -72,11 +41,11 @@ def extract_images(pres_file: FileStorage, pres_uuid: str) -> bool:
 
     pres_id = pres_obj.id
 
-    root_dir = os.path.join(app.root_path, "user_upload", pres_uuid)
+    root_dir = os.path.join(UPLOADS_DIR, pres_uuid)
     images_dir = os.path.join(root_dir, "images")
     os.makedirs(images_dir, exist_ok = True)
 
-    pptx_slides = PPTX(os.path.join(app.root_path, "user_upload", pres_uuid, "presentation.pptx")).slides
+    pptx_slides = PPTX(os.path.join(UPLOADS_DIR, pres_uuid, "presentation.pptx")).slides
 
     last_slide:list[list[bytes]] = []
     image_index = 0
@@ -91,13 +60,13 @@ def extract_images(pres_file: FileStorage, pres_uuid: str) -> bool:
                 image_index += 1
                 if not image_path: continue
 
-                db.session.add(Image(file = image_path, slide = slide_n, presentation = pres_id, title = ""))
+                db.session.add(Image(file = image_path, slide = slide_n, pres_id = pres_id, title = ""))
 
             elif shape.has_text_frame:
                 if not hasattr(shape, "text"): continue
                 if not shape.text: continue
 
-                db.session.add(Label(text = shape.text, slide = slide_n, presentation = pres_id))
+                db.session.add(Label(text = shape.text, slide = slide_n, pres_id = pres_id))
 
         if slide_n >= 2:
             del last_slide[-3]
@@ -107,21 +76,6 @@ def extract_images(pres_file: FileStorage, pres_uuid: str) -> bool:
 
 
 def _save_image(image: PPTXImage, last_slide: list[list[bytes]], img_n: int, target_dir: str) -> str | Literal[False]:
-    """
-    Saves an image to the target directory, but only if it has not been already saved in the current slide or the previous one.
-
-    Args:
-        image: `PPTXImage` - The image to be saved.
-        last_slide: `list[list[bytes]]` - A list of slides, where each sublist contains the image bytes of all images
-            in one slide. The most recent slide is at the end of the list.
-        img_n: `int` - The index of the image in the current slide.
-        target_dir: `str` - The directory where the image should be saved.
-
-    Returns:
-        `str | Literal[False]` - The path of the saved image, or `False` if the image was already saved in the current or
-            previous slide.
-    """
-
     if not isinstance(image, PPTXImage): return False
     image_bytes = image.blob
 
@@ -145,18 +99,13 @@ def _save_image(image: PPTXImage, last_slide: list[list[bytes]], img_n: int, tar
 
 
 def get_image_data(image_path: str, presentation_uuid: str) -> str:
-    """
-    Retrieves and encodes image data as a base64 string.
-
-    Args:
-        image_name: `str` - The name of the image file.
-        presentation_uuid: `str` - The unique identifier of the presentation.
-
-    Returns:
-        `str` - The base64 encoded string of the image data.
-    """
-
     with open(image_path, "rb") as f:
         return base64.b64encode(f.read()).decode('ascii')
 
 
+__all__ = [
+    "upload_file",
+    "extract_images",
+    "get_image_data",
+    "UPLOADS_DIR",
+]
