@@ -87,5 +87,102 @@
     <script src="{{ url_for('static', filename = 'edit_title.js') }}"></script>
     <script>
         document.body.onload = () => {set_index(0);}
+
+        function update_options(image_data) {
+            let ignore_numbers   = document.getElementById("ignore_numbers"  ).checked;
+            let ignore_symbols   = document.getElementById("ignore_symbols"  ).checked;
+            let strip_whitespace = document.getElementById("strip_whitespace").checked;
+            let skip_links       = document.getElementById("skip_links"      ).checked;
+            let split_brackets   = document.getElementById("split_brackets"  ).checked;
+            let capitalize       = document.getElementById("capitalize"      ).checked;
+
+            options.innerHTML = image_data["options"].map((option) => {
+        
+                if (split_symbols) {
+                    option = option.split(/\s*[,;:–><-=]+\s*/g).join("\n");
+                }
+        
+                return option.split("\n").map(o => {
+                    if (ignore_numbers)   {o = o.replace(/\d/g, "");}
+                    if (strip_whitespace) {o = o.trim();}
+                    if (skip_links)       {o = o.replace(/https?:\/\/[^\s]+/g, "");}
+        
+                    if (o.match(/^[\s.:;,–><=]*$/g)) return "";
+                    if (capitalize) o = o[0].toUpperCase() + o.slice(1).toLowerCase();
+                    return `<div class="option" title="${o}" onclick="save(this)">${o}</div>`;
+                }).join("\n");
+            }).join("\n");
+        }
+
+        function save_image_title(element = null) {
+            if (element) text_input.value = element.title;
+        
+            data[index] = text_input.value;
+        
+            const label = document.getElementById("previews").children[index].querySelector("label");
+            if (text_input.value) {
+                label.innerText = text_input.value;
+            } else {
+                label.innerHTML = "<i class='fa-solid fa-xmark'></i>";
+            }
+        
+            document.getElementById("previews").scrollTo(0, 40 * index - 100);
+        
+            text_input.blur();
+        }
+        
+        
+        
+        function skip_image() {
+            text_input.value = "";
+            save_image_title();
+        }
+        
+        
+        
+        function submit() {
+            const xhr = new XMLHttpRequest();
+        
+            xhr.open("POST", `/set/${uuid}/save`, false);
+            xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+        
+            xhr.onload = () => {
+                if (xhr.status == 200) {
+                    window.location.href = "/";
+                } else {
+                    alert(`Error saving presentation: ${xhr.status} ${xhr.statusText}`);
+                }
+            };
+        
+            xhr.send("data=" + encodeURIComponent(JSON.stringify(data)));
+        }
+
+        
+        
+        document.addEventListener("keydown", (event) => {
+            if (document.activeElement === text_input) {
+                if (event.key === "Enter") {text_input.blur();}
+                if (event.key === "Escape") {text_input.blur();}
+            } else if (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA") {
+                return;
+            } else {
+                if (event.key === "ArrowRight") {move(+1);}
+                if (event.key === "ArrowLeft" ) {move(-1);}
+
+                if (event.key === ",") {skip_image();}
+        
+                if (!isNaN(+event.key) && parseInt(event.key) == parseFloat(event.key)) {
+                    if (+event.key < document.querySelector(".options").children.length) {
+                        save_image_title(document.querySelector(".options").children[+event.key]);
+
+                        if (event.altKey) {
+                            move(+1);
+                        }
+                    }
+                }
+        
+                if (event.key === "Enter") {text_input.focus();}
+            }
+        });
     </script>
 {% endblock %}

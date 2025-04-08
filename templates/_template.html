@@ -12,7 +12,7 @@
         <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename = 'img/favicon/favicon-16x16.png') }}">
         <link rel="manifest" href="{{ url_for('static', filename = 'img/favicon/site.webmanifest') }}">
 
-        <title>Editting {{ title }} | recognify.</title>
+        <title>{% block title %}Editting {{ title }}{% endblock %} | recognify.</title>
     </head>
     <body>
         <h1 id="header">

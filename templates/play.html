@@ -1,5 +1,7 @@
 {% extends "_template.html" %}
 
+{% block title %}Practising {{ presentation.title }}{% endblock %}
+
 {% block header %}{{ presentation.title }}{% endblock %}
 
 {% block content %}
@@ -9,10 +11,10 @@
         </div>
 
         <div class="controls">
-            <button id="btn_l" class="light" onclick="move(-1)"><i class="fa-solid fa-caret-left"></i></button>
-            <button class="light" onclick=""><i class="fa-solid fas fa-check"></i></button>
-            <button class="light" onclick=""><i class="fa-solid fas fa-xmark"></i></button>
-            <button id="btn_r" class="light" onclick="move(1)"><i class="fa-solid fa-caret-right"></i></button>
+            <button id="btn_l" class="light" onclick="move(-1)"><i class="fas fa-caret-left"></i></button>
+            <button class="light" onclick=""><i class="fas fa-check"></i></button>
+            <button class="light" onclick=""><i class="fas fa-xmark"></i></button>
+            <button id="btn_r" class="light" onclick="move(1)"><i class="fas fa-caret-right"></i></button>
         </div>
     </main>
 
@@ -25,10 +27,9 @@
         document.body.onload = () => {set_index(0);};
 
         function click(event) {
-            event.preventDefault(); // Prevent the context menu from opening
+            //event.preventDefault(); // Prevent the context menu from opening
             if (event.button === 0) {
-                // Left button
-                
+                console.log("Left button clicked");
             } else if (event.button === 2) {
                 console.log("Right button clicked");
                 // Add your logic for right button click here
