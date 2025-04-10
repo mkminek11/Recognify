@@ -114,7 +114,7 @@ def play(uuid: str):
 
     images = Image.query.filter_by(pres_id = presentation.id).all()
 
-    return render_template('play.html', presentation = presentation, images = images)
+    return render_template('play.html', presentation = presentation, images = {image.id: image.title for image in images})
 
 
 

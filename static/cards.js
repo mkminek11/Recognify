@@ -66,13 +66,19 @@ function set_index(new_index) {
 
 
 function update_cards() {
-    const image_data = get_image_data(index);
+    let image_data;
+
+    if (edit) {
+        image_data = get_image_data(index);
+    } else {
+        image_data = get_image_data(titles[index].order);
+    }
 
     image.src = `data:image/png;base64,${image_data["image"]}`;
     if (edit) text_input.value = index in data ? data[index] : "";
 
-    document.getElementById("btn_l").disabled = index == 0;
-    document.getElementById("btn_r").disabled = index == images_count - 1;
+    // document.getElementById("btn_l").disabled = index == 0;
+    // document.getElementById("btn_r").disabled = index == images_count - 1;
 
     if (edit) update_options(image_data);
 }

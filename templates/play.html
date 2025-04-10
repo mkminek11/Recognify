@@ -7,14 +7,15 @@
 {% block content %}
     <main>
         <div class="img">
-            <img id="image" src="" alt="Loading image..." onclick="click">
+            <p class="title hidden" id="title">_</p>
+            <img id="image" src="" alt="Loading image..." onmousedown="c(event);" oncontextmenu="return false;">
         </div>
 
         <div class="controls">
-            <button id="btn_l" class="light" onclick="move(-1)"><i class="fas fa-caret-left"></i></button>
-            <button class="light" onclick=""><i class="fas fa-check"></i></button>
-            <button class="light" onclick=""><i class="fas fa-xmark"></i></button>
-            <button id="btn_r" class="light" onclick="move(1)"><i class="fas fa-caret-right"></i></button>
+            <!-- <button id="btn_l" class="light" onclick="move(-1)"><i class="fas fa-caret-left"></i></button> -->
+            <button class="light" onclick="wrong();   next()"><i class="fas fa-xmark"></i></button>
+            <button class="light" onclick="correct(); next()"><i class="fas fa-check"></i></button>
+            <!-- <button id="btn_r" class="light" onclick="move(1)"><i class="fas fa-caret-right"></i></button> -->
         </div>
     </main>
 
@@ -25,15 +26,71 @@
     <script src="{{ url_for('static', filename = 'cards.js') }}"></script>
     <script>
         document.body.onload = () => {set_index(0);};
+        let mouseOnly = true;
+        let title = false;
+        const titles = Object.values(JSON.parse('{{ images|tojson|safe }}')).map((value, index) => {return { value: value, order: index };});
+        
+        shuffle(titles);
 
-        function click(event) {
-            //event.preventDefault(); // Prevent the context menu from opening
-            if (event.button === 0) {
-                console.log("Left button clicked");
-            } else if (event.button === 2) {
-                console.log("Right button clicked");
-                // Add your logic for right button click here
+        console.log(titles);
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                // Generate a random index between 0 and i
+                const j = Math.floor(Math.random() * (i + 1));
+                // Swap elements at index i and j
+                [array[i], array[j]] = [array[j], array[i]];
             }
+        }
+
+        function c(event) {
+            event.preventDefault(); // Prevent the context menu from opening
+            console.log("Image clicked");
+
+            if (!mouseOnly) {flip(); return;}
+
+            if (!title) {
+                flip();
+                return;
+            }
+
+            if (event.button === 0) {
+                wrong();
+                next();
+            } else if (event.button === 2) {
+                correct();
+                next();
+            }
+
+            return;
+        }
+
+        function flip() {
+            title = !title;
+
+            if (title) {
+                document.getElementById("title").innerHTML = titles[index].value;
+                document.getElementById("title").classList.remove("hidden");
+            } else {
+                document.getElementById("title").classList.add("hidden");
+            }
+        }
+
+        function correct() {
+            console.log("Correct answer");
+            document.activeElement.blur();
+        }
+
+        function wrong() {
+            console.log("Wrong answer");
+            document.activeElement.blur();
+        }
+
+        function next() {
+            title = false;
+            document.getElementById("title").classList.add("hidden");
+            document.activeElement.blur();
+            move(1);
         }
     </script>
 {% endblock %}
