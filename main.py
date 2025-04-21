@@ -1,7 +1,9 @@
 from flask import render_template, request, redirect, session, url_for
+from flask_login import login_user
 from werkzeug.utils import secure_filename
 from shutil import rmtree
 from uuid import uuid4
+from datetime import timedelta
 import json
 import os
 
@@ -10,13 +12,31 @@ from db import *
 from app import *
 
 
-@app.route('/')
+@app.route('/', methods = ['GET', 'POST'])
 def index():
-    presentations = Presentation.query.all()
-    return render_template('index.html', presentations = presentations)
+    if request.method == 'GET':
+        return render_template('login.html', message = request.args.get("m", ""))
+    
+    email = request.form.get("email", "")
+    password = request.form.get("password", "")
+    user = User.query.filter_by(email = email).first()
+    print(user)
+    if not isinstance(user, User): return redirect("/?m=User not found")
+    if not user.check_password(password): return redirect("/?m=Wrong password")
+
+    login_user(user, remember = False, duration = timedelta(days = 1))
+    return redirect("/home")
+    
+
+
+@login_required
+@app.route('/home')
+def home():
+    return render_template('home.html', presentations = Presentation.query.all())
 
 
 
+@permission_required(1)
 @app.route('/upload', methods = ['POST'])
 def upload():
     if 'file' not in request.files: return redirect("/")
@@ -34,6 +54,7 @@ def upload():
 
 
 
+@permission_required(1)
 @app.route('/set/<string:uuid>/edit')
 def edit(uuid: str):
     presentation = Presentation.query.filter_by(uuid = uuid).first()
@@ -44,6 +65,7 @@ def edit(uuid: str):
 
 
 
+@login_required
 @app.route('/set/<string:uuid>/image/<int:index>')
 def get_image(uuid: str, index: int):
     presentation = Presentation.query.filter_by(uuid = uuid).first()
@@ -61,6 +83,7 @@ def get_image(uuid: str, index: int):
 
 
 
+@login_required
 @app.route('/set/<string:uuid>/title', methods = ['POST'])
 def edit_title(uuid: str):
     if "title" not in request.form: return ""
@@ -73,6 +96,7 @@ def edit_title(uuid: str):
 
 
 
+@login_required
 @app.route("/set/<string:uuid>/save", methods = ['POST'])
 def save_presentation(uuid: str):
     if "data" not in request.form: return ""
@@ -92,6 +116,7 @@ def save_presentation(uuid: str):
 
 
 
+@permission_required(1)
 @app.route('/set/<string:uuid>/delete')
 def delete_presentation(uuid: str):
     presentation = Presentation.query.filter_by(uuid = uuid).first()
@@ -107,6 +132,7 @@ def delete_presentation(uuid: str):
 
 
 
+@login_required
 @app.route('/set/<string:uuid>/play')
 def play(uuid: str):
     presentation = Presentation.query.filter_by(uuid = uuid).first()
@@ -118,6 +144,7 @@ def play(uuid: str):
 
 
 
+@permission_required(3)
 @app.route('/clearall')
 def clear_all():
     Presentation.query.delete()

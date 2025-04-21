@@ -91,6 +91,15 @@
             document.getElementById("title").classList.add("hidden");
             document.activeElement.blur();
             move(1);
+            update_cards();
+        }
+
+        function update_cards() {
+            let image_data = get_image_data(titles[index].order);
+            image.src = `data:image/png;base64,${image_data["image"]}`;
+        
+            // document.getElementById("btn_l").disabled = index == 0;
+            // document.getElementById("btn_r").disabled = index == images_count - 1;
         }
     </script>
 {% endblock %}

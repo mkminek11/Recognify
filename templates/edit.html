@@ -38,13 +38,13 @@
             </div>
 
             <div class="controls">
-                <button id="btn_l" class="light" onclick="move(-1)"><i class="fa-solid fa-caret-left"></i></button>
+                <button id="btn_l" class="light" onclick="fmove(-1)"><i class="fa-solid fa-caret-left"></i></button>
 
                 <input type="text" id="text_input" placeholder="Describe the picture...">
                 <button id="btn_accept" onclick="save_image_title()">Save</button>
                 <button id="btn_delete" onclick="skip_image()      ">Skip</button>
 
-                <button id="btn_r" class="light" onclick="move(+1)"><i class="fa-solid fa-caret-right"></i></button>
+                <button id="btn_r" class="light" onclick="fmove(+1)"><i class="fa-solid fa-caret-right"></i></button>
             </div>
             
             <div class="options"></div>
@@ -138,6 +138,34 @@
             save_image_title();
         }
         
+
+
+        function fmove(direction) {
+            move(direction);
+            save_image_title();
+            update_cards();
+        }
+
+
+
+        function update_cards() {
+            let image_data = get_image_data(index);
+
+            const img_prev = document.getElementById("previews").children[index].querySelector("img");
+            document.getElementById("previews").scrollTo(0, 40 * index - 100);
+
+            const src = `data:image/png;base64,${image_data["image"]}`;
+
+            img_prev.src = src;
+            image.src = src;
+            text_input.value = index in data ? data[index] : "";
+        
+            // document.getElementById("btn_l").disabled = index == 0;
+            // document.getElementById("btn_r").disabled = index == images_count - 1;
+        
+            update_options(image_data);
+        }
+
         
         
         function submit() {
@@ -161,27 +189,27 @@
         
         document.addEventListener("keydown", (event) => {
             if (document.activeElement === text_input) {
-                if (event.key === "Enter") {text_input.blur();}
-                if (event.key === "Escape") {text_input.blur();}
+                if (event.key === "Enter")  text_input.blur();
+                if (event.key === "Escape") text_input.blur();
             } else if (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA") {
                 return;
             } else {
-                if (event.key === "ArrowRight") {move(+1);}
-                if (event.key === "ArrowLeft" ) {move(-1);}
+                if (event.key === "ArrowRight") fmove(+1);
+                if (event.key === "ArrowLeft" ) fmove(-1);
 
-                if (event.key === ",") {skip_image();}
+                if (event.key === ",") skip_image();
         
+                // If the key is a number
                 if (!isNaN(+event.key) && parseInt(event.key) == parseFloat(event.key)) {
                     if (+event.key < document.querySelector(".options").children.length) {
                         save_image_title(document.querySelector(".options").children[+event.key]);
 
-                        if (event.altKey) {
-                            move(+1);
-                        }
+                        // If the number is pressed with Alt key, move to the next image
+                        if (event.altKey) fmove(+1);
                     }
                 }
         
-                if (event.key === "Enter") {text_input.focus();}
+                if (event.key === "Enter") text_input.focus();
             }
         });
     </script>

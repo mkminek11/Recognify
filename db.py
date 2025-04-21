@@ -10,12 +10,13 @@ from hashlib import sha256
 class User(UserMixin, db.Model):
     __tablename__ = 'user'
 
-    id:       Mapped[int]  = mapped_column(Integer, primary_key = True, autoincrement = True)
-    uuid:     Mapped[str]  = mapped_column(String,  unique = True, nullable = False, default = lambda: uuid4().hex)
-    email:    Mapped[str]  = mapped_column(String,  unique = True, nullable = False)
-    fname:    Mapped[str]  = mapped_column(String,  nullable = False)
-    lname:    Mapped[str]  = mapped_column(String,  nullable = False)
-    password: Mapped[str]  = mapped_column(String,  nullable = False)
+    id:         Mapped[int] = mapped_column(Integer, primary_key = True, autoincrement = True)
+    uuid:       Mapped[str] = mapped_column(String,  unique = True, nullable = False, default = lambda: uuid4().hex)
+    email:      Mapped[str] = mapped_column(String,  unique = True, nullable = False)
+    fname:      Mapped[str] = mapped_column(String,  nullable = False)
+    lname:      Mapped[str] = mapped_column(String,  nullable = False)
+    password:   Mapped[str] = mapped_column(String,  nullable = False)
+    permission: Mapped[int] = mapped_column(Integer, nullable = False, default = 0)
 
     def check_password(self, password: str) -> bool:
         return self.password == sha256(password.encode("utf-8")).hexdigest()
