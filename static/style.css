@@ -347,3 +347,24 @@ main {
         }
     }
 }
+
+
+.presentations {
+    list-style-type: none;
+
+    & li {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+
+        & a {
+            color: var(--c4);
+            transition: 0.3s ease;
+
+            &:hover {
+                color: var(--c3);
+            }
+        }
+    }
+}

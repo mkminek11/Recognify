@@ -29,14 +29,14 @@ def index():
     
 
 
-@login_required
+# @login_required
 @app.route('/home')
 def home():
     return render_template('home.html', presentations = Presentation.query.all())
 
 
 
-@permission_required(1)
+# @permission_required(1)
 @app.route('/upload', methods = ['POST'])
 def upload():
     if 'file' not in request.files: return redirect("/")
@@ -54,7 +54,7 @@ def upload():
 
 
 
-@permission_required(1)
+# @permission_required(1)
 @app.route('/set/<string:uuid>/edit')
 def edit(uuid: str):
     presentation = Presentation.query.filter_by(uuid = uuid).first()
@@ -65,47 +65,54 @@ def edit(uuid: str):
 
 
 
-@login_required
+# @login_required
 @app.route('/set/<string:uuid>/image/<int:index>')
 def get_image(uuid: str, index: int):
     presentation = Presentation.query.filter_by(uuid = uuid).first()
     if not isinstance(presentation, Presentation): return "Presentation not found"
 
-    images = Image.query.filter_by(pres_id = presentation.id).all()
+    # images = Image.query.filter_by(pres_id = presentation.id).all()
     
-    if index >= len(images) or index < 0: return "Image not found"
-    image = images[index]
-    image_data = get_image_data(image.file, uuid)
+    # if index >= len(images) or index < 0: return "Image not found"
+    # image = images[index]
+    image = Image.query.filter_by(pres_id = presentation.id, id = index).first()
+    if not isinstance(image, Image): return "Image not found"
+    if not os.path.exists(image.file): return "Image not found"
+    image_data = get_image_data(image.file)
 
-    labels = Label.query.filter_by(pres_id = presentation.id, slide = image.slide).all()
+    # labels = Label.query.filter_by(pres_id = presentation.id, slide = image.slide).all()
 
-    return json.dumps({"image": image_data, "options": [option.text for option in labels]})
+    return {"image": image_data}
 
 
 
-@login_required
+# @login_required
 @app.route('/set/<string:uuid>/title', methods = ['POST'])
 def edit_title(uuid: str):
     if "title" not in request.form: return ""
 
     title = request.form["title"]
     presentation = Presentation.query.filter_by(uuid = uuid).first()
+
+    if not isinstance(presentation, Presentation): return ""
     presentation.title = title
     db.session.commit()
     return ""
 
 
 
-@login_required
+# @login_required
 @app.route("/set/<string:uuid>/save", methods = ['POST'])
 def save_presentation(uuid: str):
     if "data" not in request.form: return ""
 
     titles = json.loads(request.form["data"])
     presentation = Presentation.query.filter_by(uuid = uuid).first()
+    if not isinstance(presentation, Presentation): return ""
+
     images = Image.query.filter_by(pres_id = presentation.id).limit(1)
 
-    presentation.visible = 1
+    # presentation.visible = 1
 
     for i, t in titles.items():
         images.offset(i).first().title = t
@@ -116,7 +123,7 @@ def save_presentation(uuid: str):
 
 
 
-@permission_required(1)
+# @permission_required(1)
 @app.route('/set/<string:uuid>/delete')
 def delete_presentation(uuid: str):
     presentation = Presentation.query.filter_by(uuid = uuid).first()
@@ -132,19 +139,21 @@ def delete_presentation(uuid: str):
 
 
 
-@login_required
+# @login_required
 @app.route('/set/<string:uuid>/play')
 def play(uuid: str):
     presentation = Presentation.query.filter_by(uuid = uuid).first()
     if not isinstance(presentation, Presentation): return redirect("/")
 
-    images = Image.query.filter_by(pres_id = presentation.id).all()
+    images = Image.query.filter_by(pres_id = presentation.id).filter(Image.title != "").all()
 
-    return render_template('play.html', presentation = presentation, images = {image.id: image.title for image in images})
+    data = {image.id: image.title for image in images}
+    print(data)
+    return render_template('play.html', presentation = presentation, images = data)
 
 
 
-@permission_required(3)
+# @permission_required(3)
 @app.route('/clearall')
 def clear_all():
     Presentation.query.delete()

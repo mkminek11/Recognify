@@ -8,13 +8,13 @@
     <main>
         <div class="img">
             <p class="title hidden" id="title">_</p>
-            <img id="image" src="" alt="Loading image..." onmousedown="c(event);" oncontextmenu="return false;">
+            <img id="image" src="" alt="Loading image..." oncontextmenu="return false;">
         </div>
 
         <div class="controls">
             <!-- <button id="btn_l" class="light" onclick="move(-1)"><i class="fas fa-caret-left"></i></button> -->
-            <button class="light" onclick="wrong();   next()"><i class="fas fa-xmark"></i></button>
-            <button class="light" onclick="correct(); next()"><i class="fas fa-check"></i></button>
+            <button class="light" onclick="wrong();  "><i class="fas fa-xmark"></i></button>
+            <button class="light" onclick="correct();"><i class="fas fa-check"></i></button>
             <!-- <button id="btn_r" class="light" onclick="move(1)"><i class="fas fa-caret-right"></i></button> -->
         </div>
     </main>
@@ -24,15 +24,17 @@
 
 {% block scripts %}
     <script src="{{ url_for('static', filename = 'cards.js') }}"></script>
+
     <script>
         document.body.onload = () => {set_index(0);};
-        let mouseOnly = true;
+        const MOUSE_ONLY = true;
         let title = false;
-        const titles = Object.values(JSON.parse('{{ images|tojson|safe }}')).map((value, index) => {return { value: value, order: index };});
+
+        const _data = JSON.parse('{{ images|tojson|safe }}');
+        const titles = Object.keys(_data).map(key => {return { id: key, value: _data[key] };});
+        console.log(titles);
         
         shuffle(titles);
-
-        console.log(titles);
 
         function shuffle(array) {
             for (let i = array.length - 1; i > 0; i--) {
@@ -43,26 +45,21 @@
             }
         }
 
-        function c(event) {
-            event.preventDefault(); // Prevent the context menu from opening
-            console.log("Image clicked");
+        function onclick(e) {
+            e.preventDefault(); // Prevent the context menu from opening
 
-            if (!mouseOnly) {flip(); return;}
+            console.log("Clicked");
 
-            if (!title) {
+            if (!MOUSE_ONLY || !title) {
                 flip();
                 return;
             }
 
-            if (event.button === 0) {
+            if (e.button === 0) {
                 wrong();
-                next();
-            } else if (event.button === 2) {
+            } else if (e.button === 2) {
                 correct();
-                next();
             }
-
-            return;
         }
 
         function flip() {
@@ -77,29 +74,27 @@
         }
 
         function correct() {
-            console.log("Correct answer");
-            document.activeElement.blur();
+            next();
         }
 
         function wrong() {
-            console.log("Wrong answer");
-            document.activeElement.blur();
+            next();
         }
 
         function next() {
             title = false;
             document.getElementById("title").classList.add("hidden");
-            document.activeElement.blur();
             move(1);
             update_cards();
         }
 
         function update_cards() {
-            let image_data = get_image_data(titles[index].order);
-            image.src = `data:image/png;base64,${image_data["image"]}`;
-        
-            // document.getElementById("btn_l").disabled = index == 0;
-            // document.getElementById("btn_r").disabled = index == images_count - 1;
+            console.log(titles[index]);
+            let image_data = get_image_data(titles[index].id).image;
+            image.src = `data:image/png;base64,${image_data}`;
         }
+
+        document.getElementById("image").addEventListener("mousedown", onclick);
+
     </script>
 {% endblock %}

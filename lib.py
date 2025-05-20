@@ -98,7 +98,7 @@ def _save_image(image: PPTXImage, last_slide: list[list[bytes]], img_n: int, tar
     return image_path
 
 
-def get_image_data(image_path: str, presentation_uuid: str) -> str:
+def get_image_data(image_path: str) -> str:
     with open(image_path, "rb") as f:
         return base64.b64encode(f.read()).decode('ascii')
 
