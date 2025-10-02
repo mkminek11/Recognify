@@ -1,0 +1,11 @@
+.vscode/
+.venv/
+node_modules/
+__pycache__/
+dist/
+
+.DS_Store
+.flaskenv
+uv.lock
+.python-version
+TODO.md
