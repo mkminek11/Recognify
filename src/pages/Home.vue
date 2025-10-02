@@ -1,5 +1,5 @@
 <template>
-    <h1>Domů</h1>
+    <h1>Home</h1>
     <div>
         <a :href="`/set/${set.id}`" v-for="set in sets" :key="set.id">{{ set.name }}</a>
     </div>
