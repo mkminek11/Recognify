@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>{{ set.name }}</h1>
+  <p>{{ set.description }}</p>
+  <p>Created at: {{ set.created_at }}</p>
+
+  <h2>Labels</h2>
+  <ul>
+    {% for label in set.labels %}
+      <li>{{ label.name }} (ID: {{ label.id }})</li>
+    {% else %}
+      <li>No labels available in this set.</li>
+    {% endfor %}
+  </ul>
+
+  <h2>Images</h2>
+  <ul>
+    {% for image in set.images %}
+      <li>{{ image.filename }} - {{ image.label }}</li>
+    {% else %}
+      <li>No images available in this set.</li>
+    {% endfor %}
+  </ul>
+{% endblock %}
+
+{% block scripts %}
+  
+{% endblock %}

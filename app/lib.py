@@ -6,15 +6,10 @@ import os
 from functools import wraps
 from typing import Callable
 
-from app.routes.main import bp as main_bp
-from app.routes.admin import bp as admin_bp
+import app.routes # Assign blueprints
 from app.app import app, db, login
-
-
-app.register_blueprint(main_bp)
-app.register_blueprint(admin_bp, url_prefix = "/admin")
-
 from app.models import User
+
 
 @login.user_loader
 def load_user(user_id):

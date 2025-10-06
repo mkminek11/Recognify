@@ -37,7 +37,6 @@ class Set(db.Model):
 
     owner: Mapped["User"] = relationship("User", back_populates = "sets", lazy = "joined")
     images: Mapped[list["Image"]] = relationship("Image", back_populates = "set", lazy = "joined")
-    labels: Mapped[list["Label"]] = relationship("Label", back_populates = "set", lazy = "joined")
 
     @staticmethod
     def all() -> list["Set"]: return Set.query.all()
@@ -50,18 +49,7 @@ class Image(db.Model):
     filename: Mapped[str] = mapped_column(String(128), unique = True, nullable = False)
     original_filename: Mapped[str] = mapped_column(String(128), nullable = False)
     set_id: Mapped[int] = mapped_column(ForeignKey("sets.id"), nullable = False)
-    label_id: Mapped[int | None] = mapped_column(ForeignKey("labels.id"), nullable = True)
+    label: Mapped[str] = mapped_column(String(128), nullable = True)
 
     set: Mapped["Set"] = relationship("Set", back_populates = "images", lazy = "joined")
-    label: Mapped["Label | None"] = relationship("Label", back_populates = "images", lazy = "joined")
 
-
-class Label(db.Model):
-    __tablename__ = "labels"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key = True, autoincrement = True)
-    name: Mapped[str] = mapped_column(String(64), nullable = False)
-    set_id: Mapped[int] = mapped_column(ForeignKey("sets.id"), nullable = False)
-
-    set: Mapped["Set"] = relationship("Set", back_populates = "labels", lazy = "joined")
-    images: Mapped[list["Image"]] = relationship("Image", back_populates = "label", lazy = "joined")
