@@ -6,8 +6,13 @@ from app.app import db
 bp = Blueprint("main", __name__)
 
 @bp.route('/')
+@bp.route('/sets')
 def index():
     return render_template('index.html', sets = Set.query.all())
+
+@bp.route('/sets/new', methods=['GET'])
+def new_set():
+    return render_template('new_set.html')
 
 @bp.route('/sets', methods=['DELETE'])
 def delete_all_sets():
