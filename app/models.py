@@ -1,24 +1,14 @@
-from lib import *
 
-from sqlalchemy.orm import Mapped, mapped_column, DeclarativeBase, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from flask_login import UserMixin
 from sqlalchemy import Integer, String, Boolean, ForeignKey, DateTime, Text, Float
-from flask_sqlalchemy import SQLAlchemy
 
 import os.path
 import datetime
-from typing import Any, Literal
-from hashlib import sha256
-from werkzeug.datastructures import FileStorage
-from werkzeug.utils import secure_filename
-from enum import Enum
+import werkzeug.security
 
+from app.app import db, app, login
 
-
-class Base(DeclarativeBase): pass
-
-db = SQLAlchemy(model_class = Base)
-db.init_app(app)
 
 class User(db.Model, UserMixin):
     __tablename__ = "users"
@@ -32,7 +22,7 @@ class User(db.Model, UserMixin):
     sets: Mapped[list["Set"]] = relationship("Set", back_populates = "owner", lazy = "joined")
 
     def authenticate(self, password: str) -> bool:
-        return self.password == sha256(password.encode()).hexdigest()
+        return werkzeug.security.check_password_hash(self.password, password)
     
 
 class Set(db.Model):
@@ -75,14 +65,3 @@ class Label(db.Model):
 
     set: Mapped["Set"] = relationship("Set", back_populates = "labels", lazy = "joined")
     images: Mapped[list["Image"]] = relationship("Image", back_populates = "label", lazy = "joined")
-
-
-with app.app_context():
-    db.create_all()
-
-ROOT_PATH = app.root_path
-UPLOAD_PATH = os.path.join(ROOT_PATH, "static", "uploads")
-
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.filter_by(id = user_id).first()

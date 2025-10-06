@@ -1,17 +1,36 @@
-# import functools
+
+from flask import Flask
+from flask_login import LoginManager
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import DeclarativeBase
 from functools import wraps
-import re
+from flask_login import current_user
 from typing import Callable
-from flask import Flask, redirect, render_template, url_for, request, send_from_directory, jsonify
-from flask_login import LoginManager, UserMixin, current_user, login_user, logout_user
-
-app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///db.sqlite"
-app.config["SECRET_KEY"] = ""
+import os
+import re
 
 
-login_manager = LoginManager()
-login_manager.init_app(app)
+app = Flask(__name__, 
+             instance_relative_config = True,
+             template_folder = '../templates',
+             static_folder = '../static')
+
+class Base(DeclarativeBase): pass
+
+login = LoginManager()
+db = SQLAlchemy(model_class = Base)
+
+os.makedirs(app.instance_path, exist_ok=True)
+
+app.config.from_mapping(
+    SECRET_KEY = os.environ.get("SECRET_KEY", "dev"),
+    DATABASE = os.path.join(app.instance_path, "db.sqlite"),
+    SQLALCHEMY_DATABASE_URI = f"sqlite:///db.sqlite",
+    SQLALCHEMY_TRACK_MODIFICATIONS = False,
+)
+
+ROOT_PATH = app.root_path
+UPLOAD_PATH = os.path.join(ROOT_PATH, "static", "uploads")
 
 
 def login_required(func: Callable) -> Callable:
@@ -35,11 +54,13 @@ def permission_required(permission: int) -> Callable:
         return wrapper
     return decorator
 
-@app.template_filter("regex_replace")
+
+
+@app.template_filter('regex_replace')
 def regex_replace(string: str, find: str, replace: str) -> str:
     return re.sub(find, replace, string)
 
-@app.template_filter("format_number")
+@app.template_filter('format_number')
 def format_number(value: int | float) -> str:
     if not isinstance(value, (int, float)): value = float(value)
 
