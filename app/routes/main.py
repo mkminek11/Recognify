@@ -12,7 +12,8 @@ def index():
 
 @bp.route('/sets/new', methods=['GET'])
 def new_set():
-    return render_template('new_set.html')
+    return ""
+    # return render_template('new_set.html')
 
 @bp.route('/sets', methods=['DELETE'])
 def delete_all_sets():

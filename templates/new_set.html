@@ -13,8 +13,13 @@
     <textarea id="description" x-model="setDescription"></textarea>
   
     <div>
-      <label for="images">Upload Images:</label>
-      <input type="file" id="images" x-ref="imageInput" name="images" multiple @change="addImages" />
+      <p>Add images:</p>
+      <label for="images" class="btn">Upload:</label>
+      <input type="file" id="images" class="hidden" x-ref="imageInput" multiple @change="addImages($event)" />
+
+      <label for="pres" class="btn">Extract from a presentation:</label>
+      <input type="file" id="pres" class="hidden" x-ref="presInput" @change="preparePres($event)" />
+
       <div x-ref="imageList">
         <template x-for="(image, index) in images" :key="index">
           <div>
@@ -48,6 +53,7 @@
         init() {
           this.$refs.titleInput.focus();
           this.$refs.imageInput.value = '';
+          this.$refs.presInput.value = '';
         },
 
         removeImage(index) {
@@ -68,6 +74,21 @@
               this.imageLabels[cimg.hash] = '';
             }
           }
+        },
+
+        async preparePres(event) {
+          const file = event.target.files[0];
+          if (!file) return;
+          if (file.size > 50 * 1024 * 1024) {return;} // 50MB limit
+
+          const formData = new FormData();
+          formData.append('presentation', file);
+
+          const results = await axios.post('/api/presentation', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          });
+
+          console.log(results.data);
         },
 
         submitForm(event) {

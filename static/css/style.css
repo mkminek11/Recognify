@@ -1,0 +1,35 @@
+
+:root {
+    --c-primary: #4CAF50;
+    --c-primary-dark: #388E3C;
+    --c-primary-light: #C8E6C9;
+    --c-secondary: #FF9800;
+    --c-secondary-dark: #F57C00;
+    --c-secondary-light: #FFE0B2;
+
+    --c-black: oklch(0% 0% 0);
+    --c-grey1: oklch(10% 0% 0);
+    --c-grey2: oklch(20% 0% 0);
+    --c-grey3: oklch(40% 0% 0);
+    --c-grey4: oklch(60% 0% 0);
+    --c-grey5: oklch(80% 0% 0);
+    --c-grey6: oklch(90% 0% 0);
+    --c-white: oklch(100% 0% 0);
+
+    --fs-small: 0.8rem;
+    --fs-medium: 1rem;
+    --fs-large: 1.2rem;
+    --fs-xlarge: 1.5rem;
+}
+
+.hidden {display: none;}
+
+.btn {
+    background-color: var(--c-primary);
+    color: var(--c-white);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: var(--fs-medium);
+}
