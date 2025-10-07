@@ -1,0 +1,52 @@
+
+from flask import Blueprint, redirect, render_template, request, url_for
+import werkzeug.security
+from flask_login import login_user
+
+from app.models import User
+from app.app import db
+
+
+bp = Blueprint("auth", __name__, url_prefix = "/auth")
+
+@bp.route('/login', methods=['GET'])
+def login():
+    return render_template('auth/login.html')
+
+@bp.route('/signup', methods=['GET'])
+def signup():
+    return render_template('auth/signup.html')
+
+
+@bp.route('/login', methods=['POST'])
+def login_post():
+    username = request.form.get('username')
+    password = request.form.get('password')
+
+    if not username or not password:
+        return "Missing fields", 400
+    
+    user = User.query.filter_by(username = username).first()
+    if not isinstance(user, User) or not user.authenticate(password):
+        return "Invalid credentials", 401
+
+    login_user(user)
+
+    return redirect('/')
+
+@bp.route('/signup', methods=['POST'])
+def signup_post():
+    username = request.form.get('username')
+    email    = request.form.get('email')
+    password = request.form.get('password')
+
+    if not username or not email or not password:
+        return "Missing fields", 400
+    
+    pwd_hash = werkzeug.security.generate_password_hash(password)
+    
+    user = User(username = username, email = email, password = pwd_hash)
+    db.session.add(user)
+    db.session.commit()
+
+    return redirect('/auth/login?message=Account created, please log in.')

@@ -1,7 +1,7 @@
 __pycache__/
 .venv/
 .vscode/
-instance/
 uploads/
 *.pyc
 SUPPORT.md
+migrations/

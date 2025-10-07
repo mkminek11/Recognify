@@ -1,28 +1,30 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <div class="container">
-    <h1>Welcome to Recognify</h1>
-    <p>Sets:</p>
-    <ul>
-      {% for set in sets %}
-        <li>
-          <a href="/sets/{{ set.id }}">{{ set.name }}</a>
-        </li>
-      {% else %}
-        <li>No sets available.</li>
-      {% endfor %}
-    </ul>
-    <a href="/sets/new">Create a new set</a>
-    <a href="" onclick="deleteAllSets();">Delete all sets</a>
-  </div>
+    <div class="container">
+        <h1>Welcome to Recognify</h1>
+        <p>Sets:</p>
+        <ul>
+            {% for set in sets %}
+                <li>
+                    <a href="/sets/{{ set.id }}">{{ set.name }}</a>
+                </li>
+            {% else %}
+                <li>No sets available.</li>
+            {% endfor %}
+        </ul>
+        <a href="/sets/new">Create a new set</a>
+        <a href="" onclick="deleteAllSets();">Delete all sets</a>
+    </div>
+    <a href="/auth/login">Login</a>
+    <a href="/auth/signup">Sign Up</a>
 {% endblock %}
 
 {% block scripts %}
-  <script>
-    function deleteAllSets() {
-      if (!confirm("Are you sure you want to delete all sets? This action cannot be undone.")) {return;}
-      axios.delete('/sets');
-    }
-  </script>
+    <script>
+        function deleteAllSets() {
+        if (!confirm("Are you sure you want to delete all sets? This action cannot be undone.")) {return;}
+        axios.delete('/sets');
+        }
+    </script>
 {% endblock %}

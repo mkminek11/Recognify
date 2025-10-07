@@ -1,107 +1,107 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <h1>Create a New Set</h1>
-  <div x-data="formHandler" x-init="init()" >
-    <div>
-      <label for="name">Set title:</label>
-      <input type="text" id="name" x-ref="titleInput" x-model="title" x-show="titleEditMode" @blur="titleEditMode = false" />
-      <span x-text="title" x-show="!titleEditMode" @click="titleEditMode = true; $nextTick(() => $refs.titleInput.focus())"></span>
-    </div>
-  
-    <label for="description">Description:</label>
-    <textarea id="description" x-model="setDescription"></textarea>
-  
-    <div>
-      <p>Add images:</p>
-      <label for="images" class="btn">Upload:</label>
-      <input type="file" id="images" class="hidden" x-ref="imageInput" multiple @change="addImages($event)" />
+    <h1>Create a New Set</h1>
+    <div x-data="formHandler" x-init="init()" >
+        <div>
+            <label for="name">Set title:</label>
+            <input type="text" id="name" x-ref="titleInput" x-model="title" x-show="titleEditMode" @blur="titleEditMode = false" />
+            <span x-text="title" x-show="!titleEditMode" @click="titleEditMode = true; $nextTick(() => $refs.titleInput.focus())"></span>
+        </div>
+    
+        <label for="description">Description:</label>
+        <textarea id="description" x-model="setDescription"></textarea>
+    
+        <div>
+            <p>Add images:</p>
+            <label for="images" class="btn">Upload:</label>
+            <input type="file" id="images" class="hidden" x-ref="imageInput" multiple @change="addImages($event)" />
 
-      <label for="pres" class="btn">Extract from a presentation:</label>
-      <input type="file" id="pres" class="hidden" x-ref="presInput" @change="preparePres($event)" />
+            <label for="pres" class="btn">Extract from a presentation:</label>
+            <input type="file" id="pres" class="hidden" x-ref="presInput" @change="preparePres($event)" />
 
-      <div x-ref="imageList">
-        <template x-for="(image, index) in images" :key="index">
-          <div>
-            <img :src="image.src" width="100" />
-            <input type="text" x-model="imageLabels[image.hash]" placeholder="Enter image caption" />
-            <button @click="removeImage(index)">Remove</button>
-          </div>
-        </template>
-      </div>
+            <div x-ref="imageList">
+                <template x-for="(image, index) in images" :key="index">
+                    <div>
+                        <img :src="image.src" width="100" />
+                        <input type="text" x-model="imageLabels[image.hash]" placeholder="Enter image caption" />
+                        <button @click="removeImage(index)">Remove</button>
+                    </div>
+                </template>
+            </div>
+        </div>
+    
+        <button @click="submitForm">Create Set</button>
     </div>
-  
-    <button @click="submitForm">Create Set</button>
-  </div>
 {% endblock %}
 
 {% block scripts %}
-  <script type="module">
-    import { CustomImage } from '{{ url_for("static", filename="js/CustomImage.js") }}';
-    window.CustomImage = CustomImage;
-  </script>
+    <script type="module">
+        import { CustomImage } from '{{ url_for("static", filename="js/CustomImage.js") }}';
+        window.CustomImage = CustomImage;
+    </script>
 
-  <script>
-    document.addEventListener('alpine:init', () => {
-      Alpine.data('formHandler', () => ({
-        title: '',
-        setDescription: '',
-        titleEditMode: true,
-        images: [],
-        imageLabels: {},
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('formHandler', () => ({
+                title: '',
+                setDescription: '',
+                titleEditMode: true,
+                images: [],
+                imageLabels: {},
 
-        init() {
-          this.$refs.titleInput.focus();
-          this.$refs.imageInput.value = '';
-          this.$refs.presInput.value = '';
-        },
+                init() {
+                    this.$refs.titleInput.focus();
+                    this.$refs.imageInput.value = '';
+                    this.$refs.presInput.value = '';
+                },
 
-        removeImage(index) {
-          const image = this.images[index];
-          if (image && image.hash) {
-            delete this.imageLabels[image.hash];
-          }
-          this.images.splice(index, 1);
-        },
+                removeImage(index) {
+                    const image = this.images[index];
+                    if (image && image.hash) {
+                        delete this.imageLabels[image.hash];
+                    }
+                    this.images.splice(index, 1);
+                },
 
-        async addImages(event) {
-          for (const file of event.target.files) {
-            const cimg = new window.CustomImage(file);
-            await cimg.ready;
+                async addImages(event) {
+                    for (const file of event.target.files) {
+                        const cimg = new window.CustomImage(file);
+                        await cimg.ready;
 
-            if (!this.images.some(existing => existing.hash === cimg.hash)) {
-              this.images.push(cimg);
-              this.imageLabels[cimg.hash] = '';
-            }
-          }
-        },
+                        if (!this.images.some(existing => existing.hash === cimg.hash)) {
+                            this.images.push(cimg);
+                            this.imageLabels[cimg.hash] = '';
+                        }
+                    }
+                },
 
-        async preparePres(event) {
-          const file = event.target.files[0];
-          if (!file) return;
-          if (file.size > 50 * 1024 * 1024) {return;} // 50MB limit
+                async preparePres(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+                    if (file.size > 50 * 1024 * 1024) {return;} // 50MB limit
 
-          const formData = new FormData();
-          formData.append('presentation', file);
+                    const formData = new FormData();
+                    formData.append('presentation', file);
 
-          const results = await axios.post('/api/presentation', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-          });
+                    const results = await axios.post('/api/presentation', formData, {
+                        headers: { 'Content-Type': 'multipart/form-data' }
+                    });
 
-          console.log(results.data);
-        },
+                    console.log(results.data);
+                },
 
-        submitForm(event) {
-          if (event) event.preventDefault();
+                submitForm(event) {
+                    if (event) event.preventDefault();
 
-          console.log({
-            title: this.title,
-            description: this.setDescription,
-            images: this.images.map(img => ({...img.data(), label: this.imageLabels[img.hash]}))
-          });
-          alert('Form submitted successfully!');
-        }
-      }));
-    });
-  </script>
+                    console.log({
+                        title: this.title,
+                        description: this.setDescription,
+                        images: this.images.map(img => ({...img.data(), label: this.imageLabels[img.hash]}))
+                    });
+                    alert('Form submitted successfully!');
+                }
+            }));
+        });
+    </script>
 {% endblock %}

@@ -15,11 +15,17 @@ class User(db.Model, UserMixin):
 
     id: Mapped[int] = mapped_column(Integer, primary_key = True)
     username: Mapped[str] = mapped_column(String(32), unique = True, nullable = False)
+    email: Mapped[str] = mapped_column(String(120), unique = True, nullable = True)
     password: Mapped[str] = mapped_column(String(64), nullable = False)
     permission: Mapped[int] = mapped_column(Integer, default = 0, nullable = False)
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default = datetime.datetime.utcnow, nullable = False)
 
     sets: Mapped[list["Set"]] = relationship("Set", back_populates = "owner", lazy = "joined")
+
+    def __init__(self, username: str, email: str, password: str, permission: int = 0):
+        for attr, value in locals().items():
+            if attr == 'self': continue
+            setattr(self, attr, value)
 
     def authenticate(self, password: str) -> bool:
         return werkzeug.security.check_password_hash(self.password, password)
