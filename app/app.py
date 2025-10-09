@@ -31,7 +31,7 @@ app.config.from_mapping(
     SQLALCHEMY_TRACK_MODIFICATIONS = False,
 )
 
-ROOT_PATH = app.root_path
+ROOT_PATH = os.path.split(app.root_path)[0]
 UPLOAD_PATH = os.path.join(ROOT_PATH, "static", "uploads")
 
 

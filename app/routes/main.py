@@ -1,7 +1,8 @@
 
-from flask import Blueprint, render_template
-from app.models import Set
+from flask import Blueprint, redirect, render_template
+from app.models import Draft, Set
 from app.app import db
+from app.presentation import create_draft
 
 bp = Blueprint("main", __name__)
 
@@ -12,8 +13,8 @@ def index():
 
 @bp.route('/sets/new', methods=['GET'])
 def new_set():
-    return ""
-    # return render_template('new_set.html')
+    draft = create_draft()
+    return redirect(f'/drafts/{draft}')
 
 @bp.route('/sets', methods=['DELETE'])
 def delete_all_sets():
@@ -26,3 +27,10 @@ def set_view(set_id):
     set_ = Set.query.get(set_id)
     if not set_: return "Set not found", 404
     return render_template('set.html', set = set_)
+
+@bp.route('/drafts/<int:draft_id>')
+def drafts(draft_id: int):
+    print("Draft ID:", draft_id)
+    draft = Draft.query.get(draft_id)
+    if not draft: return "Draft not found", 404
+    return render_template('draft.html', draft = draft)

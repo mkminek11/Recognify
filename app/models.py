@@ -1,6 +1,6 @@
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from flask_login import UserMixin
+from flask_login import UserMixin, current_user
 from sqlalchemy import Integer, String, Boolean, ForeignKey, DateTime, Text, Float
 
 import os.path
@@ -52,10 +52,55 @@ class Image(db.Model):
     __tablename__ = "images"
 
     id: Mapped[int] = mapped_column(Integer, primary_key = True, autoincrement = True)
-    filename: Mapped[str] = mapped_column(String(128), unique = True, nullable = False)
+    filename: Mapped[str] = mapped_column(String(128), nullable = False)
     original_filename: Mapped[str] = mapped_column(String(128), nullable = False)
     set_id: Mapped[int] = mapped_column(ForeignKey("sets.id"), nullable = False)
     label: Mapped[str] = mapped_column(String(128), nullable = True)
 
     set: Mapped["Set"] = relationship("Set", back_populates = "images", lazy = "joined")
 
+
+class Draft(db.Model):
+    __tablename__ = "drafts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key = True, autoincrement = True)
+    name: Mapped[str] = mapped_column(String(64), nullable = False, default = "")
+    description: Mapped[str] = mapped_column(Text, default = "", nullable = False)
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable = False)
+    presentations: Mapped[int] = mapped_column(Integer, default = 0, nullable = False)
+    created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default = datetime.datetime.utcnow, nullable = False)
+
+    images: Mapped[list["DraftImage"]] = relationship("DraftImage", back_populates = "draft", lazy = "joined", cascade = "all, delete-orphan")
+    labels: Mapped[list["DraftLabel"]] = relationship("DraftLabel", back_populates = "draft", lazy = "joined", cascade = "all, delete-orphan")
+    owner: Mapped["User"] = relationship("User", lazy = "joined")
+
+    def __init__(self):
+        self.owner_id = current_user.id if current_user and current_user.is_authenticated else 0
+
+
+class DraftImage(db.Model):
+    __tablename__ = "draft_images"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key = True, autoincrement = True)
+    draft_id: Mapped[int] = mapped_column(ForeignKey("drafts.id"), nullable = False)
+    filename: Mapped[str] = mapped_column(String(128), nullable = False)
+    slide: Mapped[int] = mapped_column(Integer, nullable = False)
+    label: Mapped[str] = mapped_column(String(128), nullable = True)
+
+    draft: Mapped["Draft"] = relationship("Draft", back_populates = "images")
+
+    def __init__(self, draft_id: int, filename: str, presentation_n: int, slide_n: int, label: str = ""):
+        slide = presentation_n * 10_000 + slide_n
+        for attr, value in locals().items():
+            setattr(self, attr, value)
+
+
+class DraftLabel(db.Model):
+    __tablename__ = "draft_labels"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key = True, autoincrement = True)
+    draft_id: Mapped[int] = mapped_column(ForeignKey("drafts.id"), nullable = False)
+    label: Mapped[str] = mapped_column(String(128), nullable = False)
+    slide: Mapped[int] = mapped_column(Integer, nullable = False)
+
+    draft: Mapped["Draft"] = relationship("Draft", back_populates = "labels")
