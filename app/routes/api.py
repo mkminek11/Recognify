@@ -4,7 +4,7 @@ from flask import Blueprint, jsonify, request
 from flask_login import current_user
 from app.models import Draft, Set
 from app.app import UPLOAD_PATH, db
-from app.presentation import extract_images
+from app.presentation import extract_images, temp_remove
 
 bp = Blueprint("api", __name__, url_prefix = "/api")
 
@@ -25,6 +25,9 @@ def process_presentation():
     if not isinstance(draft, Draft): return jsonify({"error": "Draft not found."}), 404
     if draft.owner != current_user: return jsonify({"error": "Unauthorized."}), 403
 
-    extract_images(presentation, draft.id)
+    result = extract_images(presentation, draft.id)
+    if not result: return jsonify({"error": "Failed to process presentation."}), 500
 
-    return jsonify({"message": "Presentation processed successfully."})
+    tmp_addr, images, labels = result
+    temp_remove(tmp_addr)
+    return jsonify({"images": images, "labels": labels}), 200

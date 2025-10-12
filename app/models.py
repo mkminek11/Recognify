@@ -104,3 +104,8 @@ class DraftLabel(db.Model):
     slide: Mapped[int] = mapped_column(Integer, nullable = False)
 
     draft: Mapped["Draft"] = relationship("Draft", back_populates = "labels")
+
+    def __init__(self, draft_id: int, label: str, presentation_n: int, slide_n: int):
+        slide = presentation_n * 10_000 + slide_n
+        for attr, value in locals().items():
+            setattr(self, attr, value)
