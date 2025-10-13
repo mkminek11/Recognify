@@ -1,5 +1,5 @@
 
-from flask import Flask
+from flask import Flask, redirect
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -7,6 +7,7 @@ from sqlalchemy.orm import DeclarativeBase
 from functools import wraps
 from flask_login import current_user
 from typing import Callable
+import hashids
 import os
 import re
 
@@ -21,6 +22,8 @@ class Base(DeclarativeBase): pass
 login = LoginManager()
 db = SQLAlchemy(model_class = Base)
 migrate = Migrate(app, db)
+
+hid = hashids.Hashids(min_length = 8, salt = os.environ.get("HASHID_SALT", "this is my salt"))
 
 os.makedirs(app.instance_path, exist_ok=True)
 
@@ -42,7 +45,7 @@ def login_required(func: Callable) -> Callable:
         if current_user.is_authenticated:
             return func(*args, **kwargs)
 
-        return "Login required", 401
+        return redirect('/auth/login')
     return wrapper
 
 def permission_required(permission: int) -> Callable:

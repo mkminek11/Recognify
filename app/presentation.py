@@ -8,22 +8,26 @@ from pptx.shapes.picture import Picture as PPTXPicture
 from pptx import Presentation
 from flask_login import current_user
 
-from app.app import UPLOAD_PATH
+from app.app import UPLOAD_PATH, hid
 from app.models import Draft, DraftImage, DraftLabel, Set, Image, db
 
 TEMP_UPLOAD_PATH = os.path.join(UPLOAD_PATH, "temp")
 
-SlideItem = tuple[str, int]
+SlideItem = tuple[str, str]
 ItemsList = list[SlideItem]
 
 
 
 def create_draft() -> int:
     """ Create a new draft and return its ID. """
-    draft = Draft()
-    db.session.add(draft)
-    db.session.commit()
-    return draft.id
+    try:
+        draft = Draft()
+        db.session.add(draft)
+        db.session.commit()
+        return draft.id
+    except Exception as e:
+        db.session.rollback()
+        raise e
 
 
 def extract_images(presentation_file: FileStorage, draft_id: int) -> tuple[str, ItemsList, ItemsList] | Literal[False]:
@@ -42,12 +46,15 @@ def extract_images(presentation_file: FileStorage, draft_id: int) -> tuple[str, 
     if not isinstance(draft, Draft): return False
     pres_n = draft.presentations
 
-    labels: list[tuple[str, int]] = []
-    images: list[tuple[str, int]] = []
+    labels: list[tuple[str, str]] = []
+    images: list[tuple[str, str]] = []
 
     image_n = 1
     for slide_n, slide in enumerate(pres.slides):
         for shape in slide.shapes:
+            slide_encoded = hid.encode(pres_n * 10_000 + slide_n)
+            if not isinstance(slide_encoded, str): slide_encoded = str(pres_n * 10_000 + slide_n)
+
             if shape.shape_type == SHAPE_TYPE.PICTURE:
                 if not isinstance(shape, PPTXPicture): continue
                 image = shape.image
@@ -56,13 +63,13 @@ def extract_images(presentation_file: FileStorage, draft_id: int) -> tuple[str, 
                 print(f"Saved image {filename} from slide {slide_n + 1}")
                 draft_img = DraftImage(draft_id, filename, pres_n, slide_n, label = "")
                 db.session.add(draft_img)
-                images.append((filename, slide_n))
+                images.append((filename, slide_encoded))
                 image_n += 1
             elif shape.has_text_frame:
                 text = getattr(shape, "text", "")
                 if not text: continue
                 l = save_labels(text, slide_n, draft_id)
-                for s in l: labels.append((s, slide_n))
+                for s in l: labels.append((s, slide_encoded))
     db.session.commit()
     
     return address, images, labels
@@ -75,6 +82,7 @@ def temp_save(file: FileStorage) -> str | Literal[False]:
     EXTENSION = file.filename.rsplit('.', 1)[-1].lower()
     FILENAME = get_free_filename(TEMP_UPLOAD_PATH, EXTENSION)
     path = os.path.join(TEMP_UPLOAD_PATH, FILENAME)
+    os.makedirs(TEMP_UPLOAD_PATH, exist_ok = True)
 
     file.save(path)
     return path

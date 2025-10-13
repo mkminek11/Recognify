@@ -5,12 +5,12 @@
     <div x-data="formHandler" x-init="init()" >
         <div>
             <label for="name">Set title:</label>
-            <input type="text" id="name" x-ref="titleInput" x-model="title" x-show="titleEditMode" @blur="titleEditMode = false" />
+            <input type="text" id="name" x-ref="titleInput" x-model="title" x-show="titleEditMode" @blur="saveTitle();" />
             <span x-text="title" x-show="!titleEditMode" @click="titleEditMode = true; $nextTick(() => $refs.titleInput.focus())"></span>
         </div>
     
         <label for="description">Description:</label>
-        <textarea id="description" x-model="setDescription"></textarea>
+        <textarea id="description" x-model="setDescription" @blur="saveDescription()"></textarea>
     
         <div>
             <p>Add images:</p>
@@ -23,8 +23,8 @@
             <div x-ref="imageList">
                 <template x-for="(image, index) in images" :key="index">
                     <div>
-                        <img :src="image.src" width="100" />
-                        <input type="text" x-model="imageLabels[image.hash]" placeholder="Enter image caption" />
+                        <img :src="image.image.src" width="100" />
+                        <input type="text" x-model="imageLabels[image.image.hash]" placeholder="Enter image caption" />
                         <button @click="removeImage(index)">Remove</button>
                     </div>
                 </template>
@@ -44,20 +44,34 @@
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('formHandler', () => ({
-                title: '',
-                setDescription: '',
+                title: '{{ draft.name or "Untitled Set" }}',
+                setDescription: '{{ draft.description or "" }}',
                 titleEditMode: true,
                 images: [],
                 imageLabels: {},
+                labels: [],
 
                 init() {
                     this.$refs.titleInput.focus();
                     this.$refs.imageInput.value = '';
                     this.$refs.presInput.value = '';
+                    this.fetchGallery();
+                },
+
+                async saveTitle() {
+                    this.titleEditMode = false;
+                    if (!this.title.trim()) {this.title = 'Untitled Set';}
+
+                    this.title = this.title.trim();
+                    const result = await axios.post('/api/draft/{{ draft.id }}/rename', { title: this.title });
+                },
+
+                async saveDescription() {
+                    const result = await axios.post('/api/draft/{{ draft.id }}/description', { description: this.setDescription });
                 },
 
                 removeImage(index) {
-                    const image = this.images[index];
+                    const image = this.images[index].image;
                     if (image && image.hash) {
                         delete this.imageLabels[image.hash];
                     }
@@ -69,8 +83,8 @@
                         const cimg = new window.CustomImage(file);
                         await cimg.ready;
 
-                        if (!this.images.some(existing => existing.hash === cimg.hash)) {
-                            this.images.push(cimg);
+                        if (!this.images.some(existing => existing.image.hash === cimg.hash)) {
+                            this.images.push({ image: cimg, slide: "" });
                             this.imageLabels[cimg.hash] = '';
                         }
                     }
@@ -89,7 +103,38 @@
                         headers: { 'Content-Type': 'multipart/form-data' }
                     });
 
-                    console.log(results.data);
+                    const images = results.data.images || [];
+                    const labels = results.data.labels || [];
+                    await this.addToGallery(images, labels);
+                },
+
+                async fetchGallery() {
+                    const result = await axios.get('/api/draft/{{ draft.id }}/gallery');
+                    const images = result.data.images || [];
+                    const labels = result.data.labels || [];
+                    await this.addToGallery(images, labels);
+                },
+
+                async addToGallery(images, labels = []) {
+                    // Process all images in parallel instead of sequentially
+                    const imagePromises = images.map(async (imageData) => {
+                        const cimg = new window.CustomImage('/api/draft/{{ draft.id }}/image/' + imageData.filename);
+                        await cimg.ready;
+                        return { cimg, imageData };
+                    });
+                    
+                    const imageResults = await Promise.all(imagePromises);
+                    
+                    for (const { cimg, imageData } of imageResults) {
+                        if (!this.images.some(existing => existing.image.hash === cimg.hash)) {
+                            this.images.push({ image: cimg, slide: imageData.slide });
+                            this.imageLabels[cimg.hash] = imageData.label || '';
+                        }
+                    }
+
+                    for (const labelData of labels) {
+                        this.labels.push({ label: labelData.text, slide: labelData.slide });
+                    }
                 },
 
                 submitForm(event) {

@@ -1,8 +1,6 @@
 
 from flask_login import current_user, login_user, logout_user
 
-import re
-import os
 from functools import wraps
 from typing import Callable
 
