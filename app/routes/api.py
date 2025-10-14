@@ -8,9 +8,13 @@ from app.presentation import extract_images, get_free_filename, get_free_index, 
 
 bp = Blueprint("api", __name__, url_prefix = "/api")
 
+
+
 @bp.route('/')
 def api_index():
     return "API is running"
+
+
 
 @bp.route('/presentation', methods=['POST'])
 def process_presentation():
@@ -32,6 +36,8 @@ def process_presentation():
     temp_remove(tmp_addr)
     return jsonify({"images": images, "labels": labels}), 200
 
+
+
 @bp.route('/draft/<int:draft_id>/rename', methods=['POST'])
 def rename_draft(draft_id):
     draft = Draft.query.get(draft_id)
@@ -46,6 +52,8 @@ def rename_draft(draft_id):
     db.session.commit()
     return jsonify({"message": "Draft renamed successfully.", "new_title": draft.name}), 200
 
+
+
 @bp.route('/draft/<int:draft_id>/description', methods=['POST'])
 def update_draft_description(draft_id):
     draft = Draft.query.get(draft_id)
@@ -59,15 +67,38 @@ def update_draft_description(draft_id):
     db.session.commit()
     return jsonify({"message": "Draft description updated successfully.", "new_description": draft.description}), 200
 
+
+
+@bp.route('/draft/<int:draft_id>/image/<int:image_id>', methods=['POST'])
+def update_image_label(draft_id: int, image_id: int):
+    draft = Draft.query.get(draft_id)
+    if not isinstance(draft, Draft): return jsonify({"error": "Draft not found."}), 404
+    if draft.owner != current_user: return jsonify({"error": "Unauthorized."}), 403
+
+    image = DraftImage.query.get(image_id)
+    if not isinstance(image, DraftImage) or image.draft_id != draft_id:
+        return jsonify({"error": "Image not found in draft."}), 404
+
+    data: dict[str, str] = request.get_json()
+    new_label = data.get('label', '').strip()
+
+    image.label = new_label
+    db.session.commit()
+    return jsonify({"message": "Image label updated successfully.", "new_label": image.label}), 200
+
+
+
 @bp.route('/draft/<int:draft_id>/gallery', methods=['GET'])
 def fetch_gallery(draft_id: int):
     draft = Draft.query.get(draft_id)
     if not isinstance(draft, Draft): return jsonify({"error": "Draft not found."}), 404
     if draft.owner != current_user: return jsonify({"error": "Unauthorized."}), 403
 
-    images = [{"filename": img.filename, "label": img.label, "slide": img.slide} for img in draft.images]
+    images = [{"id": img.id, "filename": img.filename, "label": img.label, "slide": img.slide} for img in draft.images]
     labels = [{"text": lbl.label, "slide": lbl.slide} for lbl in draft.labels]
     return jsonify({"images": images, "labels": labels}), 200
+
+
 
 @bp.route('/draft/<int:draft_id>/gallery', methods=['POST'])
 def update_gallery(draft_id: int):
@@ -81,7 +112,7 @@ def update_gallery(draft_id: int):
     path = os.path.join(UPLOAD_PATH, "sets", f"draft_{draft_id}")
     index = get_free_index(path, "img", "*")
     for image in images:
-        extension = os.path.splitext(image.filename or "")[1].lower()
+        extension = os.path.splitext(image.filename or "")[1].lower().lstrip('.')
         os.makedirs(path, exist_ok=True)
         filename = get_free_filename(path, extension, "img", index)
 
@@ -93,6 +124,8 @@ def update_gallery(draft_id: int):
         db.session.add(i)
     db.session.commit()
     return jsonify({"message": "Gallery updated successfully."}), 200
+
+
 
 @bp.route('/draft/<int:draft_id>/image/<string:filename>', methods=['GET'])
 def get_draft_image(draft_id: int, filename: str):
@@ -115,3 +148,4 @@ def get_draft_image(draft_id: int, filename: str):
     if not os.path.exists(image_path): return jsonify({"error": "Image file not found."}), 404
     
     return send_file(image_path)
+

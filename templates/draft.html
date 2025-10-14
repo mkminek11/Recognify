@@ -24,7 +24,7 @@
                 <template x-for="(image, index) in images" :key="index">
                     <div>
                         <img :src="image.image.src" width="100" />
-                        <input type="text" x-model="imageLabels[image.image.hash]" placeholder="Enter image caption" />
+                        <input type="text" x-model="imageLabels[image.image.hash]" placeholder="Enter image caption" @blur="saveImageLabel(index)" />
                         <button @click="removeImage(index)">Remove</button>
                     </div>
                 </template>
@@ -70,6 +70,12 @@
                     const result = await axios.post('/api/draft/{{ draft.id }}/description', { description: this.setDescription });
                 },
 
+                async saveImageLabel(index) {
+                    const image = this.images[index].image;
+                    const label = this.imageLabels[image.hash] || '';
+                    await axios.post('/api/draft/{{ draft.id }}/image/' + image.id, { label });
+                },
+
                 removeImage(index) {
                     const image = this.images[index].image;
                     if (image && image.hash) {
@@ -80,8 +86,10 @@
 
                 async addImages(event) {
                     const fd = new FormData();
+                    const files = event.target.files;
+                    let added = 0;
 
-                    for (const file of event.target.files) {
+                    for (const file of files) {
                         if (file.size > 10 * 1024 * 1024) {continue;} // 10MB limit
                         fd.append('images', file);
 
@@ -91,12 +99,17 @@
                         if (!this.images.some(existing => existing.image.hash === cimg.hash)) {
                             this.images.push({ image: cimg, slide: "" });
                             this.imageLabels[cimg.hash] = '';
+                            added++;
                         }
                     }
 
-                    await axios.post('/api/draft/{{ draft.id }}/gallery', fd, {
+                    let ids = await axios.post('/api/draft/{{ draft.id }}/gallery', fd, {
                         headers: { 'Content-Type': 'multipart/form-data' }
                     });
+
+                    for (let i = 0; i < added; i++) {
+                        this.images[this.images.length - added + i - 1].image.id = ids.data.images[i].id;
+                    }
                 },
 
                 async preparePres(event) {
@@ -127,7 +140,7 @@
                 async addToGallery(images, labels = []) {
                     // Process all images in parallel instead of sequentially
                     const imagePromises = images.map(async (imageData) => {
-                        const cimg = new window.CustomImage('/api/draft/{{ draft.id }}/image/' + imageData.filename);
+                        const cimg = new window.CustomImage('/api/draft/{{ draft.id }}/image/' + imageData.filename, null, imageData);
                         await cimg.ready;
                         return { cimg, imageData };
                     });

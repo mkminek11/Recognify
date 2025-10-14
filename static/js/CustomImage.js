@@ -1,9 +1,21 @@
 
 class CustomImage extends Image {
-  constructor(fileOrUrl) {
+  constructor(fileOrUrl, id = null, imageData = null) {
     super();
     this.isFile = fileOrUrl instanceof File;
     this.isUrl = typeof fileOrUrl === 'string';
+    
+    // Set ID from multiple sources in priority order
+    if (id) {
+      this.id = id;
+    } else if (imageData && imageData.id) {
+      this.id = imageData.id;
+    } else if (this.isUrl) {
+      // Try to extract ID from URL if it follows pattern /api/draft/{id}/image/{filename}
+      this.id = this.extractIdFromUrl(fileOrUrl);
+    } else {
+      this.id = this.generateId();
+    }
     
     if (this.isFile) {
       this.file = fileOrUrl;
@@ -13,12 +25,32 @@ class CustomImage extends Image {
       this.file = null;
       this.src = fileOrUrl;
       this.filename = fileOrUrl.split('/').pop(); // Extract filename from URL
+      
+      // Set additional properties from imageData if available
+      if (imageData) {
+        this.label = imageData.label || '';
+        this.slide = imageData.slide || '';
+      }
     } else {
       throw new Error('CustomImage constructor expects a File object or URL string');
     }
     
     this.hash = null;
     this.ready = this.generateHash();
+  }
+
+  extractIdFromUrl(url) {
+    // Try to extract draft ID from URL pattern like /api/draft/{id}/image/{filename}
+    const match = url.match(/\/api\/draft\/(\d+)\/image\//);
+    if (match) {
+      return `draft_${match[1]}_${this.filename}`;
+    }
+    return this.generateId();
+  }
+
+  generateId() {
+    // Generate a unique ID using timestamp and random number
+    return 'img_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
   }
 
   async generateHash() {
@@ -49,10 +81,13 @@ class CustomImage extends Image {
 
   data() {
     return {
+      id: this.id,
       file: this.file,
       src: this.src,
       hash: this.hash,
-      filename: this.filename
+      filename: this.filename,
+      label: this.label || '',
+      slide: this.slide || ''
     };
   }
 }
