@@ -3,7 +3,7 @@ import os.path
 from flask import Blueprint, jsonify, request, send_file
 from flask_login import current_user
 from app.models import Draft, DraftImage, DraftLabel, Image, Set
-from app.app import db, UPLOAD_PATH
+from app.app import db, UPLOAD_PATH, hid, decode
 from app.presentation import extract_images, get_free_filename, get_free_index, temp_remove
 
 bp = Blueprint("api", __name__, url_prefix = "/api")
@@ -38,8 +38,10 @@ def process_presentation():
 
 
 
-@bp.route('/draft/<int:draft_id>/rename', methods=['POST'])
-def rename_draft(draft_id):
+@bp.route('/draft/<string:draft_hash>/rename', methods=['POST'])
+def rename_draft(draft_hash: str):
+    draft_id = decode(draft_hash)
+    if not isinstance(draft_id, int): return jsonify({"error": "Invalid draft hash."}), 400
     draft = Draft.query.get(draft_id)
     if not isinstance(draft, Draft): return jsonify({"error": "Draft not found."}), 404
     if draft.owner != current_user: return jsonify({"error": "Unauthorized."}), 403
@@ -54,8 +56,10 @@ def rename_draft(draft_id):
 
 
 
-@bp.route('/draft/<int:draft_id>/description', methods=['POST'])
-def update_draft_description(draft_id):
+@bp.route('/draft/<string:draft_hash>/description', methods=['POST'])
+def update_draft_description(draft_hash: str):
+    draft_id = decode(draft_hash)
+    if not isinstance(draft_id, int): return jsonify({"error": "Invalid draft hash."}), 400
     draft = Draft.query.get(draft_id)
     if not isinstance(draft, Draft): return jsonify({"error": "Draft not found."}), 404
     if draft.owner != current_user: return jsonify({"error": "Unauthorized."}), 403
@@ -69,8 +73,10 @@ def update_draft_description(draft_id):
 
 
 
-@bp.route('/draft/<int:draft_id>/image/<int:image_id>', methods=['POST'])
-def update_image_label(draft_id: int, image_id: int):
+@bp.route('/draft/<string:draft_hash>/image/<int:image_id>', methods=['POST'])
+def update_image_label(draft_hash: str, image_id: int):
+    draft_id = decode(draft_hash)
+    if not isinstance(draft_id, int): return jsonify({"error": "Invalid draft hash."}), 400
     draft = Draft.query.get(draft_id)
     if not isinstance(draft, Draft): return jsonify({"error": "Draft not found."}), 404
     if draft.owner != current_user: return jsonify({"error": "Unauthorized."}), 403
@@ -88,8 +94,10 @@ def update_image_label(draft_id: int, image_id: int):
 
 
 
-@bp.route('/draft/<int:draft_id>/gallery', methods=['GET'])
-def fetch_gallery(draft_id: int):
+@bp.route('/draft/<string:draft_hash>/gallery', methods=['GET'])
+def fetch_gallery(draft_hash: str):
+    draft_id = decode(draft_hash)
+    if not isinstance(draft_id, int): return jsonify({"error": "Invalid draft hash."}), 400
     draft = Draft.query.get(draft_id)
     if not isinstance(draft, Draft): return jsonify({"error": "Draft not found."}), 404
     if draft.owner != current_user: return jsonify({"error": "Unauthorized."}), 403
@@ -100,8 +108,10 @@ def fetch_gallery(draft_id: int):
 
 
 
-@bp.route('/draft/<int:draft_id>/gallery', methods=['POST'])
-def update_gallery(draft_id: int):
+@bp.route('/draft/<string:draft_hash>/gallery', methods=['POST'])
+def update_gallery(draft_hash: str):
+    draft_id = decode(draft_hash)
+    if not isinstance(draft_id, int): return jsonify({"error": "Invalid draft hash."}), 400
     draft = Draft.query.get(draft_id)
     if not isinstance(draft, Draft): return jsonify({"error": "Draft not found."}), 404
     if draft.owner != current_user: return jsonify({"error": "Unauthorized."}), 403
@@ -127,8 +137,10 @@ def update_gallery(draft_id: int):
 
 
 
-@bp.route('/draft/<int:draft_id>/image/<string:filename>', methods=['GET'])
-def get_draft_image(draft_id: int, filename: str):
+@bp.route('/draft/<string:draft_hash>/image/<string:filename>', methods=['GET'])
+def get_draft_image(draft_hash: str, filename: str):
+    draft_id = decode(draft_hash)
+    if not isinstance(draft_id, int): return jsonify({"error": "Invalid draft hash."}), 400
     image = db.session.query(DraftImage).join(Draft).filter(
         DraftImage.filename == filename,
         DraftImage.draft_id == draft_id,

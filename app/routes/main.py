@@ -2,7 +2,7 @@
 from flask import Blueprint, redirect, render_template
 from flask_login import current_user
 from app.models import Draft, Set
-from app.app import db, login_required
+from app.app import db, login_required, hid, decode
 from app.presentation import create_draft
 
 bp = Blueprint("main", __name__)
@@ -11,13 +11,14 @@ bp = Blueprint("main", __name__)
 @bp.route('/sets')
 @login_required
 def index():
-    return render_template('index.html', sets = Set.query.all(), drafts = Draft.query.where(Draft.owner_id == current_user.id).all())
+    drafts = [{ "id": hid.encode(draft.id), "name": draft.name } for draft in Draft.query.where(Draft.owner_id == current_user.id).all()]
+    return render_template('index.html', sets = Set.query.all(), drafts = drafts)
 
 @bp.route('/sets/new', methods=['GET'])
 @login_required
 def new_set():
-    draft = create_draft()
-    return redirect(f'/draft/{draft}')
+    draft_id = create_draft()
+    return redirect(f'/draft/{hid.encode(draft_id)}')
 
 @bp.route('/sets', methods=['DELETE'])
 @login_required
@@ -33,10 +34,11 @@ def set_view(set_id):
     if not set_: return "Set not found", 404
     return render_template('set.html', set = set_)
 
-@bp.route('/draft/<int:draft_id>')
+@bp.route('/draft/<string:draft_hash>')
 @login_required
-def draft_view(draft_id: int):
-    print("Draft ID:", draft_id)
+def draft_view(draft_hash: str):
+    draft_id = decode(draft_hash)
+    if not isinstance(draft_id, int): return "Invalid draft hash", 400
     draft = Draft.query.get(draft_id)
     if not draft: return "Draft not found", 404
     return render_template('draft.html', draft = draft)

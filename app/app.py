@@ -6,7 +6,7 @@ from flask_migrate import Migrate
 from sqlalchemy.orm import DeclarativeBase
 from functools import wraps
 from flask_login import current_user
-from typing import Callable
+from typing import Callable, Literal
 import hashids
 import os
 import re
@@ -24,6 +24,12 @@ db = SQLAlchemy(model_class = Base)
 migrate = Migrate(app, db)
 
 hid = hashids.Hashids(min_length = 8, salt = os.environ.get("HASHID_SALT", "this is my salt"))
+
+def decode(hashid: str) -> int | Literal[False]:
+    decoded = hid.decode(hashid)
+    if not decoded: return False
+    if not isinstance(decoded[0], int): return False
+    return decoded[0]
 
 os.makedirs(app.instance_path, exist_ok=True)
 

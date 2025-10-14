@@ -7,7 +7,7 @@ import os.path
 import datetime
 import werkzeug.security
 
-from app.app import db, app, login
+from app.app import db, app, login, hid
 
 
 class User(db.Model, UserMixin):
@@ -76,6 +76,8 @@ class Draft(db.Model):
 
     def __init__(self):
         self.owner_id = current_user.id if current_user and current_user.is_authenticated else 0
+
+    def hash(self) -> str: return hid.encode(self.id)
 
 
 class DraftImage(db.Model):

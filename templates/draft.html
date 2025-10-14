@@ -63,17 +63,17 @@
                     if (!this.title.trim()) {this.title = 'Untitled Set';}
 
                     this.title = this.title.trim();
-                    const result = await axios.post('/api/draft/{{ draft.id }}/rename', { title: this.title });
+                    const result = await axios.post('/api/draft/{{ draft.hash() }}/rename', { title: this.title });
                 },
 
                 async saveDescription() {
-                    const result = await axios.post('/api/draft/{{ draft.id }}/description', { description: this.setDescription });
+                    const result = await axios.post('/api/draft/{{ draft.hash() }}/description', { description: this.setDescription });
                 },
 
                 async saveImageLabel(index) {
                     const image = this.images[index].image;
                     const label = this.imageLabels[image.hash] || '';
-                    await axios.post('/api/draft/{{ draft.id }}/image/' + image.id, { label });
+                    await axios.post('/api/draft/{{ draft.hash() }}/image/' + image.id, { label });
                 },
 
                 removeImage(index) {
@@ -103,7 +103,7 @@
                         }
                     }
 
-                    let ids = await axios.post('/api/draft/{{ draft.id }}/gallery', fd, {
+                    let ids = await axios.post('/api/draft/{{ draft.hash() }}/gallery', fd, {
                         headers: { 'Content-Type': 'multipart/form-data' }
                     });
 
@@ -119,7 +119,7 @@
 
                     const formData = new FormData();
                     formData.append('presentation', file);
-                    formData.append('draft', '{{ draft.id }}');
+                    formData.append('draft', '{{ draft.hash() }}');
 
                     const results = await axios.post('/api/presentation', formData, {
                         headers: { 'Content-Type': 'multipart/form-data' }
@@ -131,7 +131,7 @@
                 },
 
                 async fetchGallery() {
-                    const result = await axios.get('/api/draft/{{ draft.id }}/gallery');
+                    const result = await axios.get('/api/draft/{{ draft.hash() }}/gallery');
                     const images = result.data.images || [];
                     const labels = result.data.labels || [];
                     await this.addToGallery(images, labels);
@@ -140,7 +140,7 @@
                 async addToGallery(images, labels = []) {
                     // Process all images in parallel instead of sequentially
                     const imagePromises = images.map(async (imageData) => {
-                        const cimg = new window.CustomImage('/api/draft/{{ draft.id }}/image/' + imageData.filename, null, imageData);
+                        const cimg = new window.CustomImage('/api/draft/{{ draft.hash() }}/image/' + imageData.filename, null, imageData);
                         await cimg.ready;
                         return { cimg, imageData };
                     });

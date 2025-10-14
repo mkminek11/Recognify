@@ -17,7 +17,7 @@
         <ul>
             {% for draft in drafts %}
                 <li>
-                    <a href="/draft/{{ draft.id }}">Draft #{{ draft.id }} - {{ draft.name }}</a>
+                    <a href="/draft/{{ draft.id }}">Draft {{ draft.name }}</a>
                 </li>
             {% else %}
                 <li>No drafts available.</li>
@@ -33,8 +33,8 @@
 {% block scripts %}
     <script>
         function deleteAllSets() {
-        if (!confirm("Are you sure you want to delete all sets? This action cannot be undone.")) {return;}
-        axios.delete('/sets');
+            if (!confirm("Are you sure you want to delete all sets? This action cannot be undone.")) {return;}
+            axios.delete('/sets');
         }
     </script>
 {% endblock %}
