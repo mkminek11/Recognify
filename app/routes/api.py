@@ -161,3 +161,28 @@ def get_draft_image(draft_hash: str, filename: str):
     
     return send_file(image_path)
 
+
+
+@bp.route('/draft/<string:draft_hash>/submit', methods=['POST'])
+def submit_draft(draft_hash: str):
+    draft_id = decode(draft_hash)
+    if not isinstance(draft_id, int): return jsonify({"error": "Invalid draft hash."}), 400
+    draft = Draft.query.get(draft_id)
+    if not isinstance(draft, Draft): return jsonify({"error": "Draft not found."}), 404
+    if draft.owner != current_user: return jsonify({"error": "Unauthorized."}), 403
+    if draft.set_id is not None: return jsonify({"error": "Draft has already been submitted."}), 400
+    if not draft.images: return jsonify({"error": "Draft has no images."}), 400
+
+    set_ = Set(name = draft.name or "Untitled Set", description = draft.description or "", is_public = True)
+    db.session.add(set_)
+    db.session.commit()
+
+    for img in draft.images:
+        new_img = Image(filename = img.filename, set_id = set_.id, label = img.label)
+        db.session.add(new_img)
+        set_.images.append(new_img)
+    
+    draft.set_id = set_.id
+    db.session.commit()
+
+    return jsonify({"message": "Draft submitted successfully.", "set_id": hid.encode(set_.id)}), 200

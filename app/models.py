@@ -20,7 +20,7 @@ class User(db.Model, UserMixin):
     permission: Mapped[int] = mapped_column(Integer, default = 0, nullable = False)
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default = datetime.datetime.utcnow, nullable = False)
 
-    sets: Mapped[list["Set"]] = relationship("Set", back_populates = "owner", lazy = "joined")
+    sets: Mapped[list["Set"]] = relationship("Set", back_populates = "owner", lazy = "select")
 
     def __init__(self, username: str, email: str, password: str, permission: int = 0):
         for attr, value in locals().items():
@@ -41,11 +41,17 @@ class Set(db.Model):
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default = datetime.datetime.utcnow, nullable = False)
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable = False)
 
-    owner: Mapped["User"] = relationship("User", back_populates = "sets", lazy = "joined")
-    images: Mapped[list["Image"]] = relationship("Image", back_populates = "set", lazy = "joined")
+    owner: Mapped["User"] = relationship("User", back_populates = "sets", lazy = "select")
+    images: Mapped[list["Image"]] = relationship("Image", back_populates = "set", lazy = "select")
 
     @staticmethod
     def all() -> list["Set"]: return Set.query.all()
+
+    def __init__(self, name: str, description: str = "", is_public: bool = False):
+        self.name = name
+        self.description = description
+        self.is_public = is_public
+        self.owner_id = current_user.id if current_user and current_user.is_authenticated else 0
 
 
 class Image(db.Model):
@@ -53,11 +59,15 @@ class Image(db.Model):
 
     id: Mapped[int] = mapped_column(Integer, primary_key = True, autoincrement = True)
     filename: Mapped[str] = mapped_column(String(128), nullable = False)
-    original_filename: Mapped[str] = mapped_column(String(128), nullable = False)
     set_id: Mapped[int] = mapped_column(ForeignKey("sets.id"), nullable = False)
     label: Mapped[str] = mapped_column(String(128), nullable = True)
 
-    set: Mapped["Set"] = relationship("Set", back_populates = "images", lazy = "joined")
+    set: Mapped["Set"] = relationship("Set", back_populates = "images", lazy = "select")
+
+    def __init__(self, filename: str, label: str = "", set_id: int = 0):
+        self.filename = filename
+        self.label = label
+        self.set_id = set_id
 
 
 class Draft(db.Model):
@@ -69,10 +79,12 @@ class Draft(db.Model):
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable = False)
     presentations: Mapped[int] = mapped_column(Integer, default = 0, nullable = False)
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default = datetime.datetime.utcnow, nullable = False)
+    set_id: Mapped[int | None] = mapped_column(ForeignKey("sets.id"), nullable = True, default = None)
 
-    images: Mapped[list["DraftImage"]] = relationship("DraftImage", back_populates = "draft", lazy = "joined", cascade = "all, delete-orphan")
-    labels: Mapped[list["DraftLabel"]] = relationship("DraftLabel", back_populates = "draft", lazy = "joined", cascade = "all, delete-orphan")
-    owner: Mapped["User"] = relationship("User", lazy = "joined")
+    images: Mapped[list["DraftImage"]] = relationship("DraftImage", back_populates = "draft", lazy = "select", cascade = "all, delete-orphan")
+    labels: Mapped[list["DraftLabel"]] = relationship("DraftLabel", back_populates = "draft", lazy = "select", cascade = "all, delete-orphan")
+    owner: Mapped["User"] = relationship("User", lazy = "select")
+    set: Mapped["Set | None"] = relationship("Set", lazy = "select")
 
     def __init__(self):
         self.owner_id = current_user.id if current_user and current_user.is_authenticated else 0

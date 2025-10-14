@@ -23,7 +23,7 @@ login = LoginManager()
 db = SQLAlchemy(model_class = Base)
 migrate = Migrate(app, db)
 
-hid = hashids.Hashids(min_length = 8, salt = os.environ.get("HASHID_SALT", "this is my salt"))
+hid = hashids.Hashids(min_length = 8, salt = os.environ.get("HASHID_SALT", os.environ.get("HASHID_SALT", "dev")))
 
 def decode(hashid: str) -> int | Literal[False]:
     decoded = hid.decode(hashid)

@@ -12,7 +12,8 @@ bp = Blueprint("main", __name__)
 @login_required
 def index():
     drafts = [{ "id": hid.encode(draft.id), "name": draft.name } for draft in Draft.query.where(Draft.owner_id == current_user.id).all()]
-    return render_template('index.html', sets = Set.query.all(), drafts = drafts)
+    sets = [{ "id": hid.encode(set.id), "name": set.name } for set in Set.query.all()]
+    return render_template('index.html', sets = sets, drafts = drafts)
 
 @bp.route('/sets/new', methods=['GET'])
 @login_required
@@ -27,9 +28,11 @@ def delete_all_sets():
     db.session.commit()
     return "", 204
 
-@bp.route('/sets/<int:set_id>')
+@bp.route('/sets/<string:set_hash>')
 @login_required
-def set_view(set_id):
+def set_view(set_hash: str):
+    set_id = decode(set_hash)
+    if not isinstance(set_id, int): return "Invalid set hash", 400
     set_ = Set.query.get(set_id)
     if not set_: return "Set not found", 404
     return render_template('set.html', set = set_)
