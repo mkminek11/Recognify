@@ -121,6 +121,17 @@ def get_free_filename(dir: str, ext: str, prefix: str = "tmp", start: int = 1) -
         if not os.path.exists(path): return filename
 
 
+def get_free_index(dir: str, prefix: str = "tmp", ext: str = "*", start: int = 1) -> int:
+    """ Get the next free index for filenames in the specified directory with the given prefix and extension. """
+    counter = start
+    while True:
+        # if not os.path.exists(path): return counter
+        for f in os.listdir(dir):
+            if f.startswith(f"{prefix}_{counter:0>6}.") and (ext == "*" or f.endswith(f".{ext}")): break
+        else: return counter
+        counter += 1
+
+
 def save_labels(text: str, slide: int, draft_id: int) -> list[str]:
     """ Save text labels to the database and return a list of labels. """
     if not text: return []

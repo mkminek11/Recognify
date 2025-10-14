@@ -79,7 +79,12 @@
                 },
 
                 async addImages(event) {
+                    const fd = new FormData();
+
                     for (const file of event.target.files) {
+                        if (file.size > 10 * 1024 * 1024) {continue;} // 10MB limit
+                        fd.append('images', file);
+
                         const cimg = new window.CustomImage(file);
                         await cimg.ready;
 
@@ -88,6 +93,10 @@
                             this.imageLabels[cimg.hash] = '';
                         }
                     }
+
+                    await axios.post('/api/draft/{{ draft.id }}/gallery', fd, {
+                        headers: { 'Content-Type': 'multipart/form-data' }
+                    });
                 },
 
                 async preparePres(event) {

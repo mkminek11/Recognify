@@ -1,2 +1,3 @@
 
-Save images to db when uploading (as a single file)
+Remove images
+Save labels

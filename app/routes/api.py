@@ -2,9 +2,9 @@
 import os.path
 from flask import Blueprint, jsonify, request, send_file
 from flask_login import current_user
-from app.models import Draft, DraftImage, Image, Set
+from app.models import Draft, DraftImage, DraftLabel, Image, Set
 from app.app import db, UPLOAD_PATH
-from app.presentation import extract_images, temp_remove
+from app.presentation import extract_images, get_free_filename, get_free_index, temp_remove
 
 bp = Blueprint("api", __name__, url_prefix = "/api")
 
@@ -68,6 +68,31 @@ def fetch_gallery(draft_id: int):
     images = [{"filename": img.filename, "label": img.label, "slide": img.slide} for img in draft.images]
     labels = [{"text": lbl.label, "slide": lbl.slide} for lbl in draft.labels]
     return jsonify({"images": images, "labels": labels}), 200
+
+@bp.route('/draft/<int:draft_id>/gallery', methods=['POST'])
+def update_gallery(draft_id: int):
+    draft = Draft.query.get(draft_id)
+    if not isinstance(draft, Draft): return jsonify({"error": "Draft not found."}), 404
+    if draft.owner != current_user: return jsonify({"error": "Unauthorized."}), 403
+
+    images = request.files.getlist('images')
+    if not images: return jsonify({"error": "No image files provided."}), 400
+
+    path = os.path.join(UPLOAD_PATH, "sets", f"draft_{draft_id}")
+    index = get_free_index(path, "img", "*")
+    for image in images:
+        extension = os.path.splitext(image.filename or "")[1].lower()
+        os.makedirs(path, exist_ok=True)
+        filename = get_free_filename(path, extension, "img", index)
+
+        if not filename: return jsonify({"error": "Failed to generate filename."}), 500
+        image_path = os.path.join(path, filename)
+        image.save(image_path)
+
+        i = DraftImage(draft_id, filename, 0, 0)
+        db.session.add(i)
+    db.session.commit()
+    return jsonify({"message": "Gallery updated successfully."}), 200
 
 @bp.route('/draft/<int:draft_id>/image/<string:filename>', methods=['GET'])
 def get_draft_image(draft_id: int, filename: str):
