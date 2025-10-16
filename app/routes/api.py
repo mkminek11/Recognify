@@ -94,6 +94,62 @@ def update_image_label(draft_hash: str, image_id: int):
 
 
 
+@bp.route('/draft/<string:draft_hash>/image/<int:image_id>', methods=['GET'])
+def get_draft_image(draft_hash: str, image_id: int):
+    draft_id = decode(draft_hash)
+    if not isinstance(draft_id, int): return jsonify({"error": "Invalid draft hash."}), 400
+    image = db.session.query(DraftImage).join(Draft).filter(
+        DraftImage.id == image_id,
+        DraftImage.draft_id == draft_id,
+        Draft.owner == current_user
+    ).first()
+    
+    if not image:
+        draft = Draft.query.get(draft_id)
+        if not draft:
+            return jsonify({"error": "Draft not found."}), 404
+        elif draft.owner != current_user:
+            return jsonify({"error": "Unauthorized."}), 403
+        else:
+            return jsonify({"error": "Image not found in draft."}), 404
+
+    image_path = os.path.join(UPLOAD_PATH, "sets", f"draft_{draft_id}", image.filename)
+    if not os.path.exists(image_path): return jsonify({"error": "Image file not found."}), 404
+    
+    return send_file(image_path)
+
+
+
+@bp.route('/draft/<string:draft_hash>/image/<int:image_id>', methods=['DELETE'])
+def delete_draft_image(draft_hash: str, image_id: int):
+    draft_id = decode(draft_hash)
+    if not isinstance(draft_id, int): return jsonify({"error": "Invalid draft hash."}), 400
+
+    image = db.session.query(DraftImage).join(Draft).filter(
+        DraftImage.id == image_id,
+        DraftImage.draft_id == draft_id,
+        Draft.owner == current_user
+    ).first()
+
+    if not image:
+        draft = Draft.query.get(draft_id)
+        if not draft:
+            return jsonify({"error": "Draft not found."}), 404
+        elif draft.owner != current_user:
+            return jsonify({"error": "Unauthorized."}), 403
+        else:
+            return jsonify({"error": "Image not found in draft."}), 404
+
+    image_path = os.path.join(UPLOAD_PATH, "sets", f"draft_{draft_id}", image.filename)
+    if os.path.exists(image_path):
+        os.remove(image_path)
+
+    db.session.delete(image)
+    db.session.commit()
+    return jsonify({"message": "Image deleted successfully."}), 200
+
+
+
 @bp.route('/draft/<string:draft_hash>/gallery', methods=['GET'])
 def fetch_gallery(draft_hash: str):
     draft_id = decode(draft_hash)
@@ -134,32 +190,6 @@ def update_gallery(draft_hash: str):
         db.session.add(i)
     db.session.commit()
     return jsonify({"message": "Gallery updated successfully."}), 200
-
-
-
-@bp.route('/draft/<string:draft_hash>/image/<string:filename>', methods=['GET'])
-def get_draft_image(draft_hash: str, filename: str):
-    draft_id = decode(draft_hash)
-    if not isinstance(draft_id, int): return jsonify({"error": "Invalid draft hash."}), 400
-    image = db.session.query(DraftImage).join(Draft).filter(
-        DraftImage.filename == filename,
-        DraftImage.draft_id == draft_id,
-        Draft.owner == current_user
-    ).first()
-    
-    if not image:
-        draft = Draft.query.get(draft_id)
-        if not draft:
-            return jsonify({"error": "Draft not found."}), 404
-        elif draft.owner != current_user:
-            return jsonify({"error": "Unauthorized."}), 403
-        else:
-            return jsonify({"error": "Image not found in draft."}), 404
-
-    image_path = os.path.join(UPLOAD_PATH, "sets", f"draft_{draft_id}", image.filename)
-    if not os.path.exists(image_path): return jsonify({"error": "Image file not found."}), 404
-    
-    return send_file(image_path)
 
 
 

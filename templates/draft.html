@@ -82,6 +82,8 @@
                         delete this.imageLabels[image.hash];
                     }
                     this.images.splice(index, 1);
+
+                    axios.delete('/api/draft/{{ draft.hash() }}/image/' + image.id);
                 },
 
                 async addImages(event) {
@@ -140,7 +142,7 @@
                 async addToGallery(images, labels = []) {
                     // Process all images in parallel instead of sequentially
                     const imagePromises = images.map(async (imageData) => {
-                        const cimg = new window.CustomImage('/api/draft/{{ draft.hash() }}/image/' + imageData.filename, null, imageData);
+                        const cimg = new window.CustomImage('/api/draft/{{ draft.hash() }}/image/' + imageData.id, null, imageData);
                         await cimg.ready;
                         return { cimg, imageData };
                     });
