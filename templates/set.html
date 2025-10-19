@@ -3,15 +3,24 @@
 {% block content %}
     <div x-data="container">
         <h1>{{ set.name }}</h1>
-        <p>{{ set.description }}</p>
-        {{ set }}
+        <p>Description: {{ set.description }}</p>
         <p>Created at: {{ set.created_at }}</p>
 
         <div>
-            <img x-ref="image" :src="image">
-            <button><i class="fas fa-check"></i></button>
-            <button><i class="fas fa-rotate-left"></i></button>
-            <button><i class="fas fa-times"></i></button>
+            <div>
+                <div x-show="index < images.length">
+                    <p :style="{ visibility: showLabel ? 'visible' : 'hidden' }" x-text="label"></p>
+                    <img x-ref="image" :src="image" height="300">
+                </div>
+                <div x-show="index >= images.length">
+                    <h2>Set completed!</h2>
+                    <p>You got <span x-text="correct"></span> out of <span x-text="images.length"></span> correct.</p>
+                    <a href="">Try again</a>
+                </div>
+            </div>
+            <button @click="nextImage(1)"><i class="fas fa-check"></i></button>
+            <button @click="turn()"><i class="fas fa-rotate-left"></i></button>
+            <button @click="nextImage(0)"><i class="fas fa-times"></i></button>
         </div>
     </div>
 {% endblock %}
@@ -22,20 +31,38 @@
             Alpine.data('container', () => ({
                 index: 0,
                 image: '',
-                images: JSON.parse('{{ set.images|tojson|safe }}'),
+                label: '',
+                images: JSON.parse('{{ set.images|tojson }}'),
+                correct: 0,
+                showLabel: false,
 
                 init() {
+                    this.shuffle(this.images);
                     this.loadImage();
+                },
+
+                shuffle(array) {
+                    for (let i = array.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [array[i], array[j]] = [array[j], array[i]];
+                    }
+                    return array;
                 },
 
                 async loadImage() {
-                    this.image = `/api/set/{{ set.id }}/image/${this.images[this.index]}`;
+                    this.image = `/api/set/{{ set.id }}/image/${this.images[this.index].id}`;
+                    this.label = this.images[this.index].label;
                 },
 
-                nextImage() {
+                nextImage(correct) {
+                    this.correct += correct;
                     this.index += 1;
                     this.loadImage();
-                }
+                },
+
+                turn() {
+                    this.showLabel = !this.showLabel;
+                },
             }));
         });
     </script>

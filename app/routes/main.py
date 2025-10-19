@@ -34,7 +34,9 @@ def set_view(set_hash: str):
         "name": set_.name,
         "description": set_.description,
         "created_at": set_.created_at.isoformat(),
-        "images": [i.id for i in set_.images]
+        "images": [
+            { "id": i.id, "label": i.label } for i in set_.images
+        ]
     }
 
     return render_template('set.html', set = data)
