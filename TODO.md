@@ -1,2 +1,3 @@
 
-Remove images
+Play sets
+Delete drafts

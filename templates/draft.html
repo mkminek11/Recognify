@@ -129,6 +129,7 @@
 
                     const images = results.data.images || [];
                     const labels = results.data.labels || [];
+                    console.log("Presentation images:", images);
                     await this.addToGallery(images, labels);
                 },
 

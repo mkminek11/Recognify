@@ -1,5 +1,5 @@
 
-from flask import Blueprint, redirect, render_template
+from flask import Blueprint, jsonify, redirect, render_template
 from flask_login import current_user
 from app.models import Draft, Set
 from app.app import db, login_required, hid, decode
@@ -28,14 +28,23 @@ def delete_all_sets():
     db.session.commit()
     return "", 204
 
+# @login_required
 @bp.route('/sets/<string:set_hash>')
-@login_required
 def set_view(set_hash: str):
     set_id = decode(set_hash)
     if not isinstance(set_id, int): return "Invalid set hash", 400
     set_ = Set.query.get(set_id)
-    if not set_: return "Set not found", 404
-    return render_template('set.html', set = set_)
+    if not isinstance(set_, Set): return "Set not found", 404
+
+    data = {
+        "id": set_hash,
+        "name": set_.name,
+        "description": set_.description,
+        "created_at": set_.created_at.isoformat(),
+        "images": [i.id for i in set_.images]
+    }
+
+    return render_template('set.html', set = data)
 
 @bp.route('/draft/<string:draft_hash>')
 @login_required

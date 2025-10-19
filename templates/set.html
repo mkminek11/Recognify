@@ -1,20 +1,42 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <h1>{{ set.name }}</h1>
-  <p>{{ set.description }}</p>
-  <p>Created at: {{ set.created_at }}</p>
+    <div x-data="container">
+        <h1>{{ set.name }}</h1>
+        <p>{{ set.description }}</p>
+        {{ set }}
+        <p>Created at: {{ set.created_at }}</p>
 
-  <h2>Images</h2>
-  <ul>
-    {% for image in set.images %}
-      <li>{{ image.filename }} - {{ image.label }}</li>
-    {% else %}
-      <li>No images available in this set.</li>
-    {% endfor %}
-  </ul>
+        <div>
+            <img x-ref="image" :src="image">
+            <button><i class="fas fa-check"></i></button>
+            <button><i class="fas fa-rotate-left"></i></button>
+            <button><i class="fas fa-times"></i></button>
+        </div>
+    </div>
 {% endblock %}
 
 {% block scripts %}
-  
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('container', () => ({
+                index: 0,
+                image: '',
+                images: JSON.parse('{{ set.images|tojson|safe }}'),
+
+                init() {
+                    this.loadImage();
+                },
+
+                async loadImage() {
+                    this.image = `/api/set/{{ set.id }}/image/${this.images[this.index]}`;
+                },
+
+                nextImage() {
+                    this.index += 1;
+                    this.loadImage();
+                }
+            }));
+        });
+    </script>
 {% endblock %}

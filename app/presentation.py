@@ -1,7 +1,7 @@
 
 import os.path
 
-from typing import Literal
+from typing import Any, Literal
 from werkzeug.datastructures import FileStorage
 from pptx.enum.shapes import MSO_SHAPE_TYPE as SHAPE_TYPE
 from pptx.shapes.picture import Picture as PPTXPicture
@@ -13,7 +13,7 @@ from app.models import Draft, DraftImage, DraftLabel, Set, Image, db
 
 TEMP_UPLOAD_PATH = os.path.join(UPLOAD_PATH, "temp")
 
-SlideItem = tuple[str, str]
+SlideItem = dict[str, str]
 ItemsList = list[SlideItem]
 
 
@@ -46,8 +46,9 @@ def extract_images(presentation_file: FileStorage, draft_id: int) -> tuple[str, 
     if not isinstance(draft, Draft): return False
     pres_n = draft.presentations
 
-    labels: list[tuple[str, str]] = []
-    images: list[tuple[str, str]] = []
+    labels: list[dict[str, str]] = []
+    images: list[dict[str, str]] = []
+    _images: list[dict[str, Any]] = []
 
     image_n = 1
     for slide_n, slide in enumerate(pres.slides):
@@ -63,14 +64,16 @@ def extract_images(presentation_file: FileStorage, draft_id: int) -> tuple[str, 
                 print(f"Saved image {filename} from slide {slide_n + 1}")
                 draft_img = DraftImage(draft_id, filename, pres_n, slide_n, label = "")
                 db.session.add(draft_img)
-                images.append((filename, slide_encoded))
+                _images.append({"id": draft_img, "filename": filename, "label": "", "slide": slide_encoded})
                 image_n += 1
             elif shape.has_text_frame:
                 text = getattr(shape, "text", "")
                 if not text: continue
                 l = save_labels(text, slide_n, draft_id)
-                for s in l: labels.append((s, slide_encoded))
+                for s in l: labels.append({"text": s, "slide": slide_encoded})
     db.session.commit()
+    for img in _images:
+        images.append({"id": img["id"].id, "filename": img["filename"], "label": img["label"], "slide": img["slide"]})
     
     return address, images, labels
 

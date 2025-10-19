@@ -18,19 +18,24 @@ def api_index():
 
 @bp.route('/presentation', methods=['POST'])
 def process_presentation():
-    print("Processing presentation...", request.files, request.form)
+    print("Processing presentation...", request.files["presentation"], request.form["draft"])
     presentation = request.files['presentation']
     if not presentation: return jsonify({"error": "No presentation file provided."}), 400
 
-    draft_id = request.form.get('draft', '')
+    draft_hash = request.form.get('draft', '')
+    draft_id = decode(draft_hash)
     if not draft_id: return jsonify({"error": "No draft ID provided."}), 400
 
     draft = Draft.query.get(draft_id)
     if not isinstance(draft, Draft): return jsonify({"error": "Draft not found."}), 404
     if draft.owner != current_user: return jsonify({"error": "Unauthorized."}), 403
 
+    print("Draft found:", draft.id)
+
     result = extract_images(presentation, draft.id)
     if not result: return jsonify({"error": "Failed to process presentation."}), 500
+
+    print("Processing result:", result)
 
     tmp_addr, images, labels = result
     temp_remove(tmp_addr)
@@ -140,9 +145,9 @@ def delete_draft_image(draft_hash: str, image_id: int):
         else:
             return jsonify({"error": "Image not found in draft."}), 404
 
-    image_path = os.path.join(UPLOAD_PATH, "sets", f"draft_{draft_id}", image.filename)
-    if os.path.exists(image_path):
-        os.remove(image_path)
+    # image_path = os.path.join(UPLOAD_PATH, "sets", f"draft_{draft_id}", image.filename)
+    # if os.path.exists(image_path):
+    #     os.remove(image_path)
 
     db.session.delete(image)
     db.session.commit()
@@ -200,19 +205,41 @@ def submit_draft(draft_hash: str):
     draft = Draft.query.get(draft_id)
     if not isinstance(draft, Draft): return jsonify({"error": "Draft not found."}), 404
     if draft.owner != current_user: return jsonify({"error": "Unauthorized."}), 403
-    if draft.set_id is not None: return jsonify({"error": "Draft has already been submitted."}), 400
     if not draft.images: return jsonify({"error": "Draft has no images."}), 400
 
-    set_ = Set(name = draft.name or "Untitled Set", description = draft.description or "", is_public = True)
-    db.session.add(set_)
-    db.session.commit()
+    set_id = draft.set_id
+    if set_id is None:
+        set_ = Set(name = draft.name or "Untitled Set", description = draft.description or "", is_public = True)
+        db.session.add(set_)
+        db.session.commit()
 
-    for img in draft.images:
-        new_img = Image(filename = img.filename, set_id = set_.id, label = img.label)
-        db.session.add(new_img)
-        set_.images.append(new_img)
+        for img in draft.images:
+            new_img = Image(filename = img.filename, set_id = set_.id, label = img.label)
+            db.session.add(new_img)
+            set_.images.append(new_img)
+
+        set_id = set_.id
     
-    draft.set_id = set_.id
+    draft.set_id = set_id
     db.session.commit()
 
-    return jsonify({"message": "Draft submitted successfully.", "set_id": hid.encode(set_.id)}), 200
+    return jsonify({"message": "Draft submitted successfully.", "set_id": hid.encode(set_id)}), 200
+
+
+
+@bp.route('/set/<string:set_hash>/image/<int:image_id>', methods=['GET'])
+def get_set_image(set_hash: str, image_id: int):
+    set_id = decode(set_hash)
+    print(set_id, image_id)
+    if not isinstance(set_id, int): return jsonify({"error": "Invalid set hash."}), 400
+    row = db.session.query(Image, Draft).join(Set, Image.set_id == Set.id).join(Draft, Draft.set_id == Set.id).filter(
+        Image.id == image_id,
+        Set.id == set_id
+    ).first()
+
+    if not row: return jsonify({"error": "Image or draft for set not found."}), 404
+    image, draft = row
+
+    if not isinstance(image, Image): return jsonify({"error": "Image not found."}), 404
+
+    return send_file(os.path.join(UPLOAD_PATH, "sets", f"draft_{draft.id}", image.filename)), 200
