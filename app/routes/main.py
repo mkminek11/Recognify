@@ -8,28 +8,21 @@ from app.presentation import create_draft
 bp = Blueprint("main", __name__)
 
 @bp.route('/')
-@bp.route('/sets')
+@bp.route('/set')
 @login_required
 def index():
     drafts = [{ "id": hid.encode(draft.id), "name": draft.name } for draft in Draft.query.where(Draft.owner_id == current_user.id).all()]
     sets = [{ "id": hid.encode(set.id), "name": set.name } for set in Set.query.all()]
     return render_template('index.html', sets = sets, drafts = drafts)
 
-@bp.route('/sets/new', methods=['GET'])
+@bp.route('/set/new', methods=['GET'])
 @login_required
 def new_set():
     draft_id = create_draft()
     return redirect(f'/draft/{hid.encode(draft_id)}')
 
-@bp.route('/sets', methods=['DELETE'])
 @login_required
-def delete_all_sets():
-    Set.query.delete()
-    db.session.commit()
-    return "", 204
-
-# @login_required
-@bp.route('/sets/<string:set_hash>')
+@bp.route('/set/<string:set_hash>')
 def set_view(set_hash: str):
     set_id = decode(set_hash)
     if not isinstance(set_id, int): return "Invalid set hash", 400

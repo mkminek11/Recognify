@@ -7,7 +7,7 @@
         <ul>
             {% for set in sets %}
                 <li>
-                    <a href="/sets/{{ set.id }}">{{ set.name }}</a>
+                    <a href="/set/{{ set.id }}">{{ set.name }}</a>
                 </li>
             {% else %}
                 <li>No sets available.</li>
@@ -23,8 +23,9 @@
                 <li>No drafts available.</li>
             {% endfor %}
         </ul>
-        <a href="/sets/new">Create a new set</a>
-        <a href="" onclick="deleteAllSets();">Delete all sets</a>
+        <a href="/set/new">Create a new set</a>
+        <a href="#" onclick="deleteAllSets();">Delete all sets</a>
+        <a href="#" onclick="deleteAllDrafts();">Delete all drafts</a>
     </div>
     <a href="/auth/login">Login</a>
     <a href="/auth/signup">Sign Up</a>
@@ -34,7 +35,12 @@
     <script>
         function deleteAllSets() {
             if (!confirm("Are you sure you want to delete all sets? This action cannot be undone.")) {return;}
-            axios.delete('/sets');
+            axios.delete('/api/set');
+        }
+
+        function deleteAllDrafts() {
+            if (!confirm("Are you sure you want to delete all drafts? This action cannot be undone.")) {return;}
+            axios.delete('/api/draft');
         }
     </script>
 {% endblock %}

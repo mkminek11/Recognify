@@ -2,7 +2,7 @@
 import os.path
 from flask import Blueprint, jsonify, request, send_file
 from flask_login import current_user
-from app.models import Draft, DraftImage, DraftLabel, Image, Set
+from app.models import Draft, DraftImage, DraftLabel, Image, Set, User
 from app.app import db, UPLOAD_PATH, hid, decode
 from app.presentation import extract_images, get_free_filename, get_free_index, temp_remove
 
@@ -40,6 +40,40 @@ def process_presentation():
     tmp_addr, images, labels = result
     temp_remove(tmp_addr)
     return jsonify({"images": images, "labels": labels}), 200
+
+
+
+@bp.route('/draft', methods=['DELETE'])
+def delete_all_drafts():
+    user = current_user
+    if not isinstance(user, User) or not user.is_authenticated or not user.permission >= 1:
+        return jsonify({"error": "Unauthorized."}), 403
+    os.rmdir(os.path.join(UPLOAD_PATH, "sets"))
+    os.mkdir(os.path.join(UPLOAD_PATH, "sets"))
+    db.session.delete(Draft)
+    db.session.delete(DraftImage)
+    db.session.delete(DraftLabel)
+    db.session.delete(Set)
+    db.session.delete(Image)
+    db.session.commit()
+    return "", 204
+
+
+
+@bp.route('/draft/<string:draft_hash>/', methods=['DELETE'])
+def delete_draft(draft_hash: str):
+    draft_id = decode(draft_hash)
+    if not isinstance(draft_id, int): return jsonify({"error": "Invalid draft hash."}), 400
+    draft = Draft.query.get(draft_id)
+    if not isinstance(draft, Draft): return jsonify({"error": "Draft not found."}), 404
+    if draft.owner != current_user: return jsonify({"error": "Unauthorized."}), 403
+
+    os.rmdir(os.path.join(UPLOAD_PATH, "sets", f"draft_{draft.id}"))
+    DraftImage.query.filter(DraftImage.draft_id == draft.id).delete()
+    DraftLabel.query.filter(DraftLabel.draft_id == draft.id).delete()
+    db.session.delete(draft)
+    db.session.commit()
+    return jsonify({"message": "Draft deleted successfully."}), 200
 
 
 
@@ -225,6 +259,32 @@ def submit_draft(draft_hash: str):
 
     return jsonify({"message": "Draft submitted successfully.", "set_id": hid.encode(set_id)}), 200
 
+
+
+@bp.route('/set', methods=['DELETE'])
+def delete_all_sets():
+    user = current_user
+    if not isinstance(user, User) or not user.is_authenticated or not user.permission >= 1:
+        return jsonify({"error": "Unauthorized."}), 403
+    db.session.delete(Set)
+    db.session.delete(Image)
+    db.session.commit()
+    return "", 204
+
+
+
+@bp.route('/set/<string:set_hash>', methods=['DELETE'])
+def delete_set(set_hash: str):
+    set_id = decode(set_hash)
+    if not isinstance(set_id, int): return jsonify({"error": "Invalid set hash."}), 400
+    set_ = Set.query.get(set_id)
+    if not isinstance(set_, Set): return jsonify({"error": "Set not found."}), 404
+    if set_.owner != current_user: return jsonify({"error": "Unauthorized."}), 403
+
+    db.session.query(Image).filter(Image.set_id == set_.id).delete()
+    db.session.delete(set_)
+    db.session.commit()
+    return jsonify({"message": "Set deleted successfully."}), 200
 
 
 @bp.route('/set/<string:set_hash>/image/<int:image_id>', methods=['GET'])
