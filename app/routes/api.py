@@ -248,6 +248,7 @@ def submit_draft(draft_hash: str):
         db.session.commit()
 
         for img in draft.images:
+            if not img.label: continue
             new_img = Image(filename = img.filename, set_id = set_.id, label = img.label)
             db.session.add(new_img)
             set_.images.append(new_img)
@@ -285,6 +286,7 @@ def delete_set(set_hash: str):
     db.session.delete(set_)
     db.session.commit()
     return jsonify({"message": "Set deleted successfully."}), 200
+
 
 
 @bp.route('/set/<string:set_hash>/image/<int:image_id>', methods=['GET'])
