@@ -1,5 +1,6 @@
 
 import os.path
+import shutil
 from flask import Blueprint, jsonify, request, send_file
 from flask_login import current_user
 from app.models import Draft, DraftImage, DraftLabel, Image, Set, User
@@ -48,13 +49,16 @@ def delete_all_drafts():
     user = current_user
     if not isinstance(user, User) or not user.is_authenticated or not user.permission >= 1:
         return jsonify({"error": "Unauthorized."}), 403
-    os.rmdir(os.path.join(UPLOAD_PATH, "sets"))
-    os.mkdir(os.path.join(UPLOAD_PATH, "sets"))
-    db.session.delete(Draft)
-    db.session.delete(DraftImage)
-    db.session.delete(DraftLabel)
-    db.session.delete(Set)
-    db.session.delete(Image)
+    sets_path = os.path.join(UPLOAD_PATH, "sets")
+    shutil.rmtree(sets_path)
+    os.makedirs(sets_path, exist_ok=True)
+
+    # Use bulk deletes via the query API to remove rows safely
+    DraftImage.query.delete()
+    DraftLabel.query.delete()
+    Draft.query.delete()
+    Image.query.delete()
+    Set.query.delete()
     db.session.commit()
     return "", 204
 
@@ -68,7 +72,7 @@ def delete_draft(draft_hash: str):
     if not isinstance(draft, Draft): return jsonify({"error": "Draft not found."}), 404
     if draft.owner != current_user: return jsonify({"error": "Unauthorized."}), 403
 
-    os.rmdir(os.path.join(UPLOAD_PATH, "sets", f"draft_{draft.id}"))
+    shutil.rmtree(os.path.join(UPLOAD_PATH, "sets", f"draft_{draft.id}"))
     DraftImage.query.filter(DraftImage.draft_id == draft.id).delete()
     DraftLabel.query.filter(DraftLabel.draft_id == draft.id).delete()
     db.session.delete(draft)

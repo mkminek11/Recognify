@@ -59,7 +59,10 @@ def extract_images(presentation_file: FileStorage, draft_id: int) -> tuple[str, 
             if shape.shape_type == SHAPE_TYPE.PICTURE:
                 if not isinstance(shape, PPTXPicture): continue
                 image = shape.image
-                filename = save_image(image.blob, image.ext, target_directory, start=image_n)
+                try:
+                    filename = save_image(image.blob, image.ext, target_directory, start=image_n)
+                except Exception:
+                    filename = False
                 if not filename: continue
                 print(f"Saved image {filename} from slide {slide_n + 1}")
                 draft_img = DraftImage(draft_id, filename, pres_n, slide_n, label = "")
@@ -69,7 +72,7 @@ def extract_images(presentation_file: FileStorage, draft_id: int) -> tuple[str, 
             elif shape.has_text_frame:
                 text = getattr(shape, "text", "")
                 if not text: continue
-                l = save_labels(text, slide_n, draft_id)
+                l = save_labels(text, pres_n, slide_n, draft_id)
                 for s in l: labels.append({"text": s, "slide": slide_encoded})
     db.session.commit()
     for img in _images:
@@ -135,11 +138,11 @@ def get_free_index(dir: str, prefix: str = "tmp", ext: str = "*", start: int = 1
         counter += 1
 
 
-def save_labels(text: str, slide: int, draft_id: int) -> list[str]:
+def save_labels(text: str, pres_n: int, slide: int, draft_id: int) -> list[str]:
     """ Save text labels to the database and return a list of labels. """
     if not text: return []
     labels = [line.strip() for line in text.splitlines() if line.strip()]
     for label in labels:
-        draft_label = DraftLabel(draft_id, label, slide, slide)
+        draft_label = DraftLabel(draft_id, label, pres_n, slide)
         db.session.add(draft_label)
     return labels

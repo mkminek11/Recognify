@@ -2,7 +2,7 @@
 
 {% block content %}
     <h1>Create a New Set</h1>
-    <div x-data="formHandler" x-init="init()" >
+    <div x-data="formHandler" x-init="init()">
         <div>
             <label for="name">Set title:</label>
             <input type="text" id="name" x-ref="titleInput" x-model="title" x-show="titleEditMode" @blur="saveTitle();" />
@@ -11,6 +11,8 @@
     
         <label for="description">Description:</label>
         <textarea id="description" x-model="setDescription" @blur="saveDescription()"></textarea>
+
+        <button @click="deleteSet">Delete Set</button>
     
         <div>
             <p>Add images:</p>
@@ -24,8 +26,18 @@
                 <template x-for="(image, index) in images" :key="index">
                     <div>
                         <img :src="image.image.src" width="100" />
-                        <input type="text" x-model="imageLabels[image.image.hash]" placeholder="Enter image caption" @blur="saveImageLabel(index)" />
-                        <button @click="removeImage(index)">Remove</button>
+                        <input type="text" 
+                               :id="`input_${index}`"
+                               x-model="imageLabels[image.image.hash]" 
+                               placeholder="Enter image caption" 
+                               @blur="saveImageLabel(index)" 
+                               @input="imageInput($event, index)" />
+                        <button @click="removeImage(index)" tabindex="-1">Remove</button>
+                        <ul>
+                            <template x-for="(label, labelIndex) in labels.filter(l => l.slide === image.slide)" :key="labelIndex">
+                                <li x-text="`${labelIndex + 1}. ${label.label}`"></li>
+                            </template>
+                        </ul>
                     </div>
                 </template>
             </div>
@@ -71,6 +83,7 @@
                 },
 
                 async saveImageLabel(index) {
+                    console.log("Blur");
                     const image = this.images[index].image;
                     const label = this.imageLabels[image.hash] || '';
                     await axios.post('/api/draft/{{ draft.hash() }}/image/' + image.id, { label });
@@ -92,7 +105,7 @@
                     let added = 0;
 
                     for (const file of files) {
-                        if (file.size > 10 * 1024 * 1024) {continue;} // 10MB limit
+                        // if (file.size > 10 * 1024 * 1024) {continue;} // 10MB limit
                         fd.append('images', file);
 
                         const cimg = new window.CustomImage(file);
@@ -117,7 +130,8 @@
                 async preparePres(event) {
                     const file = event.target.files[0];
                     if (!file) return;
-                    if (file.size > 50 * 1024 * 1024) {return;} // 50MB limit
+                    // if (file.size > 50 * 1024 * 1024) {return;} // 50MB limit
+                    // Musel jsem to zakomentovat kvuli prezentaci na rostliny, ktera mela pres pul giga xd
 
                     const formData = new FormData();
                     formData.append('presentation', file);
@@ -158,8 +172,45 @@
                     }
 
                     for (const labelData of labels) {
-                        this.labels.push({ label: labelData.text, slide: labelData.slide });
+                        if (!this.labels.some(existing => existing.label === labelData.text && existing.slide === labelData.slide)) {
+                            this.labels.push({ label: labelData.text, slide: labelData.slide });
+                        }
                     }
+                },
+
+                async imageInput(event, index) {
+                    const image = this.images[index].image;
+                    const input = event.target;
+                    const value = input.value;
+
+                    console.log("Input ", input, " changed for image", image.hash, "to", value);
+
+                    if (!/^[1-9]$/.test(value)) {return;}
+
+                    const nextIndex = index + 1;
+                    this.$nextTick(() => {
+                        const number = parseInt(value, 10);
+                        const label = this.labels.filter(l => l.slide === image.slide)[number - 1].label;
+                        console.log("Mapped number", number, "to label", label);
+
+                        // Set the value and focus next input
+                        this.imageLabels[image.hash] = label;
+                        
+                        // Focus the next input using getElementById
+                        if (nextIndex >= this.images.length) {return;}
+                        this.$nextTick(() => {
+                            this.saveImageLabel(index);
+                            
+                            const nextInput = document.getElementById(`input_${nextIndex}`);
+                            console.log("Next input:", nextInput, "index:", nextIndex);
+                            if (nextInput) {
+                                nextInput.focus();
+                                nextInput.select(); // Select text for better UX
+                            } else {
+                                console.log("Input not found for id:", `input_${nextIndex}`);
+                            }
+                        });
+                    });
                 },
 
                 async submitForm(event) {
@@ -168,6 +219,15 @@
                     await axios.post('/api/draft/{{ draft.hash() }}/submit', {
                         images: this.images.map(img => ({ img: img.image.data(), label: this.imageLabels[img.image.hash] }))
                     });
+                },
+
+                async deleteSet() {
+                    if (!confirm("Are you sure you want to delete this set? This action cannot be undone.")) {
+                        return;
+                    }
+
+                    await axios.delete('/api/draft/{{ draft.hash() }}');
+                    window.location.href = '/';
                 }
             }));
         });
