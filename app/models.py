@@ -53,6 +53,8 @@ class Set(db.Model):
         self.is_public = is_public
         self.owner_id = current_user.id if current_user and current_user.is_authenticated else 0
 
+    def hash(self) -> str: return hid.encode(self.id)
+
 
 class Image(db.Model):
     __tablename__ = "images"
@@ -123,3 +125,15 @@ class DraftLabel(db.Model):
         slide = presentation_n * 10_000 + slide_n
         for attr, value in locals().items():
             setattr(self, attr, value)
+
+
+class SkipImage(db.Model):
+    __tablename__ = "skip_images"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key = True, autoincrement = True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable = False)
+    image_id: Mapped[int] = mapped_column(ForeignKey("images.id"), nullable = False)
+
+    def __init__(self, user_id: int, image_id: int):
+        self.user_id = user_id
+        self.image_id = image_id

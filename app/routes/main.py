@@ -23,12 +23,12 @@ def new_set():
 
 @login_required
 @bp.route('/set/<string:set_hash>')
-def set_view(set_hash: str):
+def view_set(set_hash: str):
     set_id = decode(set_hash)
     if not isinstance(set_id, int): return "Invalid set hash", 400
     set_ = Set.query.get(set_id)
     if not isinstance(set_, Set): return "Set not found", 404
-
+    
     data = {
         "id": set_hash,
         "name": set_.name,
@@ -38,8 +38,28 @@ def set_view(set_hash: str):
             { "id": i.id, "label": i.label } for i in set_.images
         ]
     }
+    
+    return render_template('set_view.html', set = data)
 
-    return render_template('set.html', set = data)
+@login_required
+@bp.route('/set/<string:set_hash>/play')
+def play_set(set_hash: str):
+    set_id = decode(set_hash)
+    if not isinstance(set_id, int): return "Invalid set hash", 400
+    set_ = Set.query.get(set_id)
+    if not isinstance(set_, Set): return "Set not found", 404
+
+    data = {
+        "id": set_.hash(),
+        "name": set_.name,
+        "description": set_.description,
+        "created_at": set_.created_at.isoformat(),
+        "images": [
+            { "id": i.id, "label": i.label } for i in set_.images
+        ]
+    }
+
+    return render_template('play_set.html', set = data)
 
 @bp.route('/draft/<string:draft_hash>')
 @login_required

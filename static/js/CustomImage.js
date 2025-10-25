@@ -1,6 +1,12 @@
 
 class CustomImage extends Image {
   constructor(fileOrUrl, id = null, imageData = null) {
+    /*
+    Constructor:
+    - fileOrUrl: File object or URL string
+    - id: optional identifier
+    - imageData: optional metadata object with properties like label, slide, id
+    */
     super();
     this.isFile = fileOrUrl instanceof File;
     this.isUrl = typeof fileOrUrl === 'string';

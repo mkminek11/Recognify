@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div x-data="container" x-init="loadImages()">
+        <h1>{{ set.name }}</h1>
+        <p>Description: {{ set.description }}</p>
+        <p>Created at: {{ set.created_at }}</p>
+
+        <div>
+            <!-- <template x-for="image in images" :key="image.id">
+                <div style="margin-bottom: 20px;">
+                    <p x-text="image.label"></p>
+                    <img :src="image.image.src" :alt="image.label" height="200">
+                </div>
+            </template> -->
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('container', () => ({
+                images: JSON.parse('{{ set.images|tojson }}'),
+
+                async loadImages() {
+                    this.$nextTick(async () => { 
+                        console.log(this.images);
+                        // Process all images in parallel instead of sequentially
+                        const imagePromises = this.images.map(async (imageData) => {
+                            const cimg = new Image();
+                            cimg.src = imageData.url;
+                            await cimg.decode();
+                            return { cimg, imageData };
+                        });
+                        
+                        const imageResults = await Promise.all(imagePromises);
+    
+                        console.log(imageResults);
+                        
+/*                        for (const { cimg, imageData } of imageResults) {
+                            console.log('Processing image:', cimg, imageData);
+                            if (!this.images.some(existing => existing.id === cimg.id)) {
+                                this.images.push({ image: cimg, label: imageData.label });
+                                // this.imageLabels[cimg.hash] = imageData.label || '';
+                            }
+                        }*/
+                    });
+                },
+            }));
+        });
+    </script>
+{% endblock %}

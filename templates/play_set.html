@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <div x-data="container">
+    <div x-data="container" @mousedown.prevent="onKeyDown($event)" @contextmenu.prevent>
         <h1>{{ set.name }}</h1>
         <p>Description: {{ set.description }}</p>
         <p>Created at: {{ set.created_at }}</p>
@@ -57,11 +57,29 @@
                 nextImage(correct) {
                     this.correct += correct;
                     this.index += 1;
+                    this.showLabel = false;
                     this.loadImage();
                 },
 
                 turn() {
                     this.showLabel = !this.showLabel;
+                },
+
+                onKeyDown(event) {
+                    if (this.index >= this.images.length) {return;}
+
+                    if (this.showLabel) {
+                        console.log(event.button);
+                        if (event.button === 2 || event.key === 'ArrowRight') {
+                            this.nextImage(1);
+                        } else if (event.button === 0 || event.key === 'ArrowLeft') {
+                            this.nextImage(0);
+                        }
+                    } else {
+                        this.turn();
+                    }
+
+                    event.preventDefault();
                 },
             }));
         });

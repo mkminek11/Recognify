@@ -72,7 +72,7 @@ def extract_images(presentation_file: FileStorage, draft_id: int) -> tuple[str, 
             elif shape.has_text_frame:
                 text = getattr(shape, "text", "")
                 if not text: continue
-                l = save_labels(text, pres_n, slide_n, draft_id)
+                l = save_labels(text, pres_n,   slide_n, draft_id)
                 for s in l: labels.append({"text": s, "slide": slide_encoded})
     db.session.commit()
     for img in _images:
