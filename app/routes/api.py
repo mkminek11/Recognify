@@ -274,10 +274,45 @@ def add_image_url(draft_hash: str):
     with open(image_path, 'wb') as f:
         f.write(response.content)
 
-    i = DraftImage(draft_id, filename, 0, 0)
+    i = DraftImage(draft_id, filename, -1, 0)
     db.session.add(i)
     db.session.commit()
     return jsonify({"message": "Image added successfully.", "id": i.id}), 200
+
+
+
+@bp.route('/draft/<string:draft_hash>/change/image', methods=['POST'])
+def change_draft_image(draft_hash: str):
+    draft_id = decode(draft_hash)
+    if not isinstance(draft_id, int): return jsonify({"error": "Invalid draft hash."}), 400
+    draft = Draft.query.get(draft_id)
+    if not isinstance(draft, Draft): return jsonify({"error": "Draft not found."}), 404
+    if draft.owner != current_user: return jsonify({"error": "Unauthorized."}), 403
+
+    change_id = request.form.get('change_id', type=int)
+    if not change_id: return jsonify({"error": "No change ID provided."}), 400
+
+    image_file = request.files.get('image')
+    if not image_file: return jsonify({"error": "No image file provided."}), 400
+    draft_image = DraftImage.query.get(change_id)
+    if not isinstance(draft_image, DraftImage) or draft_image.draft_id != draft_id:
+        return jsonify({"error": "Image not found in draft."}), 404
+
+    extension = os.path.splitext(image_file.filename or "")[1].lower().lstrip('.')
+    if not extension in VALID_IMG_EXTENSIONS:
+        return jsonify({"error": f"Not a valid image extension: {extension}"}), 400
+    path = os.path.join(UPLOAD_PATH, "sets", f"draft_{draft_id}")
+    index = get_free_index(path, "img", "*")
+    filename = get_free_filename(path, extension, "img", index)
+
+    if not filename: return jsonify({"error": "Failed to generate filename."}), 500
+    image_path = os.path.join(path, filename)
+    image_file.save(image_path)
+    os.remove(os.path.join(path, draft_image.filename))
+
+    draft_image.filename = filename
+    db.session.commit()
+    return jsonify({"message": "Image changed successfully.", "id": draft_image.id}), 200
 
 
 

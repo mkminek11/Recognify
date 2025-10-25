@@ -16,14 +16,14 @@
     
         <div>
             <p>Add images:</p>
-            <label for="images" class="btn">Upload:</label>
+            <label for="images" class="btn">Upload</label>
             <input type="file" id="images" class="hidden" x-ref="imageInput" multiple @change="addImages($event)" />
 
             <!-- <label for="img_online">Add online:</label> -->
             <input type="url" id="img_url" x-ref="imgURL" placeholder="Image URL" />
             <button @click="addURL">Add URL</button>
 
-            <label for="pres" class="btn">Extract from a presentation:</label>
+            <label for="pres" class="btn">Extract from a presentation</label>
             <input type="file" id="pres" class="hidden" x-ref="presInput" @change="preparePres($event)" />
 
             <div x-ref="imageList">
@@ -37,7 +37,7 @@
                                @blur="saveImageLabel(index)" 
                                @input="imageInput($event, index)" />
                         <button @click="removeImage(index)" tabindex="-1">Remove</button>
-                        <button @click="changeFromFile(index)" tabindex="-1">Change from file</button>
+                        <label for="change_from_file" @click="changeFromFile(index)" tabindex="-1">Change from file</label>
                         <button @click="changeFromURL(index)" tabindex="-1">Change from URL</button>
                         <ul>
                             <template x-for="(label, labelIndex) in labels.filter(l => l.slide === image.slide)" :key="labelIndex">
@@ -50,6 +50,12 @@
         </div>
     
         <button @click="submitForm">Create Set</button>
+        <input type="file"
+               id="change_from_file"
+               class="hidden-fixed"
+               x-ref="changeFromFileInput"
+               @change="changeFromFileEvent($event)"
+               accept="image/*" />
     </div>
 {% endblock %}
 
@@ -65,9 +71,9 @@
                 title: '{{ draft.name or "Untitled Set" }}',
                 setDescription: '{{ draft.description or "" }}',
                 titleEditMode: true,
-                images: [],
-                imageLabels: {},
-                labels: [],
+                images: [], // list of { image: CustomImage, slide: string }
+                imageLabels: {}, // map of imageHash: string -> label: string
+                labels: [], // list of { label: string, slide: string }
 
                 init() {
                     this.$refs.titleInput.focus();
@@ -157,6 +163,33 @@
                         alert("Failed to add image from URL.");
                         console.error(error);
                     }
+                },
+
+                changeFromFile(index) {
+                    this.$refs.changeFromFileInput.dataset.index = index;
+                },
+
+                async changeFromFileEvent(event) {
+                    const index = this.$refs.changeFromFileInput.dataset.index;
+                    const file = event.target.files[0];
+                    if (!file) return;
+
+                    console.log(`Image src: ${this.images[index].image.src}`);
+
+                    const fd = new FormData();
+                    fd.append('image', file);
+                    fd.append('change_id', this.images[index].image.id);
+                    const cimg = new window.CustomImage(file);
+                    cimg.id = this.images[index].image.id;
+                    await cimg.ready;
+
+                    await axios.post('/api/draft/{{ draft.hash() }}/change/image', fd, {
+                        headers: { 'Content-Type': 'multipart/form-data' }
+                    });
+                    console.log(`New Image src: ${cimg.src}`);
+
+                    this.images[index].image = cimg;
+                    this.$refs.changeFromFileInput.value = '';
                 },
 
                 async preparePres(event) {
