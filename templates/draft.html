@@ -19,6 +19,10 @@
             <label for="images" class="btn">Upload:</label>
             <input type="file" id="images" class="hidden" x-ref="imageInput" multiple @change="addImages($event)" />
 
+            <!-- <label for="img_online">Add online:</label> -->
+            <input type="url" id="img_url" x-ref="imgURL" placeholder="Image URL" />
+            <button @click="addURL">Add URL</button>
+
             <label for="pres" class="btn">Extract from a presentation:</label>
             <input type="file" id="pres" class="hidden" x-ref="presInput" @change="preparePres($event)" />
 
@@ -33,6 +37,8 @@
                                @blur="saveImageLabel(index)" 
                                @input="imageInput($event, index)" />
                         <button @click="removeImage(index)" tabindex="-1">Remove</button>
+                        <button @click="changeFromFile(index)" tabindex="-1">Change from file</button>
+                        <button @click="changeFromURL(index)" tabindex="-1">Change from URL</button>
                         <ul>
                             <template x-for="(label, labelIndex) in labels.filter(l => l.slide === image.slide)" :key="labelIndex">
                                 <li x-text="`${labelIndex + 1}. ${label.label}`"></li>
@@ -124,6 +130,32 @@
 
                     for (let i = 0; i < added; i++) {
                         this.images[this.images.length - added + i - 1].image.id = ids.data.images[i].id;
+                    }
+                },
+
+                async addURL() {
+                    const url = this.$refs.imgURL.value.trim();
+                    if (!url) return;
+
+                    try {
+                        const cimg = new window.CustomImage(url);
+                        await cimg.ready;
+
+                        if (this.images.some(existing => existing.image.hash === cimg.hash)) {
+                            alert("This image is already added.");
+                            return;
+                        }
+
+                        const result = await axios.post('/api/draft/{{ draft.hash() }}/gallery/url', { url });
+                        cimg.id = result.data.id;
+
+                        this.images.push({ image: cimg, slide: "" });
+                        this.imageLabels[cimg.hash] = '';
+
+                        this.$refs.imgURL.value = '';
+                    } catch (error) {
+                        alert("Failed to add image from URL.");
+                        console.error(error);
                     }
                 },
 

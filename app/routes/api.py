@@ -4,8 +4,9 @@ import shutil
 from flask import Blueprint, jsonify, request, send_file
 from flask_login import current_user
 from app.models import Draft, DraftImage, DraftLabel, Image, Set, User
-from app.app import db, UPLOAD_PATH, hid, decode
+from app.app import VALID_IMG_EXTENSIONS, db, UPLOAD_PATH, hid, decode
 from app.presentation import extract_images, get_free_filename, get_free_index, temp_remove
+import requests
 
 bp = Blueprint("api", __name__, url_prefix = "/api")
 
@@ -208,7 +209,7 @@ def fetch_gallery(draft_hash: str):
 
 
 @bp.route('/draft/<string:draft_hash>/gallery', methods=['POST'])
-def update_gallery(draft_hash: str):
+def add_image(draft_hash: str):
     draft_id = decode(draft_hash)
     if not isinstance(draft_id, int): return jsonify({"error": "Invalid draft hash."}), 400
     draft = Draft.query.get(draft_id)
@@ -233,6 +234,50 @@ def update_gallery(draft_hash: str):
         db.session.add(i)
     db.session.commit()
     return jsonify({"message": "Gallery updated successfully."}), 200
+
+
+
+@bp.route('/draft/<string:draft_hash>/gallery/url', methods=['POST'])
+def add_image_url(draft_hash: str):
+    draft_id = decode(draft_hash)
+    if not isinstance(draft_id, int): return jsonify({"error": "Invalid draft hash."}), 400
+    draft = Draft.query.get(draft_id)
+    if not isinstance(draft, Draft): return jsonify({"error": "Draft not found."}), 404
+    if draft.owner != current_user: return jsonify({"error": "Unauthorized."}), 403
+
+    data: dict[str, str] = request.get_json()
+    image_url = data.get('url', '').strip()
+    if not image_url: return jsonify({"error": "No image URL provided."}), 400
+
+    try:
+        headers = {'User-Agent': 'Recognify/1.0 (Educational Tool; email@example.com)'}
+        response = requests.get(image_url, timeout=10, headers=headers)
+        response.raise_for_status()
+    except requests.RequestException as e:
+        return jsonify({"error": f"Failed to fetch image from URL: {str(e)}"}), 400
+
+    content_type = response.headers.get('Content-Type', '')
+    if 'image' not in content_type:
+        return jsonify({"error": "URL does not point to a valid image."}), 400
+
+    extension = content_type.split('/')[-1]
+    if not extension in VALID_IMG_EXTENSIONS:
+        return jsonify({"error": f"Not a valid image extension: {extension}"}), 400
+    
+    path = os.path.join(UPLOAD_PATH, "sets", f"draft_{draft_id}")
+    index = get_free_index(path, "img", "*")
+    filename = get_free_filename(path, extension, "img", index)
+
+    if not filename: return jsonify({"error": "Failed to generate filename."}), 500
+    image_path = os.path.join(path, filename)
+
+    with open(image_path, 'wb') as f:
+        f.write(response.content)
+
+    i = DraftImage(draft_id, filename, 0, 0)
+    db.session.add(i)
+    db.session.commit()
+    return jsonify({"message": "Image added successfully.", "id": i.id}), 200
 
 
 

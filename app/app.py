@@ -42,7 +42,7 @@ app.config.from_mapping(
 
 ROOT_PATH = os.path.split(app.root_path)[0]
 UPLOAD_PATH = os.path.join(ROOT_PATH, "static", "uploads")
-
+VALID_IMG_EXTENSIONS = ["png", "jpg", "jpeg"]
 
 def login_required(func: Callable) -> Callable:
     @wraps(func)
