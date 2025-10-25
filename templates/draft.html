@@ -192,6 +192,21 @@
                     this.$refs.changeFromFileInput.value = '';
                 },
 
+                async changeFromURL(index) {
+                    url = prompt("Insert image URL:");
+                    if (!url) {return;}
+                    const cimg = new window.CustomImage(url);
+                    cimg.id = this.images[index].image.id;
+                    await cimg.ready;
+                    
+                    const fd = new FormData();
+                    fd.append('url', url);
+                    fd.append('change_id', cimg.id);
+                    await axios.post('/api/draft/{{ draft.hash() }}/change/url', fd);
+
+                    this.images[index].image = cimg;
+                },
+
                 async preparePres(event) {
                     const file = event.target.files[0];
                     if (!file) return;
@@ -243,7 +258,7 @@
                     }
                 },
 
-                async imageInput(event, index) {
+                imageInput(event, index) {
                     const image = this.images[index].image;
                     const input = event.target;
                     const value = input.value;
