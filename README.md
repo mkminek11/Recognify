@@ -1,115 +1,91 @@
-# Recognify
+# 🧠 Recognify
 
-**Recognify** is a web-based application designed to help users practice recognizing animals, plants, and other objects from images. The platform allows users to create interactive learning sets by importing images from presentations or uploading custom images, associating them with labels, and organizing them into topics for practice and study.
+<div align="center">
 
-## 🎯 Purpose
+**A smart flashcard learning tool that extracts images from presentations and turns them into interactive study sets**
 
-Recognify enables users to:
-- Import images from PowerPoint presentations
-- Create custom labels for images (either from slide text or custom-written)
-- Organize images into learning sets
-- Practice object recognition through interactive gameplay
-- Share learning sets with other users
+[Features](#-features) •
+[Quick Start](#-quick-start) •
+[Installation](#-installation) •
+[Usage](#-usage)
 
-## 🏗️ Project Structure
+</div>
 
+---
+
+## 🎯 What is Recognify?
+
+Recognify is an intelligent study tool that revolutionizes how you learn with visual content. Upload PowerPoint presentations, and Recognify automatically extracts images and text labels to create interactive flashcard sets. Perfect for biology, anatomy, geography, art history, or any subject with visual components!
+
+### ✨ Key Highlights
+
+- 🖼️ **Automatic Image Extraction** - Upload presentations and get instant flashcard sets
+- 🎮 **Interactive Learning** - Keyboard and mouse-controlled quiz interface  
+- 🔄 **Smart Workflows** - Number-to-label mapping for rapid data entry
+- 📱 **Modern UI** - Responsive design with Alpine.js reactivity
+- 🔐 **User Management** - Secure authentication and personal collections
+- 🌐 **URL Support** - Add images directly from web URLs (with proper headers for Wikimedia!)
+
+---
+
+## 🚀 Features
+
+### 📚 **Content Creation**
+- **Presentation Processing**: Extract images and labels from PowerPoint files automatically
+- **Manual Upload**: Add individual images via file upload or URL
+- **Smart Labeling**: Quick number-to-label mapping workflow
+- **Draft System**: Work-in-progress management with auto-save
+
+### 🎯 **Learning Interface**
+- **Flashcard Mode**: Interactive image recognition quizzes
+- **Adaptive Learning**: Skip familiar images to focus on challenging content
+- **Performance Tracking**: Track correct/incorrect answers
+- **Flexible Controls**: Keyboard shortcuts and mouse controls
+
+---
+
+## ⚡ Quick Start
+
+**Try Recognify now:** [https://recognify.onrender.com](https://recognify.onrender.com)
+
+No installation required! Just visit the link above and start creating your first flashcard set! 🎉
+
+### For Local Development
+
+```bash
+# Clone the repository
+git clone https://github.com/mkminek11/recognify.git
+cd recognify
+
+# Install dependencies
+pip install -e .
+
+# Set environment variables (create .env file)
+SECRET_KEY=your-super-secret-key
+HASHID_SALT=your-unique-salt
+
+# Run the application
+python main.py
 ```
-recognify/
-├── 📁 app/                   # Main Flask application package
-│   ├── 📄 __init__.py        # Package initialization
-│   ├── 📄 db.py              # Database configuration
-│   ├── 📄 lib.py             # Core Flask app setup and utilities
-│   ├── 📄 models.py          # SQLAlchemy database models
-│   └── 📁 routes/            # Application routes (blueprints)
-│       ├── 📄 admin.py       # Admin panel routes
-│       └── 📄 main.py        # Main application routes
-│
-├── 📁 instance/              # Flask instance folder
-│   └── 📄 db.sqlite          # SQLite database file
-│
-├── 📁 static/                # Static assets (CSS, JS, images)
-│   ├── 📁 css/               # Stylesheets
-│   ├── 📁 js/                # JavaScript files
-│   │   ├── 📁 alpine/        # Alpine.js library
-│   │   └── 📁 htmx/          # HTMX library
-│   └── 📁 uploads/           # User uploaded images
-│
-├── 📁 templates/             # Jinja2 HTML templates
-│   └── 📄 base.html          # Base template
-│
-├── 📁 .venv/                 # Python virtual environment
-├── 📄 .flaskenv              # Flask environment variables
-├── 📄 .python-version        # Python version specification
-├── 📄 main.py                # Application entry point
-├── 📄 pyproject.toml         # Project configuration and dependencies
-├── 📄 uv.lock                # Dependency lock file
-└── 📄 TODO.md                # Project todo list
-```
 
-## 🛠️ Technology Stack
+Visit `http://127.0.0.1:5000` for local development.
 
-### Backend
-- **Flask** - Python web framework
-- **SQLAlchemy** - ORM for database operations
-- **Flask-Login** - User authentication management
-- **SQLite** - Lightweight database for development
-- **python-pptx** - PowerPoint file processing
-- **Hashids** - ID obfuscation for security
+---
 
-### Frontend
-- **Jinja2** - Server-side templating
-- **HTMX** - Dynamic HTML updates
-- **Alpine.js** - Lightweight JavaScript framework
-- **CSS** - Custom styling
+## 🔧 Installation
 
-### Development Tools
-- **uv** - Python package manager
-- **Python 3.12+** - Programming language
+### Access Online
+**No installation needed!** Visit [https://recognify.onrender.com](https://recognify.onrender.com) to use Recognify immediately.
 
-## 📊 Database Schema
+### Local Development Setup
 
-### Models
+For developers who want to run Recognify locally:
 
-#### User
-- **id** (Primary Key)
-- **username** (Unique)
-- **password** (Hashed)
-- **permission** (Access level)
-- **created_at** (Timestamp)
+#### Prerequisites
+- Python 3.12+
+- Modern web browser with JavaScript enabled
 
-#### Set
-- **id** (Primary Key)
-- **name** (Unique)
-- **description**
-- **is_public** (Boolean)
-- **created_at** (Timestamp)
-- **owner_id** (Foreign Key → User)
-
-#### Image
-- **id** (Primary Key)
-- **filename** (Unique)
-- **original_filename**
-- **set_id** (Foreign Key → Set)
-- **label_id** (Foreign Key → Label, Optional)
-
-#### Label
-- **id** (Primary Key)
-- **name**
-- **set_id** (Foreign Key → Set)
-
-### Relationships
-- **User** ↔ **Set**: One-to-Many (owner relationship)
-- **Set** ↔ **Image**: One-to-Many
-- **Set** ↔ **Label**: One-to-Many
-- **Label** ↔ **Image**: One-to-Many (optional)
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Python 3.12 or higher
-- uv package manager
-
-### Installation
+#### Environment Setup
 
 1. **Clone the repository**
    ```bash
@@ -117,91 +93,99 @@ recognify/
    cd recognify
    ```
 
-2. **Set up virtual environment and install dependencies**
+2. **Create virtual environment**
    ```bash
-   uv sync
+   python -m venv .venv
+   .venv\Scripts\activate  # On Windows
+   # source .venv/bin/activate  # On Linux/Mac
    ```
 
-3. **Activate virtual environment**
+3. **Install dependencies**
    ```bash
-   # Windows
-   .venv\Scripts\activate
-   
-   # macOS/Linux
-   source .venv/bin/activate
+   pip install -e .
    ```
 
-4. **Run the application**
+4. **Configure environment**
+   Create a `.env` file in the project root:
+   ```env
+   SECRET_KEY=your-super-secret-key
+   HASHID_SALT=your-unique-salt
+   FLASK_ENV=development
+   ```
+
+5. **Run the application**
    ```bash
    python main.py
    ```
 
-5. **Access the application**
-   Open your browser and navigate to `http://localhost:5000`
-
-## 🎮 Features
-
-### Current Features
-- ✅ User authentication and authorization
-- ✅ PowerPoint presentation import
-- ✅ Image extraction from slides
-- ✅ Custom label creation and editing
-- ✅ Set management (create, edit, delete)
-- ✅ Interactive practice mode
-- ✅ Image shuffling for varied practice sessions
-
-### Planned Features
-- 🔄 Direct image upload (without presentations)
-- 🔄 Advanced scoring and progress tracking
-- 🔄 Multi-user collaboration on sets
-- 🔄 Mobile-responsive design
-- 🔄 Export/import functionality for sets
-- 🔄 Advanced search and filtering
-
-## 👥 User Roles
-
-### Standard User (Permission 0)
-- Create and manage their own sets
-- Practice with any public set
-- Edit their own content
-
-### Admin User (Permission 1+)
-- Access admin panel
-- Manage all users and sets
-- Clear database content
-- System-wide configuration
-
-## 🔧 Configuration
-
-### Environment Variables
-Create a `.env` file in the root directory:
-
-```env
-SECRET_KEY=your-secret-key-here
-FLASK_ENV=development
-FLASK_DEBUG=True
-```
-
-### Database Configuration
-The application uses SQLite by default. The database file is automatically created in the `instance/` directory.
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📝 License
-
-This project is open source and available under the [MIT License](LICENSE).
-
-## 📞 Contact
-
-**Project Owner:** mkminek11  
-**Repository:** [https://github.com/mkminek11/recognify](https://github.com/mkminek11/recognify)
+The database will be created automatically on first run.
 
 ---
 
-*Recognify - Making object recognition practice engaging and accessible for everyone.*
+## 📖 Usage
+
+### Creating Your First Set
+
+1. **Sign Up/Login** - Create an account or log in
+2. **Create New Set** - Click "Create a new set" from the dashboard
+3. **Add Content**: Choose your method:
+   - 📄 **Upload Presentation**: Drag & drop PowerPoint files for automatic extraction
+   - 🖼️ **Manual Images**: Upload individual image files
+   - 🔗 **Image URLs**: Paste direct image links from the web
+
+### Smart Labeling Workflow
+
+The number-to-label mapping feature speeds up data entry:
+
+```
+1. Upload presentation → Images extracted with labels
+2. Type numbers (1-9) → Auto-fills corresponding labels
+3. Tab to next image → Seamless workflow
+4. Submit set → Ready for learning!
+```
+
+### Learning Interface
+
+**Keyboard Controls:**
+- `Space` - Reveal/hide answer
+- `→ (Right Arrow)` - Mark correct, next image  
+- `← (Left Arrow)` - Mark incorrect, next image
+- `💡 Lightbulb Button` - Skip this image permanently
+
+**Mouse Controls:**
+- `Left Click` - Reveal answer or mark incorrect
+- `Right Click` - Mark correct
+- `Middle Click` - Reveal/hide answer
+
+### Tips for Best Results
+
+- **Presentations**: Use slides with clear images and text labels for best extraction
+- **Image Quality**: Higher resolution images work better for recognition
+- **Consistent Labeling**: Use clear, concise labels for better learning
+- **Regular Practice**: Use the skip feature to focus on challenging images
+
+---
+
+## 🛠️ Technical Details
+
+### Built With
+- **Backend**: Flask, SQLAlchemy, python-pptx
+- **Frontend**: Alpine.js, Axios, vanilla JavaScript
+- **Database**: SQLite (default)
+- **Authentication**: Flask-Login with session management
+
+For detailed API documentation, see [API.md](API.md).
+
+---
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+<div align="center">
+
+**Made with ❤️ for visual learners**
+
+</div>
