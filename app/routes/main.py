@@ -1,7 +1,7 @@
 
 from flask import Blueprint, jsonify, redirect, render_template
 from flask_login import current_user
-from app.models import Draft, Set
+from app.models import Draft, Image, Set, SkipImage
 from app.app import db, login_required, hid, decode
 from app.presentation import create_draft
 
@@ -28,10 +28,14 @@ def view_set(set_hash: str):
     if not isinstance(set_id, int): return "Invalid set hash", 400
     set_ = Set.query.get(set_id)
     if not isinstance(set_, Set): return "Set not found", 404
+
+    draft = Draft.query.filter(Draft.set_id == set_.id).first()
+    if not isinstance(draft, Draft): return "Associated draft not found", 404
     
     data = {
         "id": set_hash,
         "name": set_.name,
+        "draft_id": hid.encode(draft.id),
         "description": set_.description,
         "created_at": set_.created_at.isoformat(),
         "images": [
@@ -49,14 +53,20 @@ def play_set(set_hash: str):
     set_ = Set.query.get(set_id)
     if not isinstance(set_, Set): return "Set not found", 404
 
+    images = [
+        { "id": i.id, "filename": i.filename, "label": i.label }
+        for i in Image.query\
+                .outerjoin(SkipImage, (Image.id == SkipImage.image_id) & (SkipImage.user_id == current_user.id))\
+                .where(Image.set_id == set_.id, SkipImage.id == None).all()
+    ]
+
     data = {
         "id": set_.hash(),
         "name": set_.name,
         "description": set_.description,
         "created_at": set_.created_at.isoformat(),
-        "images": [
-            { "id": i.id, "label": i.label } for i in set_.images
-        ]
+        "hash": set_.hash(),
+        "images": images
     }
 
     return render_template('play_set.html', set = data)
