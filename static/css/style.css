@@ -25,12 +25,6 @@
 .hidden {display: none;}
 .hidden-fixed {position: fixed; top: 0px; display: none;}
 
-/* .btn {
-    background-color: var(--c-primary);
-    color: var(--c-white);
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: var(--fs-medium);
+/* [x-data="container"] {
+    background-color: red;
 } */

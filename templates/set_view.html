@@ -6,7 +6,9 @@
         <p>Description: {{ set.description }}</p>
         <p>Created at: {{ set.created_at }}</p>
         <a href="/set/{{ set.id }}/play">Play</a>
-        <a href="/draft/{{ set.draft_id }}">Edit</a>
+        {% if current_user.is_authenticated and current_user.id == set.owner_id %}
+            <a href="/draft/{{ set.draft_id }}">Edit</a>
+        {% endif %}
 
         <div>
             <template x-for="image in images" :key="image.id">
@@ -24,7 +26,8 @@
         document.addEventListener('alpine:init', () => {
             Alpine.data('container', () => ({
                 images: JSON.parse('{{ set.images|tojson }}'),
+                is_author: +'{{ current_user.is_authenticated and current_user.id == set.owner_id }}',
             }));
-        });
+        }); 
     </script>
 {% endblock %}

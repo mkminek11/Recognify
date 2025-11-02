@@ -29,6 +29,9 @@ class User(db.Model, UserMixin):
 
     def authenticate(self, password: str) -> bool:
         return werkzeug.security.check_password_hash(self.password, password)
+
+    def is_admin(self) -> bool:
+        return self.permission >= 10
     
 
 class Set(db.Model):

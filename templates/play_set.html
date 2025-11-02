@@ -20,7 +20,9 @@
             </div>
             <button @click="nextImage(1)"><i class="fas fa-check"></i></button>
             <button @click="turn()"><i class="fas fa-rotate-left"></i></button>
-            <button @click="know()" title="Click this if you are already sure with this, so we won't show you this image anymore."><i class="fas fa-lightbulb"></i></button>
+            {% if current_user.is_authenticated %}
+                <button @click="know()" title="Click this if you are already sure with this, so we won't show you this image anymore."><i class="fas fa-lightbulb"></i></button>
+            {% endif %}
             <button @click="nextImage(0)"><i class="fas fa-times"></i></button>
 
             <label for="mouse_controls">Enable mouse controls</label>
@@ -42,7 +44,7 @@
                 images: JSON.parse('{{ set.images|tojson }}'),
                 correct: 0,
                 showLabel: false,
-                mouseControls: false,
+                mouseControls: true,
                 keyboardControls: true,
 
                 init() {
