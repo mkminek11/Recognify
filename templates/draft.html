@@ -3,6 +3,14 @@
 {% block content %}
     <h1>Create a New Set</h1>
     <div x-data="formHandler" x-init="init()">
+        <dialog x-ref="inaturalistDialog">
+            <button @click="$refs.inaturalistDialog.close()">Close</button>
+            <h2>Import from iNaturalist</h2>
+            <p>Write species names here, each on a new line.</p>
+            <textarea x-ref="inaturalistTextarea"></textarea>
+            <button @click="importFromInaturalist()">Import</button>
+        </dialog>
+
         <div>
             <label for="name">Set title:</label>
             <input type="text" id="name" x-ref="titleInput" x-model="title" x-show="titleEditMode" @blur="saveTitle();" />
@@ -19,17 +27,18 @@
             <label for="images" class="btn">Upload</label>
             <input type="file" id="images" class="hidden" x-ref="imageInput" multiple @change="addImages($event)" />
 
-            <!-- <label for="img_online">Add online:</label> -->
             <input type="url" id="img_url" x-ref="imgURL" placeholder="Image URL" />
             <button @click="addURL">Add URL</button>
 
             <label for="pres" class="btn">Extract from a presentation</label>
             <input type="file" id="pres" class="hidden" x-ref="presInput" @change="preparePres($event)" />
 
+            <button @click="$refs.inaturalistDialog.showModal()">Import from iNaturalist</button>
+
             <div x-ref="imageList">
                 <template x-for="(image, index) in images" :key="index">
                     <div>
-                        <img :src="image.image.src" width="100" />
+                        <img :src="image.image.data" width="100" />
                         <input type="text" 
                                :id="`input_${index}`"
                                x-model="imageLabels[image.image.hash]" 
@@ -98,7 +107,7 @@
                     console.log("Blur");
                     const image = this.images[index].image;
                     const label = this.imageLabels[image.hash] || '';
-                    await axios.post('/api/draft/{{ draft.hash() }}/image/' + image.id, { label });
+                    await axios.post('/api/draft/{{ draft.hash() }}/image/' + image.dbid, { label });
                 },
 
                 removeImage(index) {
@@ -108,7 +117,7 @@
                     }
                     this.images.splice(index, 1);
 
-                    axios.delete('/api/draft/{{ draft.hash() }}/image/' + image.id);
+                    axios.delete('/api/draft/{{ draft.hash() }}/image/' + image.dbid);
                 },
 
                 async addImages(event) {
@@ -120,7 +129,7 @@
                         // if (file.size > 10 * 1024 * 1024) {continue;} // 10MB limit
                         fd.append('images', file);
 
-                        const cimg = new window.CustomImage(file);
+                        const cimg = window.CustomImage.fromFile(file);
                         await cimg.ready;
 
                         if (!this.images.some(existing => existing.image.hash === cimg.hash)) {
@@ -135,7 +144,7 @@
                     });
 
                     for (let i = 0; i < added; i++) {
-                        this.images[this.images.length - added + i - 1].image.id = ids.data.images[i].id;
+                        this.images[this.images.length - added + i - 1].image.dbid = ids.data.images[i].id;
                     }
                 },
 
@@ -144,7 +153,7 @@
                     if (!url) return;
 
                     try {
-                        const cimg = new window.CustomImage(url);
+                        const cimg = await window.CustomImage.fromUrl(url);
                         await cimg.ready;
 
                         if (this.images.some(existing => existing.image.hash === cimg.hash)) {
@@ -153,7 +162,7 @@
                         }
 
                         const result = await axios.post('/api/draft/{{ draft.hash() }}/gallery/url', { url });
-                        cimg.id = result.data.id;
+                        cimg.dbid = result.data.id;
 
                         this.images.push({ image: cimg, slide: "" });
                         this.imageLabels[cimg.hash] = '';
@@ -174,19 +183,15 @@
                     const file = event.target.files[0];
                     if (!file) return;
 
-                    console.log(`Image src: ${this.images[index].image.src}`);
-
                     const fd = new FormData();
                     fd.append('image', file);
-                    fd.append('change_id', this.images[index].image.id);
-                    const cimg = new window.CustomImage(file);
-                    cimg.id = this.images[index].image.id;
+                    fd.append('change_id', this.images[index].image.dbid);
+                    const cimg = window.CustomImage.fromFile(file, this.images[index].image.dbid);
                     await cimg.ready;
 
                     await axios.post('/api/draft/{{ draft.hash() }}/change/image', fd, {
                         headers: { 'Content-Type': 'multipart/form-data' }
                     });
-                    console.log(`New Image src: ${cimg.src}`);
 
                     this.images[index].image = cimg;
                     this.$refs.changeFromFileInput.value = '';
@@ -195,13 +200,12 @@
                 async changeFromURL(index) {
                     url = prompt("Insert image URL:");
                     if (!url) {return;}
-                    const cimg = new window.CustomImage(url);
-                    cimg.id = this.images[index].image.id;
+                    const cimg = await window.CustomImage.fromUrl(url, this.images[index].image.dbid);
                     await cimg.ready;
                     
                     const fd = new FormData();
                     fd.append('url', url);
-                    fd.append('change_id', cimg.id);
+                    fd.append('change_id', cimg.dbid);
                     await axios.post('/api/draft/{{ draft.hash() }}/change/url', fd);
 
                     this.images[index].image = cimg;
@@ -237,7 +241,7 @@
                 async addToGallery(images, labels = []) {
                     // Process all images in parallel instead of sequentially
                     const imagePromises = images.map(async (imageData) => {
-                        const cimg = new window.CustomImage('/api/draft/{{ draft.hash() }}/image/' + imageData.id, null, imageData);
+                        const cimg = await window.CustomImage.fromUrl('/api/draft/{{ draft.hash() }}/image/' + imageData.id, imageData.id);
                         await cimg.ready;
                         return { cimg, imageData };
                     });
@@ -308,6 +312,23 @@
 
                     await axios.delete('/api/draft/{{ draft.hash() }}');
                     window.location.href = '/';
+                },
+
+                async importFromInaturalist() {
+                    const textarea = this.$refs.inaturalistTextarea;
+                    const speciesNames = textarea.value.split('\n').map(name => name.trim()).filter(name => name);
+
+                    await axios.get('/api/inaturalist/links', {
+                        params: { species: speciesNames }
+                    }).then(async (response) => {
+                        const imageSets = response.data.image_sets || {};
+                        
+                        for (const { query, urls } of Object.entries(imageSets)) {
+                            for (const url of urls) {
+
+                            }
+                        }
+                    });
                 }
             }));
         });

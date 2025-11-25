@@ -196,6 +196,8 @@ def delete_draft_image(draft_hash: str, image_id: int):
 
 @bp.route('/draft/<string:draft_hash>/gallery', methods=['GET'])
 def fetch_gallery(draft_hash: str):
+    """ Fetches all images and labels for a draft """
+
     draft_id = decode(draft_hash)
     if not isinstance(draft_id, int): return jsonify({"error": "Invalid draft hash."}), 400
     draft = Draft.query.get(draft_id)
@@ -210,6 +212,8 @@ def fetch_gallery(draft_hash: str):
 
 @bp.route('/draft/<string:draft_hash>/gallery', methods=['POST'])
 def add_image(draft_hash: str):
+    """ Add image to draft from files """
+
     draft_id = decode(draft_hash)
     if not isinstance(draft_id, int): return jsonify({"error": "Invalid draft hash."}), 400
     draft = Draft.query.get(draft_id)
@@ -239,6 +243,8 @@ def add_image(draft_hash: str):
 
 @bp.route('/draft/<string:draft_hash>/gallery/url', methods=['POST'])
 def add_image_url(draft_hash: str):
+    """ Add image to draft gallery from URL """
+
     draft_id = decode(draft_hash)
     if not isinstance(draft_id, int): return jsonify({"error": "Invalid draft hash."}), 400
     draft = Draft.query.get(draft_id)
