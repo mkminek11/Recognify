@@ -130,6 +130,7 @@ def get_free_filename(dir: str, ext: str, prefix: str = "tmp", start: int = 1) -
 def get_free_index(dir: str, prefix: str = "tmp", ext: str = "*", start: int = 1) -> int:
     """ Get the next free index for filenames in the specified directory with the given prefix and extension. """
     counter = start
+    os.makedirs(dir, exist_ok = True)
     while True:
         # if not os.path.exists(path): return counter
         for f in os.listdir(dir):

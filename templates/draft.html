@@ -11,6 +11,24 @@
             <button @click="importFromInaturalist()">Import</button>
         </dialog>
 
+        <dialog x-ref="importedImagesDialog">
+            <button @click="$refs.inaturalistDialog.close()">Close</button>
+            <h2>Imported Images</h2>
+
+            <div>
+                <template x-for="(imageLink, label, id, selected) in importedImageLinks" :key="id">
+                    <div>
+                        <input type="checkbox" :id="`imported_${id}`" x-model="importedImageLinks[id].selected" />
+                        <label x-bind:for="`imported_${id}`">
+                            <img :src="importedImageLinks[id].imageLink" width="100" :class="{ 'checked': importedImageLinks[id].selected }" />
+                        </label>
+                    </div>
+                </template>
+            </div>
+
+            <button :disabled="!importedImageLinks.some(link => link.selected)" @click="insertImportedImages()">Insert</button>
+        </dialog>
+
         <div>
             <label for="name">Set title:</label>
             <input type="text" id="name" x-ref="titleInput" x-model="title" x-show="titleEditMode" @blur="saveTitle();" />
@@ -83,6 +101,7 @@
                 images: [], // list of { image: CustomImage, slide: string }
                 imageLabels: {}, // map of imageHash: string -> label: string
                 labels: [], // list of { label: string, slide: string }
+                importedImageLinks: [], // list of { imageLink: string, label: string, id: int, selected: boolean }
 
                 init() {
                     this.$refs.titleInput.focus();
@@ -316,20 +335,51 @@
 
                 async importFromInaturalist() {
                     const textarea = this.$refs.inaturalistTextarea;
-                    const speciesNames = encodeURIComponent(textarea.value).split('%0A').map(name => name.trim()).filter(name => name);
+                    const speciesNames = textarea.value.split('\n').map(name => name.trim()).filter(name => name);
+                    this.$refs.inaturalistDialog.close();
 
                     await axios.get('/api/inaturalist/links', {
                         params: { species: speciesNames.join(',') }
                     }).then(async (response) => {
-                        const imageSets = response.data.image_sets || {};
-                        
-                        for (const { query, urls } of Object.entries(imageSets)) {
-                            for (const url of urls) {
+                        const imageSets = response.data.links || {};
+                        this.importedImageLinks = [];
+                        this.$refs.importedImagesDialog.showModal();
 
+                        console.log("Received image sets:", imageSets);
+                        
+                        for (const [species, urls] of Object.entries(imageSets)) {
+                            for (const url of urls) {
+                                console.log("Processing URL:", url);
+                                let id = url.split('/')[-2];
+                                this.importedImageLinks.push({ imageLink: url, label: species, id: id, selected: false });
                             }
                         }
+
+                        console.log("Imported image links:", this.importedImageLinks);
                     });
-                }
+                },
+            
+                async insertImportedImages() {
+                    this.$refs.importedImagesDialog.close();
+
+                    for (const { imageLink: url, label, id, selected } of this.importedImageLinks) {
+                        if (!selected) {continue;}
+
+                        const cimg = await window.CustomImage.fromUrl(url);
+                        await cimg.ready;
+                        
+                        if (this.images.some(existing => existing.image.hash === cimg.hash)) {
+                            alert("This image is already added.");
+                            continue;
+                        }
+
+                        const result = await axios.post('/api/draft/{{ draft.hash() }}/gallery/url', { url });
+                        cimg.dbid = result.data.id;
+
+                        this.images.push({ image: cimg, slide: "" });
+                        this.imageLabels[cimg.hash] = label;
+                    }
+                },
             }));
         });
     </script>

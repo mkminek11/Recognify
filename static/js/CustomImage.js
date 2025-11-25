@@ -45,8 +45,4 @@ export class CustomImage extends Image {
     const blob = await response.blob();
     return new CustomImage(URL.createObjectURL(blob), id);
   }
-
-  type() {
-    return "[CustomImage]";
-  }
 }
