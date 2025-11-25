@@ -2,7 +2,7 @@
 
 {% block content %}
     <h1>Create a New Set</h1>
-    <div x-data="formHandler" x-init="init()">
+    <div x-data="formHandler">
         <dialog x-ref="inaturalistDialog">
             <button @click="$refs.inaturalistDialog.close()">Close</button>
             <h2>Import from iNaturalist</h2>
