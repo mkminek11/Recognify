@@ -2,7 +2,7 @@
 
 {% block content %}
     <h1>Create a New Set</h1>
-    <div x-data="formHandler" x-init="init()">
+    <div x-data="formHandler">
         <dialog x-ref="inaturalistDialog">
             <button @click="$refs.inaturalistDialog.close()">Close</button>
             <h2>Import from iNaturalist</h2>
@@ -221,7 +221,7 @@
                     formData.append('presentation', file);
                     formData.append('draft', '{{ draft.hash() }}');
 
-                    const results = await axios.post('/api/presentation', formData, {
+                    const results = await axios.post('/api/draft/presentation', formData, {
                         headers: { 'Content-Type': 'multipart/form-data' }
                     });
 
@@ -316,10 +316,10 @@
 
                 async importFromInaturalist() {
                     const textarea = this.$refs.inaturalistTextarea;
-                    const speciesNames = textarea.value.split('\n').map(name => name.trim()).filter(name => name);
+                    const speciesNames = encodeURIComponent(textarea.value).split('%0A').map(name => name.trim()).filter(name => name);
 
                     await axios.get('/api/inaturalist/links', {
-                        params: { species: speciesNames }
+                        params: { species: speciesNames.join(',') }
                     }).then(async (response) => {
                         const imageSets = response.data.image_sets || {};
                         

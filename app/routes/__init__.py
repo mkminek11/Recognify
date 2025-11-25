@@ -4,6 +4,10 @@ from app.routes.admin import bp as admin_bp
 from app.routes.api import bp as api_bp
 from app.routes.auth import bp as auth_bp
 
+import app.routes.api.draft
+import app.routes.api.general
+import app.routes.api.inaturalist
+
 from app.app import app
 
 app.register_blueprint(main_bp)

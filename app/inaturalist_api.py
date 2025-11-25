@@ -1,6 +1,7 @@
 
 import os, re, time, requests
 from typing import Iterator
+from concurrent.futures import ThreadPoolExecutor
 
 OUT = "img"
 PER_PAGE = 100
@@ -35,22 +36,36 @@ def get_page(query: str, page_i: int) -> list[dict]:
     res: list[dict] = r.json().get("results", [])
     return res
 
-def download_photos(query: str, max_img: int) -> None:
-    downloaded = 0
+def get_image_links(species: str, max_images: int) -> list[str]:
+    image_links: list[str] = []
+    saved = 0
     page_i = 0
     
-    while downloaded < max_img:
-        page = get_page(query, page_i)
+    while saved < max_images:
+        page = get_page(species, page_i)
         if not page: break
 
         for observation in page:
-            if downloaded >= max_img: break
-            obs_id: int = observation.get("id", 0)
-            
+            if saved >= max_images: break
             for photo in observation.get("photos", []):
-                if downloaded >= max_img: break
-                success = download_photo(photo, obs_id, downloaded)
-                if success: downloaded += 1
+                if saved >= max_images: break
+                base_url: str = photo.get("url", "")
+                if base_url:
+                    # Use img_candidates to get best quality URL (converts square→original/large)
+                    candidates = img_candidates(base_url)
+                    if candidates:
+                        image_links.append(candidates[0])
+                        saved += 1
+        page_i += 1
+    
+    return image_links
+
+def download_photos(query: str, max_img: int) -> None:
+    links = get_image_links(query, max_img)
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        tasks = [executor.submit(download_candidate, link, 0, i) for i, link in enumerate(links)]
+        for future in tasks:
+            future.result()
                 
 def download_photo(photo: dict, obs_id: int, downloaded: int) -> bool:
     original_size_url: str = photo.get("url", "") or photo.get("large_url", "") or photo.get("original_url", "")
@@ -85,4 +100,13 @@ def write_file(content_iter: Iterator[bytes], path: str) -> None:
             if chunk:
                 f.write(chunk)
 
-__all__ = ["download_photos"]
+def get_inaturalist_image_links(species_list: list[str], max_images_per_species: int = 10) -> dict[str, list[str]]:
+    image_sets: dict[str, list[str]] = {}
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        futures = {executor.submit(get_image_links, species, max_images_per_species): species for species in species_list}
+        for future in futures:
+            species = futures[future]
+            image_sets[species] = future.result()
+    return image_sets
+
+__all__ = ["download_photos", "get_inaturalist_image_links"]
