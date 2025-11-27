@@ -16,22 +16,13 @@
             <h2>Imported Images</h2>
 
             <div>
-                <!-- <template x-for="(imageLink, label, id, selected) in importedImageLinks" :key="id">
-                    <div>
-                        <input type="checkbox" :id="`imported_${id}`" x-model="importedImageLinks[id].selected" />
-                        <label x-bind:for="`imported_${id}`">
-                            <img :src="importedImageLinks[id].imageLink" width="100" :class="{ 'checked': importedImageLinks[id].selected }" />
-                        </label>
-                    </div>
-                </template> -->
-
-                <template x-for="(images, species) in importedImageLinks" :key="species">
+                <template x-for="([species, images], spIndex) in Object.entries(importedImageLinks)" :key="spIndex">
                     <div>
                         <p x-text="species"></p>
                         <template x-for="(image, index) in images" :key="index">
                             <div>
-                                <input type="checkbox" :id="`imported_${image.id}`" x-model="image.selected" />
-                                <label x-bind:for="`imported_${image.id}`">
+                                <input type="checkbox" :id="`imported_${spIndex}_${image.id}`" x-model="image.selected" />
+                                <label x-bind:for="`imported_${spIndex}_${image.id}`">
                                     <img :src="image.imageLink" width="100"
                                         :class="{ 'checked': image.selected }" />
                                 </label>
@@ -382,29 +373,44 @@
                 async insertImportedImages() {
                     this.$refs.importedImagesDialog.close();
 
+                    // Collect all selected images first
+                    const selectedImages = [];
                     for (const species in this.importedImageLinks) {
-                        for (const { imageLink: url, label, id, selected } of this.importedImageLinks[species]) {
-                            if (!selected) {continue;}
-    
-                            const cimg = await window.CustomImage.fromUrl(url);
-                            await cimg.ready;
-                            
-                            if (this.images.some(existing => existing.image.hash === cimg.hash)) {
-                                alert("This image is already added.");
-                                continue;
+                        for (const imageData of this.importedImageLinks[species]) {
+                            if (imageData.selected) {
+                                selectedImages.push(imageData);
                             }
-    
-                            const result = await axios.post('/api/draft/{{ draft.hash() }}/gallery/url', { url });
-                            cimg.dbid = result.data.id;
-    
-                            this.images.push({ image: cimg, slide: "" });
-                            this.imageLabels[cimg.hash] = label;
                         }
+                    }
+
+                    // Process all selected images in parallel
+                    const imagePromises = selectedImages.map(async ({ imageLink: url, label, id }) => {
+                        const cimg = await window.CustomImage.fromUrl(url);
+                        await cimg.ready;
+                        return { cimg, label, url };
+                    });
+                    
+                    const imageResults = await Promise.all(imagePromises);
+                    
+                    // Add images to gallery sequentially to maintain order
+                    for (const { cimg, label, url } of imageResults) {
+                        if (this.images.some(existing => existing.image.hash === cimg.hash)) {
+                            alert("This image is already added.");
+                            continue;
+                        }
+
+                        const result = await axios.post('/api/draft/{{ draft.hash() }}/gallery/url', { url });
+                        cimg.dbid = result.data.id;
+
+                        this.images.push({ image: cimg, slide: "" });
+                        this.imageLabels[cimg.hash] = label;
+
+                        axios.post('/api/draft/{{ draft.hash() }}/image/' + cimg.dbid, { label });
                     }
                 },
 
                 anyImageSelected() {
-                    return !Object.values(this.importedImageLinks).some(images => images.some(link => link.selected))
+                    return Object.values(this.importedImageLinks).some(images => images.some(image => image.selected));
                 },
             }));
         });
