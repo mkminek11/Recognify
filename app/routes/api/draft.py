@@ -5,27 +5,18 @@ import requests
 from flask_login import current_user
 from flask import jsonify, request, send_file
 from app.models import Draft, DraftAccess, DraftImage, DraftLabel, Image, Set, User
-from app.app import VALID_IMG_EXTENSIONS, db, UPLOAD_PATH, hid, decode
+from app.app import VALID_IMG_EXTENSIONS, db, UPLOAD_PATH, draft_access_required, hid, decode, permission_required
 from app.presentation import extract_images, get_free_filename, get_free_index, temp_remove
 from app.routes.api import bp
 
 
 
-@bp.route('/draft/presentation', methods=['POST'])
-def process_presentation():
+@bp.route('/draft/<string:draft_hash>/presentation', methods=['POST'])
+@draft_access_required
+def process_presentation(draft: Draft):
     print("Processing presentation...", request.files["presentation"], request.form["draft"])
     presentation = request.files['presentation']
     if not presentation: return jsonify({"error": "No presentation file provided."}), 400
-
-    draft_hash = request.form.get('draft', '')
-    draft_id = decode(draft_hash)
-    if not draft_id: return jsonify({"error": "No draft ID provided."}), 400
-
-    draft = Draft.query.get(draft_id)
-    if not isinstance(draft, Draft): return jsonify({"error": "Draft not found."}), 404
-    if draft.owner != current_user: return jsonify({"error": "Unauthorized."}), 403
-
-    print("Draft found:", draft.id)
 
     result = extract_images(presentation, draft.id)
     if not result: return jsonify({"error": "Failed to process presentation."}), 500
@@ -39,33 +30,26 @@ def process_presentation():
 
 
 @bp.route('/draft', methods=['DELETE'])
+@permission_required(10)
 def delete_all_drafts():
-    user = current_user
-    if not isinstance(user, User) or not user.is_authenticated or not user.permission >= 1:
-        return jsonify({"error": "Unauthorized."}), 403
     sets_path = os.path.join(UPLOAD_PATH, "sets")
     shutil.rmtree(sets_path)
     os.makedirs(sets_path, exist_ok=True)
 
-    # Use bulk deletes via the query API to remove rows safely
-    DraftImage.query.delete()
-    DraftLabel.query.delete()
-    Draft.query.delete()
-    Image.query.delete()
-    Set.query.delete()
+    db.session.query(DraftImage).delete()
+    db.session.query(DraftLabel).delete()
+    db.session.query(DraftAccess).delete()
+    db.session.query(Draft).delete()
+    db.session.query(Image).delete()
+    db.session.query(Set).delete()
     db.session.commit()
     return "", 204
 
 
 
 @bp.route('/draft/<string:draft_hash>/', methods=['DELETE'])
-def delete_draft(draft_hash: str):
-    draft_id = decode(draft_hash)
-    if not isinstance(draft_id, int): return jsonify({"error": "Invalid draft hash."}), 400
-    draft = Draft.query.get(draft_id)
-    if not isinstance(draft, Draft): return jsonify({"error": "Draft not found."}), 404
-    if draft.owner != current_user: return jsonify({"error": "Unauthorized."}), 403
-
+@draft_access_required
+def delete_draft(draft: Draft):
     shutil.rmtree(os.path.join(UPLOAD_PATH, "sets", f"draft_{draft.id}"))
     DraftImage.query.filter(DraftImage.draft_id == draft.id).delete()
     DraftLabel.query.filter(DraftLabel.draft_id == draft.id).delete()
@@ -76,13 +60,8 @@ def delete_draft(draft_hash: str):
 
 
 @bp.route('/draft/<string:draft_hash>/rename', methods=['POST'])
-def rename_draft(draft_hash: str):
-    draft_id = decode(draft_hash)
-    if not isinstance(draft_id, int): return jsonify({"error": "Invalid draft hash."}), 400
-    draft = Draft.query.get(draft_id)
-    if not isinstance(draft, Draft): return jsonify({"error": "Draft not found."}), 404
-    if draft.owner != current_user: return jsonify({"error": "Unauthorized."}), 403
-
+@draft_access_required
+def rename_draft(draft: Draft):
     data: dict[str, str] = request.get_json()
     new_title = data.get('title', '').strip()
     if not new_title: return jsonify({"error": "Title cannot be empty."}), 400
@@ -94,13 +73,8 @@ def rename_draft(draft_hash: str):
 
 
 @bp.route('/draft/<string:draft_hash>/description', methods=['POST'])
-def update_draft_description(draft_hash: str):
-    draft_id = decode(draft_hash)
-    if not isinstance(draft_id, int): return jsonify({"error": "Invalid draft hash."}), 400
-    draft = Draft.query.get(draft_id)
-    if not isinstance(draft, Draft): return jsonify({"error": "Draft not found."}), 404
-    if draft.owner != current_user: return jsonify({"error": "Unauthorized."}), 403
-
+@draft_access_required
+def update_draft_description(draft: Draft):
     data: dict[str, str] = request.get_json()
     new_description = data.get('description', '').strip()
 
@@ -111,15 +85,10 @@ def update_draft_description(draft_hash: str):
 
 
 @bp.route('/draft/<string:draft_hash>/image/<int:image_id>', methods=['POST'])
-def update_image_label(draft_hash: str, image_id: int):
-    draft_id = decode(draft_hash)
-    if not isinstance(draft_id, int): return jsonify({"error": "Invalid draft hash."}), 400
-    draft = Draft.query.get(draft_id)
-    if not isinstance(draft, Draft): return jsonify({"error": "Draft not found."}), 404
-    if draft.owner != current_user: return jsonify({"error": "Unauthorized."}), 403
-
+@draft_access_required
+def update_image_label(draft: Draft, image_id: int):
     image = DraftImage.query.get(image_id)
-    if not isinstance(image, DraftImage) or image.draft_id != draft_id:
+    if not isinstance(image, DraftImage) or image.draft_id != draft.id:
         return jsonify({"error": "Image not found in draft."}), 404
 
     data: dict[str, str] = request.get_json()
@@ -132,25 +101,18 @@ def update_image_label(draft_hash: str, image_id: int):
 
 
 @bp.route('/draft/<string:draft_hash>/image/<int:image_id>', methods=['GET'])
-def get_draft_image(draft_hash: str, image_id: int):
-    draft_id = decode(draft_hash)
-    if not isinstance(draft_id, int): return jsonify({"error": "Invalid draft hash."}), 400
+@draft_access_required
+def get_draft_image(draft: Draft, image_id: int):
     image = db.session.query(DraftImage).join(Draft).filter(
         DraftImage.id == image_id,
-        DraftImage.draft_id == draft_id,
+        DraftImage.draft_id == draft.id,
         Draft.owner == current_user
     ).first()
     
     if not image:
-        draft = Draft.query.get(draft_id)
-        if not draft:
-            return jsonify({"error": "Draft not found."}), 404
-        elif draft.owner != current_user:
-            return jsonify({"error": "Unauthorized."}), 403
-        else:
-            return jsonify({"error": "Image not found in draft."}), 404
+        return jsonify({"error": "Image not found in draft."}), 404
 
-    image_path = os.path.join(UPLOAD_PATH, "sets", f"draft_{draft_id}", image.filename)
+    image_path = os.path.join(UPLOAD_PATH, "sets", f"draft_{draft.id}", image.filename)
     if not os.path.exists(image_path): return jsonify({"error": "Image file not found."}), 404
     
     return send_file(image_path)
@@ -158,26 +120,17 @@ def get_draft_image(draft_hash: str, image_id: int):
 
 
 @bp.route('/draft/<string:draft_hash>/image/<int:image_id>', methods=['DELETE'])
-def delete_draft_image(draft_hash: str, image_id: int):
-    draft_id = decode(draft_hash)
-    if not isinstance(draft_id, int): return jsonify({"error": "Invalid draft hash."}), 400
-
+@draft_access_required
+def delete_draft_image(draft: Draft, image_id: int):
     image = db.session.query(DraftImage).join(Draft).filter(
         DraftImage.id == image_id,
-        DraftImage.draft_id == draft_id,
-        Draft.owner == current_user
+        DraftImage.draft_id == draft.id
     ).first()
 
     if not image:
-        draft = Draft.query.get(draft_id)
-        if not draft:
-            return jsonify({"error": "Draft not found."}), 404
-        elif draft.owner != current_user:
-            return jsonify({"error": "Unauthorized."}), 403
-        else:
-            return jsonify({"error": "Image not found in draft."}), 404
+        return jsonify({"error": "Image not found in draft."}), 404
 
-    # image_path = os.path.join(UPLOAD_PATH, "sets", f"draft_{draft_id}", image.filename)
+    # image_path = os.path.join(UPLOAD_PATH, "sets", f"draft_{draft.id}", image.filename)
     # if os.path.exists(image_path):
     #     os.remove(image_path)
 
@@ -188,15 +141,9 @@ def delete_draft_image(draft_hash: str, image_id: int):
 
 
 @bp.route('/draft/<string:draft_hash>/gallery', methods=['GET'])
-def fetch_gallery(draft_hash: str):
+@draft_access_required
+def fetch_gallery(draft: Draft):
     """ Fetches all images and labels for a draft """
-
-    draft_id = decode(draft_hash)
-    if not isinstance(draft_id, int): return jsonify({"error": "Invalid draft hash."}), 400
-    draft = Draft.query.get(draft_id)
-    if not isinstance(draft, Draft): return jsonify({"error": "Draft not found."}), 404
-    if draft.owner != current_user: return jsonify({"error": "Unauthorized."}), 403
-
     images = [{"id": img.id, "filename": img.filename, "label": img.label, "slide": img.slide} for img in draft.images]
     labels = [{"text": lbl.label, "slide": lbl.slide} for lbl in draft.labels]
     return jsonify({"images": images, "labels": labels}), 200
@@ -204,19 +151,13 @@ def fetch_gallery(draft_hash: str):
 
 
 @bp.route('/draft/<string:draft_hash>/gallery', methods=['POST'])
-def add_image(draft_hash: str):
+@draft_access_required
+def add_image(draft: Draft):
     """ Add image to draft from files """
-
-    draft_id = decode(draft_hash)
-    if not isinstance(draft_id, int): return jsonify({"error": "Invalid draft hash."}), 400
-    draft = Draft.query.get(draft_id)
-    if not isinstance(draft, Draft): return jsonify({"error": "Draft not found."}), 404
-    if draft.owner != current_user: return jsonify({"error": "Unauthorized."}), 403
-
     images = request.files.getlist('images')
     if not images: return jsonify({"error": "No image files provided."}), 400
 
-    path = os.path.join(UPLOAD_PATH, "sets", f"draft_{draft_id}")
+    path = os.path.join(UPLOAD_PATH, "sets", f"draft_{draft.id}")
     index = get_free_index(path, "img", "*")
     for image in images:
         extension = os.path.splitext(image.filename or "")[1].lower().lstrip('.')
@@ -227,7 +168,7 @@ def add_image(draft_hash: str):
         image_path = os.path.join(path, filename)
         image.save(image_path)
 
-        i = DraftImage(draft_id, filename, 0, 0)
+        i = DraftImage(draft.id, filename, 0, 0)
         db.session.add(i)
     db.session.commit()
     return jsonify({"message": "Gallery updated successfully."}), 200
@@ -235,15 +176,9 @@ def add_image(draft_hash: str):
 
 
 @bp.route('/draft/<string:draft_hash>/gallery/url', methods=['POST'])
-def add_image_url(draft_hash: str):
+@draft_access_required
+def add_image_url(draft: Draft):
     """ Add image to draft gallery from URL """
-
-    draft_id = decode(draft_hash)
-    if not isinstance(draft_id, int): return jsonify({"error": "Invalid draft hash."}), 400
-    draft = Draft.query.get(draft_id)
-    if not isinstance(draft, Draft): return jsonify({"error": "Draft not found."}), 404
-    if draft.owner != current_user: return jsonify({"error": "Unauthorized."}), 403
-
     data: dict[str, str] = request.get_json()
     image_url = data.get('url', '').strip()
     if not image_url: return jsonify({"error": "No image URL provided."}), 400
@@ -263,7 +198,7 @@ def add_image_url(draft_hash: str):
     if not extension in VALID_IMG_EXTENSIONS:
         return jsonify({"error": f"Not a valid image extension: {extension}"}), 400
     
-    path = os.path.join(UPLOAD_PATH, "sets", f"draft_{draft_id}")
+    path = os.path.join(UPLOAD_PATH, "sets", f"draft_{draft.id}")
     index = get_free_index(path, "img", "*")
     filename = get_free_filename(path, extension, "img", index)
 
@@ -273,7 +208,7 @@ def add_image_url(draft_hash: str):
     with open(image_path, 'wb') as f:
         f.write(response.content)
 
-    i = DraftImage(draft_id, filename, -1, 0)
+    i = DraftImage(draft.id, filename, -1, 0)
     db.session.add(i)
     db.session.commit()
     return jsonify({"message": "Image added successfully.", "id": i.id}), 200
@@ -281,26 +216,21 @@ def add_image_url(draft_hash: str):
 
 
 @bp.route('/draft/<string:draft_hash>/change/image', methods=['POST'])
-def change_image_from_file(draft_hash: str):
-    draft_id = decode(draft_hash)
-    if not isinstance(draft_id, int): return jsonify({"error": "Invalid draft hash."}), 400
-    draft = Draft.query.get(draft_id)
-    if not isinstance(draft, Draft): return jsonify({"error": "Draft not found."}), 404
-    if draft.owner != current_user: return jsonify({"error": "Unauthorized."}), 403
-
+@draft_access_required
+def change_image_from_file(draft: Draft):
     change_id = request.form.get('change_id', type=int)
     if not change_id: return jsonify({"error": "No change ID provided."}), 400
 
     image_file = request.files.get('image')
     if not image_file: return jsonify({"error": "No image file provided."}), 400
     draft_image = DraftImage.query.get(change_id)
-    if not isinstance(draft_image, DraftImage) or draft_image.draft_id != draft_id:
+    if not isinstance(draft_image, DraftImage) or draft_image.draft_id != draft.id:
         return jsonify({"error": "Image not found in draft."}), 404
 
     extension = os.path.splitext(image_file.filename or "")[1].lower().lstrip('.')
     if not extension in VALID_IMG_EXTENSIONS:
         return jsonify({"error": f"Not a valid image extension: {extension}"}), 400
-    path = os.path.join(UPLOAD_PATH, "sets", f"draft_{draft_id}")
+    path = os.path.join(UPLOAD_PATH, "sets", f"draft_{draft.id}")
     index = get_free_index(path, "img", "*")
     filename = get_free_filename(path, extension, "img", index)
 
@@ -316,11 +246,8 @@ def change_image_from_file(draft_hash: str):
 
 
 @bp.route('/draft/<string:draft_hash>/change/url', methods=['POST'])
-def change_image_from_url(draft_hash: str):
-    draft_id = decode(draft_hash)
-    if not isinstance(draft_id, int): return jsonify({"error": "Invalid draft hash."}), 400
-    draft = Draft.query.get(draft_id)
-    if not isinstance(draft, Draft): return jsonify({"error": "Draft not found."}), 404
+@draft_access_required
+def change_image_from_url(draft: Draft):
     if draft.owner != current_user: return jsonify({"error": "Unauthorized."}), 403
 
     change_id = request.form.get('change_id', 0, type = int)
@@ -330,7 +257,7 @@ def change_image_from_url(draft_hash: str):
     if not url: return jsonify({"error": "No URL provided."}), 400
 
     draft_image = DraftImage.query.get(change_id)
-    if not isinstance(draft_image, DraftImage) or draft_image.draft_id != draft_id:
+    if not isinstance(draft_image, DraftImage) or draft_image.draft_id != draft.id:
         return jsonify({"error": "Image not found in draft."}), 404
     
     print(f"Changing image (id {draft_image.id}) to url '{url}'")
@@ -350,7 +277,7 @@ def change_image_from_url(draft_hash: str):
     if not extension in VALID_IMG_EXTENSIONS:
         return jsonify({"error": f"Not a valid image extension: {extension}"}), 400
     
-    path = os.path.join(UPLOAD_PATH, "sets", f"draft_{draft_id}")
+    path = os.path.join(UPLOAD_PATH, "sets", f"draft_{draft.id}")
     index = get_free_index(path, "img", "*")
     filename = get_free_filename(path, extension, "img", index)
 
@@ -371,12 +298,9 @@ def change_image_from_url(draft_hash: str):
 
 
 @bp.route('/draft/<string:draft_hash>/submit', methods=['POST'])
-def submit_draft(draft_hash: str):
-    draft_id = decode(draft_hash)
-    if not isinstance(draft_id, int): return jsonify({"error": "Invalid draft hash."}), 400
-    draft = Draft.query.get(draft_id)
-    if not isinstance(draft, Draft): return jsonify({"error": "Draft not found."}), 404
-    if draft.owner != current_user: return jsonify({"error": "Unauthorized."}), 403
+@draft_access_required
+def submit_draft(draft: Draft):
+    if not current_user.has_access_to(draft): return jsonify({"error": "Unauthorized."}), 403
     if not draft.images: return jsonify({"error": "Draft has no images."}), 400
 
     set_id = draft.set_id
@@ -401,13 +325,8 @@ def submit_draft(draft_hash: str):
 
 
 @bp.route('/draft/<string:draft_hash>/access', methods=['POST'])
-def add_draft_access(draft_hash: str):
-    draft_id = decode(draft_hash)
-    if not isinstance(draft_id, int): return jsonify({"error": "Invalid draft hash."}), 400
-    draft = Draft.query.get(draft_id)
-    if not isinstance(draft, Draft): return jsonify({"error": "Draft not found."}), 404
-    if draft.owner != current_user: return jsonify({"error": "Unauthorized."}), 403
-
+@draft_access_required
+def add_draft_access(draft: Draft):
     data = request.get_json()
     user = data.get("user", "").strip()
     if not user: return jsonify({"error": "No user provided."}), 400
@@ -422,16 +341,14 @@ def add_draft_access(draft_hash: str):
     return jsonify({"message": "Access granted successfully.", 
                     "user": { "id": user_obj.id, "name": user_obj.username, "email": user_obj.email }}), 200
 
-@bp.route('/draft/<string:draft_hash>/access', methods=['DELETE'])
-def remove_draft_access(draft_hash: str):
-    draft_id = decode(draft_hash)
-    if not isinstance(draft_id, int): return jsonify({"error": "Invalid draft hash."}), 400
-    draft = Draft.query.get(draft_id)
-    if not isinstance(draft, Draft): return jsonify({"error": "Draft not found."}), 404
-    if draft.owner != current_user: return jsonify({"error": "Unauthorized."}), 403
 
+
+@bp.route('/draft/<string:draft_hash>/access', methods=['DELETE'])
+@draft_access_required
+def remove_draft_access(draft: Draft):
     data = request.get_json()
     user = data.get("user", "").strip()
+    # TODO
 
     print(request.get_json())
     return ""

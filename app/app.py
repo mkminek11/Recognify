@@ -65,6 +65,22 @@ def permission_required(permission: int) -> Callable:
         return wrapper
     return decorator
 
+def draft_access_required(func: Callable) -> Callable:
+    @wraps(func)
+    def wrapper(draft_hash: str, *args, **kwargs):
+        from app.models import Draft
+
+        draft_id = decode(draft_hash)
+        if draft_id is False: return "Draft not found", 404
+
+        draft = Draft.query.get(draft_id)
+        print(f"User {current_user.is_authenticated} accessing draft {draft_id}")
+        if not isinstance(draft, Draft): return "Draft not found", 404
+        if not current_user.has_access_to(draft): return "Access denied", 403
+
+        return func(draft, *args, **kwargs)
+    return wrapper
+
 
 
 @app.template_filter('regex_replace')

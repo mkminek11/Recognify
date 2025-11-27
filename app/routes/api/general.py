@@ -18,8 +18,8 @@ def delete_all_sets():
     user = current_user
     if not isinstance(user, User) or not user.is_authenticated or not user.permission >= 1:
         return jsonify({"error": "Unauthorized."}), 403
-    db.session.delete(Set)
-    db.session.delete(Image)
+    db.session.query(Image).delete()
+    db.session.query(Set).delete()
     db.session.commit()
     return "", 204
 

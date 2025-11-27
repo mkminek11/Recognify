@@ -2,7 +2,7 @@
 from flask import Blueprint, jsonify, redirect, render_template
 from flask_login import current_user
 from app.models import Draft, Image, Set, SkipImage
-from app.app import db, login_required, hid, decode
+from app.app import db, draft_access_required, login_required, hid, decode
 from app.presentation import create_draft
 
 bp = Blueprint("main", __name__)
@@ -75,13 +75,8 @@ def play_set(set_hash: str):
     return render_template('play_set.html', set = data, anonymous = int(current_user.is_anonymous))
 
 @bp.route('/draft/<string:draft_hash>')
-@login_required
-def draft_view(draft_hash: str):
-    draft_id = decode(draft_hash)
-    if not isinstance(draft_id, int): return "Invalid draft hash", 400
-    draft = Draft.query.get(draft_id)
-
-    if not isinstance(draft, Draft) or current_user.is_anonymous or draft.owner_id != current_user.id:
-        return "Draft not found", 404
+@draft_access_required
+def draft_view(draft: Draft):
+    if not current_user.has_access_to(draft): return "Access denied", 403
     
     return render_template('draft.html', draft = draft)

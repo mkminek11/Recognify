@@ -39,6 +39,11 @@ class User(db.Model, UserMixin):
             "username": self.username,
             "email": self.email,
         }
+
+    def has_access_to(self, draft: "Draft") -> bool:
+        if draft.owner_id == self.id:
+            return True
+        return any(access.user_id == self.id for access in draft.access_users)
     
 
 class Set(db.Model):
@@ -97,7 +102,7 @@ class Draft(db.Model):
     labels: Mapped[list["DraftLabel"]] = relationship("DraftLabel", back_populates = "draft", lazy = "select", cascade = "all, delete-orphan")
     owner: Mapped["User"] = relationship("User", lazy = "select")
     set: Mapped["Set | None"] = relationship("Set", lazy = "select")
-    access_users: Mapped[list["DraftAccess"]] = relationship("DraftAccess", lazy = "select", cascade = "all, delete-orphan")
+    access_users: Mapped[list["DraftAccess"]] = relationship("DraftAccess", back_populates = "draft", lazy = "select", cascade = "all, delete-orphan")
 
     def __init__(self):
         self.owner_id = current_user.id if current_user and current_user.is_authenticated else 0
@@ -165,7 +170,7 @@ class DraftAccess(db.Model):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable = False)
 
     user: Mapped["User"] = relationship("User", lazy = "select")
-    draft: Mapped["Draft"] = relationship("Draft", lazy = "select")
+    draft: Mapped["Draft"] = relationship("Draft", back_populates = "access_users", lazy = "select")
 
     def __init__(self, draft_id: int, user_id: int):
         self.draft_id = draft_id
