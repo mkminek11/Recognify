@@ -1,207 +1,82 @@
 # Recognify
 
-**Recognify** is a web-based application designed to help users practice recognizing animals, plants, and other objects from images. The platform allows users to create interactive learning sets by importing images from presentations or uploading custom images, associating them with labels, and organizing them into topics for practice and study.
+A web-based interactive learning tool for creating and sharing flashcard-style image recognition sets. Perfect for studying nature, biology, species identification, and more using real iNaturalist data.
 
-## 🎯 Purpose
+## ✨ Features
 
-Recognify enables users to:
-- Import images from PowerPoint presentations
-- Create custom labels for images (either from slide text or custom-written)
-- Organize images into learning sets
-- Practice object recognition through interactive gameplay
-- Share learning sets with other users
-
-## 🏗️ Project Structure
-
-```
-recognify/
-├── 📁 app/                   # Main Flask application package
-│   ├── 📄 __init__.py        # Package initialization
-│   ├── 📄 db.py              # Database configuration
-│   ├── 📄 lib.py             # Core Flask app setup and utilities
-│   ├── 📄 models.py          # SQLAlchemy database models
-│   └── 📁 routes/            # Application routes (blueprints)
-│       ├── 📄 admin.py       # Admin panel routes
-│       └── 📄 main.py        # Main application routes
-│
-├── 📁 instance/              # Flask instance folder
-│   └── 📄 db.sqlite          # SQLite database file
-│
-├── 📁 static/                # Static assets (CSS, JS, images)
-│   ├── 📁 css/               # Stylesheets
-│   ├── 📁 js/                # JavaScript files
-│   │   ├── 📁 alpine/        # Alpine.js library
-│   │   └── 📁 htmx/          # HTMX library
-│   └── 📁 uploads/           # User uploaded images
-│
-├── 📁 templates/             # Jinja2 HTML templates
-│   └── 📄 base.html          # Base template
-│
-├── 📁 .venv/                 # Python virtual environment
-├── 📄 .flaskenv              # Flask environment variables
-├── 📄 .python-version        # Python version specification
-├── 📄 main.py                # Application entry point
-├── 📄 pyproject.toml         # Project configuration and dependencies
-├── 📄 uv.lock                # Dependency lock file
-└── 📄 TODO.md                # Project todo list
-```
-
-## 🛠️ Technology Stack
-
-### Backend
-- **Flask** - Python web framework
-- **SQLAlchemy** - ORM for database operations
-- **Flask-Login** - User authentication management
-- **SQLite** - Lightweight database for development
-- **python-pptx** - PowerPoint file processing
-- **Hashids** - ID obfuscation for security
-
-### Frontend
-- **Jinja2** - Server-side templating
-- **HTMX** - Dynamic HTML updates
-- **Alpine.js** - Lightweight JavaScript framework
-- **CSS** - Custom styling
-
-### Development Tools
-- **uv** - Python package manager
-- **Python 3.12+** - Programming language
-
-## 📊 Database Schema
-
-### Models
-
-#### User
-- **id** (Primary Key)
-- **username** (Unique)
-- **password** (Hashed)
-- **permission** (Access level)
-- **created_at** (Timestamp)
-
-#### Set
-- **id** (Primary Key)
-- **name** (Unique)
-- **description**
-- **is_public** (Boolean)
-- **created_at** (Timestamp)
-- **owner_id** (Foreign Key → User)
-
-#### Image
-- **id** (Primary Key)
-- **filename** (Unique)
-- **original_filename**
-- **set_id** (Foreign Key → Set)
-- **label_id** (Foreign Key → Label, Optional)
-
-#### Label
-- **id** (Primary Key)
-- **name**
-- **set_id** (Foreign Key → Set)
-
-### Relationships
-- **User** ↔ **Set**: One-to-Many (owner relationship)
-- **Set** ↔ **Image**: One-to-Many
-- **Set** ↔ **Label**: One-to-Many
-- **Label** ↔ **Image**: One-to-Many (optional)
+- **Create Custom Study Sets** - Build personalized image recognition flashcards with images from iNaturalist
+- **Label Images** - Add descriptive labels to help you learn and remember
+- **Interactive Learning Mode** - Quiz yourself with a play mode where you try to identify images
+- **Progress Tracking** - Skip images you know well to focus on the harder ones
+- **Public & Private Sets** - Share your sets with others or keep them private
+- **iNaturalist Integration** - Automatically fetch high-quality nature photographs
+- **Presentations** - Export your study sets to PowerPoint presentations
 
 ## 🚀 Getting Started
 
-### Prerequisites
-- Python 3.12 or higher
-- uv package manager
+### Visit Recognify Online
 
-### Installation
+**Recognify is now live!** 🎉
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/mkminek11/recognify.git
-   cd recognify
-   ```
+Visit **[recognify.pythonanywhere.com](https://recognify.pythonanywhere.com)** to start using it right now. No installation needed!
 
-2. **Set up virtual environment and install dependencies**
-   ```bash
-   uv sync
-   ```
+## 📚 How to Use
 
-3. **Activate virtual environment**
-   ```bash
-   # Windows
-   .venv\Scripts\activate
-   
-   # macOS/Linux
-   source .venv/bin/activate
-   ```
+### Creating Your First Study Set
 
-4. **Run the application**
-   ```bash
-   python main.py
-   ```
+1. **Sign Up or Log In**
+   - Click "Sign Up" to create a new account
+   - Or "Log In" if you already have one
+   - You'll need a username and password (email is optional)
 
-5. **Access the application**
-   Open your browser and navigate to `http://localhost:5000`
+2. **Create a New Set**
+   - On the home page, click "Create New Set"
+   - This takes you to the draft editor where you can add images
 
-## 🎮 Features
+3. **Add Images**
+   - You can upload images or search for them from iNaturalist
+   - Add a label to each image (e.g., "Red Fox", "Common Daisy")
+   - Organize your images across different slides
 
-### Current Features
-- ✅ User authentication and authorization
-- ✅ PowerPoint presentation import
-- ✅ Image extraction from slides
-- ✅ Custom label creation and editing
-- ✅ Set management (create, edit, delete)
-- ✅ Interactive practice mode
-- ✅ Image shuffling for varied practice sessions
+4. **Publish Your Set**
+   - Once satisfied with your set, publish it
+   - Your set appears on the home page and can be shared
+   - Optionally make it public for others to study
 
-### Planned Features
-- 🔄 Direct image upload (without presentations)
-- 🔄 Advanced scoring and progress tracking
-- 🔄 Multi-user collaboration on sets
-- 🔄 Mobile-responsive design
-- 🔄 Export/import functionality for sets
-- 🔄 Advanced search and filtering
+### Studying with a Set
 
-## 👥 User Roles
+1. **Browse Available Sets**
+   - Visit the home page to see all public sets
+   - Click on any set to view details or start playing
 
-### Standard User (Permission 0)
-- Create and manage their own sets
-- Practice with any public set
-- Edit their own content
+2. **Play Mode**
+   - Click "Play" on a set to enter study mode
+   - Each image is shown one at a time
+   - Try to identify or remember the label before revealing the answer
+   - Click "Skip" when you're confident you know that image well
 
-### Admin User (Permission 1+)
-- Access admin panel
-- Manage all users and sets
-- Clear database content
-- System-wide configuration
+3. **Track Your Progress**
+   - Skipped images are removed from future rounds
+   - When you return to a set, you'll see only the images you haven't skipped yet
+   - This helps you focus on the harder images you need to practice
 
-## 🔧 Configuration
+### Managing Your Drafts
 
-### Environment Variables
-Create a `.env` file in the root directory:
+- Your unpublished study sets are saved as "Drafts"
+- Edit your drafts anytime before publishing
+- Keep drafts private or convert them to public sets
 
-```env
-SECRET_KEY=your-secret-key-here
-FLASK_ENV=development
-FLASK_DEBUG=True
-```
+<!--
+TODO
 
-### Database Configuration
-The application uses SQLite by default. The database file is automatically created in the `instance/` directory.
+## 📤 Exporting Sets
 
-## 🤝 Contributing
+You can export your study sets to PowerPoint presentations for offline review or printing:
+- Each set generates a PPTX file with your labeled images
+- Perfect for presentations or study groups
+-->
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📝 License
-
-This project is open source and available under the [MIT License](LICENSE).
-
-## 📞 Contact
-
-**Project Owner:** mkminek11  
-**Repository:** [https://github.com/mkminek11/recognify](https://github.com/mkminek11/recognify)
 
 ---
 
-*Recognify - Making object recognition practice engaging and accessible for everyone.*
+**Enjoy learning! Happy recognizing! 🌿🦋**
