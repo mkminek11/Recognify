@@ -7,3 +7,4 @@ SUPPORT.md
 TESTS.md
 migrations/
 .env
+# db.sqlite
