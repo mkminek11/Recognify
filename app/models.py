@@ -33,6 +33,13 @@ class User(db.Model, UserMixin):
     def is_admin(self) -> bool:
         return self.permission >= 10
     
+    def data(self) -> dict:
+        return {
+            "id": self.id,
+            "username": self.username,
+            "email": self.email,
+        }
+    
 
 class Set(db.Model):
     __tablename__ = "sets"
@@ -90,11 +97,19 @@ class Draft(db.Model):
     labels: Mapped[list["DraftLabel"]] = relationship("DraftLabel", back_populates = "draft", lazy = "select", cascade = "all, delete-orphan")
     owner: Mapped["User"] = relationship("User", lazy = "select")
     set: Mapped["Set | None"] = relationship("Set", lazy = "select")
+    access_users: Mapped[list["DraftAccess"]] = relationship("DraftAccess", lazy = "select", cascade = "all, delete-orphan")
 
     def __init__(self):
         self.owner_id = current_user.id if current_user and current_user.is_authenticated else 0
 
     def hash(self) -> str: return hid.encode(self.id)
+
+    def get_access_users(self) -> list[dict]:
+        users = []
+        for access in self.access_users:
+            user = access.user
+            users.append(user.data())
+        return users
 
 
 class DraftImage(db.Model):
@@ -140,3 +155,18 @@ class SkipImage(db.Model):
     def __init__(self, user_id: int, image_id: int):
         self.user_id = user_id
         self.image_id = image_id
+
+
+class DraftAccess(db.Model):
+    __tablename__ = "draft_access"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key = True, autoincrement = True)
+    draft_id: Mapped[int] = mapped_column(ForeignKey("drafts.id"), nullable = False)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable = False)
+
+    user: Mapped["User"] = relationship("User", lazy = "select")
+    draft: Mapped["Draft"] = relationship("Draft", lazy = "select")
+
+    def __init__(self, draft_id: int, user_id: int):
+        self.draft_id = draft_id
+        self.user_id = user_id

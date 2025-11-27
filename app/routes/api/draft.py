@@ -4,7 +4,7 @@ import os.path
 import requests
 from flask_login import current_user
 from flask import jsonify, request, send_file
-from app.models import Draft, DraftImage, DraftLabel, Image, Set, User
+from app.models import Draft, DraftAccess, DraftImage, DraftLabel, Image, Set, User
 from app.app import VALID_IMG_EXTENSIONS, db, UPLOAD_PATH, hid, decode
 from app.presentation import extract_images, get_free_filename, get_free_index, temp_remove
 from app.routes.api import bp
@@ -397,3 +397,41 @@ def submit_draft(draft_hash: str):
     db.session.commit()
 
     return jsonify({"message": "Draft submitted successfully.", "set_id": hid.encode(set_id)}), 200
+
+
+
+@bp.route('/draft/<string:draft_hash>/access', methods=['POST'])
+def add_draft_access(draft_hash: str):
+    draft_id = decode(draft_hash)
+    if not isinstance(draft_id, int): return jsonify({"error": "Invalid draft hash."}), 400
+    draft = Draft.query.get(draft_id)
+    if not isinstance(draft, Draft): return jsonify({"error": "Draft not found."}), 404
+    if draft.owner != current_user: return jsonify({"error": "Unauthorized."}), 403
+
+    data = request.get_json()
+    user = data.get("user", "").strip()
+    if not user: return jsonify({"error": "No user provided."}), 400
+
+    user_obj = User.query.filter((User.email == user) | (User.username == user)).first()
+    if not isinstance(user_obj, User): return jsonify({"error": "User not found."}), 404
+
+    draft_access = DraftAccess(draft_id = draft.id, user_id = user_obj.id)
+    db.session.add(draft_access)
+    db.session.commit()
+
+    return jsonify({"message": "Access granted successfully.", 
+                    "user": { "id": user_obj.id, "name": user_obj.username, "email": user_obj.email }}), 200
+
+@bp.route('/draft/<string:draft_hash>/access', methods=['DELETE'])
+def remove_draft_access(draft_hash: str):
+    draft_id = decode(draft_hash)
+    if not isinstance(draft_id, int): return jsonify({"error": "Invalid draft hash."}), 400
+    draft = Draft.query.get(draft_id)
+    if not isinstance(draft, Draft): return jsonify({"error": "Draft not found."}), 404
+    if draft.owner != current_user: return jsonify({"error": "Unauthorized."}), 403
+
+    data = request.get_json()
+    user = data.get("user", "").strip()
+
+    print(request.get_json())
+    return ""

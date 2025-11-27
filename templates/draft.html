@@ -36,6 +36,22 @@
             <button :disabled="!anyImageSelected()" @click="insertImportedImages()">Insert</button>
         </dialog>
 
+        <dialog x-ref="accessDialog">
+            <button @click="$refs.accessDialog.close()">Close</button>
+            <h2>Set Access</h2>
+            <p>Who can access this set?</p>
+            <input x-ref="accessAddInput" type="text" placeholder="Add user by email or name" />
+            <button @click="addUserAccess()">Add</button>
+            <div>
+                <template x-for="(user, index) in accessUsers" :key="index">
+                    <div>
+                        <span x-text="user.username"></span>
+                        <button @click="removeUserAccess(index)">Remove</button>
+                    </div>
+                </template>
+            </div>
+        </dialog>
+
         <div>
             <label for="name">Set title:</label>
             <input type="text" id="name" x-ref="titleInput" x-model="title" x-show="titleEditMode" @blur="saveTitle();" />
@@ -46,6 +62,7 @@
         <textarea id="description" x-model="setDescription" @blur="saveDescription()"></textarea>
 
         <button @click="deleteSet">Delete Set</button>
+        <button @click="$refs.accessDialog.showModal()">Manage Set Access</button>
     
         <div>
             <p>Add images:</p>
@@ -111,6 +128,7 @@
                 importedImageLinks: {}, // { species: string -> [
                                         //     { imageLink: string, label: string, id: int, selected: boolean }
                                         // ] }
+                accessUsers: JSON.parse('{{ draft.get_access_users()|tojson|safe }}'), // list of { id: int, name: string, email: string }
 
                 init() {
                     this.$refs.titleInput.focus();
@@ -411,6 +429,29 @@
 
                 anyImageSelected() {
                     return Object.values(this.importedImageLinks).some(images => images.some(image => image.selected));
+                },
+            
+                async addUserAccess() {
+                    const nameOrEmail = this.$refs.accessAddInput.value.trim();
+                    if (!nameOrEmail) return;
+
+                    await axios.post('/api/draft/{{ draft.hash() }}/access', { user: nameOrEmail }).then((response) => {
+                        const user = response.data.user;
+                        if (!user) {alert("User not found."); return;}
+                        this.accessUsers.push(user);
+                        this.$refs.accessAddInput.value = '';
+                    }).catch((error) => {
+                        alert("Failed to add user access: " + error.response.data.error);
+                    });
+                },
+
+                async removeUserAccess(index) {
+                    const user = this.accessUsers[index];
+                    await axios.delete('/api/draft/{{ draft.hash() }}/access', { user: user.id }).then((response) => {
+                        if (response.status === 200) {this.accessUsers.splice(index, 1);}
+                    }).catch((error) => {
+                        alert("Failed to remove user access: " + error.response.data.error);
+                    });
                 },
             }));
         });
