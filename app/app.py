@@ -2,7 +2,6 @@
 from flask import Flask, redirect
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
 from sqlalchemy.orm import DeclarativeBase
 from functools import wraps
 from flask_login import current_user
@@ -21,7 +20,6 @@ class Base(DeclarativeBase): pass
 
 login = LoginManager()
 db = SQLAlchemy(model_class = Base)
-migrate = Migrate(app, db)
 
 hid = hashids.Hashids(min_length = 8, salt = os.environ.get("HASHID_SALT", os.environ.get("HASHID_SALT", "dev")))
 

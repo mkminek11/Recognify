@@ -1,7 +1,7 @@
 
 from flask import Blueprint, redirect, render_template, request, url_for
 import werkzeug.security
-from flask_login import login_user
+from flask_login import login_user, logout_user
 
 from app.models import User
 from app.app import db
@@ -26,7 +26,7 @@ def login_post():
     if not username or not password:
         return "Missing fields", 400
     
-    user = User.query.filter_by(username = username).first()
+    user = User.query.filter_by(username = username).first() or User.query.filter_by(email = username).first()
     if not isinstance(user, User) or not user.authenticate(password):
         return "Invalid credentials", 401
 
@@ -50,3 +50,8 @@ def signup_post():
     db.session.commit()
 
     return redirect('/auth/login?message=Account created, please log in.')
+
+@bp.route('/logout', methods=['GET'])
+def logout():
+    logout_user()
+    return redirect('/auth/login?message=Logged out successfully.')
