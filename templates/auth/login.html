@@ -22,7 +22,7 @@
             </div>
         </div>
         
-        <button type="submit">Log in</button>
+        <button @click="submit()">Log in</button>
         
         <p>Don't have an account? Sign up <a href="/auth/signup">here</a> or&nbsp;<a href="/">continue as a guest</a></p>
     </div>
@@ -36,8 +36,8 @@
                 showPassword: false,
                 togglePassword() {this.showPassword = !this.showPassword;},
                 async submit() {
-                    const username = $ref.username.value;
-                    const password = $ref.password.value;
+                    const username = this.$refs.username.value;
+                    const password = this.$refs.password.value;
                     await axios.post('/auth/login', {username, password}).then(response => {
                         if (response.status === 200) {
                             window.location.href = '/';

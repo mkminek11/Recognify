@@ -20,8 +20,8 @@ def signup():
 
 @bp.route('/login', methods=['POST'])
 def login_post():
-    username = request.form.get('username')
-    password = request.form.get('password')
+    username = (request.json or {}).get('username')
+    password = (request.json or {}).get('password')
 
     if not username or not password:
         return "Missing fields", 400

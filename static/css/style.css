@@ -52,6 +52,7 @@ a {
     background-color: var(--c-grey55);
     border-radius: 5px;
     border-bottom: 2px solid transparent;
+    overflow: hidden;
 
     &:has(:focus-within) {
         border-bottom: 2px solid var(--c-primary-light);

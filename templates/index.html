@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <div x-data="container">
+    <div x-data="container()">
         <h1>Welcome to Recognify</h1>
         <p>Sets:</p>
         <ul>
@@ -43,6 +43,10 @@
 
 {% block scripts %}
     <script>
+        function container() {
+            return {}
+        }
+
         function deleteAllSets() {
             if (!confirm("Are you sure you want to delete all sets? This action cannot be undone.")) {return;}
             axios.delete('/api/set');
