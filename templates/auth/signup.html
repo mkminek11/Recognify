@@ -4,14 +4,9 @@
 {% block content %}
     <h1>Sign Up</h1>
     <form method="POST" action="{{ url_for('auth.signup') }}">
-        <label for="username">Username:</label>
-        <input type="text" id="username" name="username" required />
-        
-        <label for="email">Email:</label>
-        <input type="email" id="email" name="email" required />
-        
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required />
+        <label class="input-wrapper"><input type="text"     name="username" required /></label>
+        <label class="input-wrapper"><input type="email"    name="email"    required /></label>
+        <label class="input-wrapper"><input type="password" name="password" required /></label>
         
         <button type="submit">Sign Up</button>
     </form>

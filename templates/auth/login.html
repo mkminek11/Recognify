@@ -6,21 +6,25 @@
 
     <div class="container" x-data="loginForm()">
         <div class="user-icon">
-            <i class="fas fa-user-circle"></i>
+            <i class="fas fa-user"></i>
         </div>
 
         <h2>Log in</h2>
 
-        <label for="username">Username:</label>
-        <input type="text" id="username" x-ref="username" required />
-        
-        <label for="password">Password:</label>
-        <input :type="showPassword ? 'text' : 'password'" id="password" x-ref="password" required />
+        <div class="inputs">
+            <div class="input-wrapper">
+                <input type="text" id="username" x-ref="username" placeholder="Username" required />
+            </div>
+            
+            <div class="input-wrapper">
+                <input :type="showPassword ? 'text' : 'password'" id="password" x-ref="password" placeholder="Password" required />
+                <i @click="togglePassword()" class="icon fas" :class="showPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+            </div>
+        </div>
         
         <button type="submit">Log in</button>
         
-        <p>Don't have an account? Sign up <a href="/auth/signup">here</a>.</p>
-        <a href="/">Continue as a guest</a>
+        <p>Don't have an account? Sign up <a href="/auth/signup">here</a> or&nbsp;<a href="/">continue as a guest</a></p>
     </div>
 {% endblock %}
 
