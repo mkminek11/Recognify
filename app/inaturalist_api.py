@@ -3,10 +3,7 @@ import os, re, time, requests
 from typing import Iterator
 from concurrent.futures import ThreadPoolExecutor
 
-OUT = "img"
 PER_PAGE = 100
-
-os.makedirs(OUT, exist_ok=True)
 
 session = requests.Session()
 
@@ -60,25 +57,25 @@ def get_image_links(species: str, max_images: int) -> list[str]:
     
     return image_links
 
-def download_photos(query: str, max_img: int) -> None:
+def download_photos(query: str, max_img: int, output: str) -> None:
     links = get_image_links(query, max_img)
     with ThreadPoolExecutor(max_workers=4) as executor:
-        tasks = [executor.submit(download_candidate, link, 0, i) for i, link in enumerate(links)]
+        tasks = [executor.submit(download_candidate, link, output, 0, i) for i, link in enumerate(links)]
         for future in tasks:
             future.result()
                 
-def download_photo(photo: dict, obs_id: int, downloaded: int) -> bool:
+def download_photo(photo: dict, obs_id: int, downloaded: int, output: str) -> bool:
     original_size_url: str = photo.get("url", "") or photo.get("large_url", "") or photo.get("original_url", "")
     if not original_size_url: return False
     
     for candidate_url in img_candidates(original_size_url):
-        success = download_candidate(candidate_url, obs_id, downloaded)
+        success = download_candidate(candidate_url, output, obs_id, downloaded)
         if success: break
     else:
         return False
     return True
 
-def download_candidate(candidate_url: str, obs_id: int, downloaded: int) -> bool:
+def download_candidate(candidate_url: str, output: str, obs_id: int, downloaded: int) -> bool:
     try:
         response = session.get(candidate_url, stream=True, timeout=20)
         if response.status_code != 200: return False
@@ -88,7 +85,7 @@ def download_candidate(candidate_url: str, obs_id: int, downloaded: int) -> bool
         if extension == "jpeg": extension = "jpg"
 
         filename = f"inat_{obs_id}_{downloaded:03d}.{extension}"
-        path = os.path.join(OUT, filename)
+        path = os.path.join(output, filename)
         write_file(response.iter_content(1024*16), path)
         return True
     except Exception:

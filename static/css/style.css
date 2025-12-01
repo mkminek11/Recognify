@@ -1,4 +1,6 @@
 
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap');
+
 :root {
     --c-primary:       #89BA8D;
     --c-primary-dark:  #74A57F;
@@ -19,6 +21,16 @@
     --fs-medium: 1rem;
     --fs-large: 1.2rem;
     --fs-xlarge: 1.5rem;
+}
+
+* {
+    font-family: 'Outfit', sans-serif;
+    box-sizing: border-box;
+}
+
+body {
+    min-height: 100vh;
+    margin: 0px;
 }
 
 .hidden {display: none;}

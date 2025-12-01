@@ -1,18 +1,48 @@
 
-{% extends "base.html" %}
+{% extends "auth/base.html" %}
 
 {% block content %}
-    <h1>Login</h1>
-    <form method="POST" action="{{ url_for('auth.login') }}">
+    <h1 class="title">Welcome to Recognify</h1>
+
+    <div class="container" x-data="loginForm()">
+        <div class="user-icon">
+            <i class="fas fa-user-circle"></i>
+        </div>
+
+        <h2>Log in</h2>
+
         <label for="username">Username:</label>
-        <input type="text" id="username" name="username" required />
+        <input type="text" id="username" x-ref="username" required />
         
         <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required />
+        <input :type="showPassword ? 'text' : 'password'" id="password" x-ref="password" required />
         
-        <button type="submit">Login</button>
-
-        <a href="/auth/signup">Sign up</a>
+        <button type="submit">Log in</button>
+        
+        <p>Don't have an account? Sign up <a href="/auth/signup">here</a>.</p>
         <a href="/">Continue as a guest</a>
-    </form>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        function loginForm() {
+            return {
+                message: '{{ message }}',
+                showPassword: false,
+                togglePassword() {this.showPassword = !this.showPassword;},
+                async submit() {
+                    const username = $ref.username.value;
+                    const password = $ref.password.value;
+                    await axios.post('/auth/login', {username, password}).then(response => {
+                        if (response.status === 200) {
+                            window.location.href = '/';
+                        } else {
+                            this.message = response.data.message;
+                        }
+                    });
+                }
+            }
+        }
+    </script>
 {% endblock %}

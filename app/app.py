@@ -80,7 +80,6 @@ def draft_access_required(func: Callable) -> Callable:
     return wrapper
 
 
-
 @app.template_filter('regex_replace')
 def regex_replace(string: str, find: str, replace: str) -> str:
     return re.sub(find, replace, string)
