@@ -1,0 +1,40 @@
+
+nav {
+    background-color: var(--c-grey6);
+    color: var(--c-white);
+    border: 2px solid var(--c-grey3);
+    box-shadow: 0px 5px 25px var(--c-black);
+    /* position: sticky; */
+    /* top: 0px; */
+    padding: 13px 38px; /* subtracted 2px for border as there is no easy way to include inset border in CSS */
+    border-radius: 15px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 60px;
+
+    & .nav-link {
+        color: var(--c-white);
+        text-decoration: none;
+        transition: var(--transition);
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 7.5px;
+
+        &:hover {
+            color: var(--c-primary-light);
+        }
+    }
+
+    & .nav-center {
+        flex-grow: 1;
+        display: flex;
+        justify-content: center;
+
+        & .input-wrapper {
+            max-width: 500px;
+            flex-grow: 1;
+        }
+    }
+}

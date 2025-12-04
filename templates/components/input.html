@@ -1,6 +1,6 @@
 
 {% macro input(type="text", placeholder="", ref="", value="", kw={}) %}
-    <div class="input">
+    <div class="input-wrapper">
         <input type="{{ type }}" placeholder="{{ placeholder }}" {% if ref %}x-ref="{{ ref }}"{% endif %} value="{{ value }}"
             {% for attr, val in kw.items() %} {{ attr }}="{{ val }}"{% endfor %} />
         {{ caller() if caller is defined else "" }}

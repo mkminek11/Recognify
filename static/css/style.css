@@ -23,7 +23,7 @@
     --fs-large: 1.2rem;
     --fs-xlarge: 1.5rem;
 
-    --transition: all 0.25s ease;
+    --transition: all 0.2s ease;
 }
 
 * {
@@ -65,6 +65,7 @@ a {
     border-radius: 5px;
     border-bottom: 2px solid transparent;
     overflow: hidden;
+    transition: var(--transition);
 
     &:has(:focus-within) {
         border-bottom: 2px solid var(--c-primary-light);
@@ -88,6 +89,7 @@ a {
         text-align: center;
         color: var(--c-grey4);
         margin-right: 20px;
+        cursor: pointer;
     }
 }
 
@@ -95,15 +97,17 @@ button, .btn {
     background-color: var(--c-primary-dark);
     border: 2px solid var(--c-primary-light);
     color: var(--c-white);
+    text-decoration: none;
     padding: 13px 18px;
     font-size: var(--fs-medium);
     border-radius: 5px;
     cursor: pointer;
     transition: var(--transition);
-    box-shadow: 0px 4px 20px -15px var(--c-white);
 
-    &:hover {
-        box-shadow: 0px 4px 30px -20px var(--c-white);
-        background-color: var(--c-primary);
+    &:hover {background-color: var(--c-primary);}
+
+    &.shadow {
+        box-shadow: 0px 4px 20px -15px var(--c-white);
+        &:hover {box-shadow: 0px 4px 30px -20px var(--c-white);}
     }
 }

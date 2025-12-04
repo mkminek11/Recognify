@@ -1,18 +1,24 @@
 
 {% from 'components/input.html' import input %}
 
+<link rel="stylesheet" href="/static/css/navigation.css" />
+
 <nav x-data="navigation()">
     <div class="nav-logo">
         <a href="/"><img src="/static/img/logo.png" alt="Recognify."></a>
     </div>
 
-    <a href="/sets">Browse sets</a>
+    <a href="/sets" class="nav-link">Browse sets</a>
 
     <div class="nav-center">
         {% call input(placeholder="Search...", ref="searchInput", kw={"x-model": "searchQuery", "@keydown.enter": "search()"}) %}
-            <i class="fas fa-search" @click="search()"></i>
+            <i class="icon fas fa-search" @click="search()"></i>
         {% endcall %}
     </div>
+
+    <a href="/sets/new" class="nav-link"><i class="fas fa-plus"></i> Create</a>
+    <a href="/settings" class="nav-link"><i class="fas fa-cog"></i> Settings</a>
+    <a href="/auth/login" class="btn btn-primary">Log in</a>
 </nav>
 
 <script>
