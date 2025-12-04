@@ -61,7 +61,7 @@
                 },
 
                 async loadImage() {
-                    this.image = `/api/set/{{ set.id }}/image/${this.images[this.index].id}`;
+                    this.image = `/api/sets/{{ set.id }}/image/${this.images[this.index].id}`;
                     this.label = this.images[this.index].label;
                 },
 
@@ -77,7 +77,7 @@
                 },
 
                 async know() {
-                    await axios.post(`/api/set/{{ set.hash }}/skip`, {
+                    await axios.post(`/api/sets/{{ set.hash }}/skip`, {
                         image_id: this.images[this.index].id,
                     });
 

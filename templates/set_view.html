@@ -5,7 +5,7 @@
         <h1>{{ set.name }}</h1>
         <p>Description: {{ set.description }}</p>
         <p>Created at: {{ set.created_at }}</p>
-        <a href="/set/{{ set.id }}/play">Play</a>
+        <a href="/sets/{{ set.id }}/play">Play</a>
         {% if current_user.is_authenticated and current_user.id == set.owner_id %}
             <a href="/draft/{{ set.draft_id }}">Edit</a>
         {% endif %}
@@ -14,7 +14,7 @@
             <template x-for="image in images" :key="image.id">
                 <div style="margin-bottom: 20px;">
                     <p x-text="image.label"></p>
-                    <img :src="`/api/set/{{ set.id }}/image/${image.id}`" height="200">
+                    <img :src="`/api/sets/{{ set.id }}/image/${image.id}`" height="200">
                 </div>
             </template>
         </div>

@@ -12,7 +12,7 @@ def search():
     return render_template('not_implemented.html', data=request.args)
 
 @bp.route('/')
-@bp.route('/set')
+@bp.route('/sets')
 def index():
     sets = [{ "id": hid.encode(set.id), "name": set.name } for set in Set.query.all()]
 
@@ -24,13 +24,13 @@ def index():
     
     return render_template('index.html', sets = sets, drafts = drafts)
 
-@bp.route('/set/new', methods=['GET'])
+@bp.route('/sets/new', methods=['GET'])
 @login_required
 def new_set():
     draft_id = create_draft()
     return redirect(f'/draft/{hid.encode(draft_id)}')
 
-@bp.route('/set/<string:set_hash>')
+@bp.route('/sets/<string:set_hash>')
 def view_set(set_hash: str):
     set_id = decode(set_hash)
     if not isinstance(set_id, int): return "Invalid set hash", 400
@@ -53,7 +53,7 @@ def view_set(set_hash: str):
     
     return render_template('set_view.html', set = data)
 
-@bp.route('/set/<string:set_hash>/play')
+@bp.route('/sets/<string:set_hash>/play')
 def play_set(set_hash: str):
     set_id = decode(set_hash)
     if not isinstance(set_id, int): return "Invalid set hash", 400

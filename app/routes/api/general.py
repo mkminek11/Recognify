@@ -13,7 +13,7 @@ def api_index():
 
 
 
-@bp.route('/set', methods=['DELETE'])
+@bp.route('/sets', methods=['DELETE'])
 def delete_all_sets():
     user = current_user
     if not isinstance(user, User) or not user.is_authenticated or not user.permission >= 1:
@@ -25,7 +25,7 @@ def delete_all_sets():
 
 
 
-@bp.route('/set/<string:set_hash>', methods=['DELETE'])
+@bp.route('/sets/<string:set_hash>', methods=['DELETE'])
 def delete_set(set_hash: str):
     set_id = decode(set_hash)
     if not isinstance(set_id, int): return jsonify({"error": "Invalid set hash."}), 400
@@ -40,7 +40,7 @@ def delete_set(set_hash: str):
 
 
 
-@bp.route('/set/<string:set_hash>/image/<int:image_id>', methods=['GET'])
+@bp.route('/sets/<string:set_hash>/image/<int:image_id>', methods=['GET'])
 def get_set_image(set_hash: str, image_id: int):
     set_id = decode(set_hash)
     if not isinstance(set_id, int): return jsonify({"error": "Invalid set hash."}), 400
@@ -58,7 +58,7 @@ def get_set_image(set_hash: str, image_id: int):
 
 
 
-@bp.route('/set/<string:set_hash>/skip', methods=['POST'])
+@bp.route('/sets/<string:set_hash>/skip', methods=['POST'])
 def skip_set_image(set_hash: str):
     set_id = decode(set_hash)
     if not isinstance(set_id, int): return jsonify({"error": "Invalid set hash."}), 400

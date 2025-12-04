@@ -8,7 +8,7 @@ body {
     text-align: center;
 }
 
-.container {
+body > .container {
     background-color: var(--c-grey6);
     width: 400px;
     padding: 100px 25px 25px;
@@ -20,6 +20,7 @@ body {
     flex-direction: column;
     align-items: stretch;
     gap: 20px;
+    flex-grow: initial;
 
     & h2 {
         margin: 0px;

@@ -1,5 +1,5 @@
 
-from flask import Blueprint, redirect, render_template, request, url_for
+from flask import Blueprint, jsonify, redirect, render_template, request, url_for
 import werkzeug.security
 from flask_login import login_user, logout_user
 
@@ -17,19 +17,18 @@ def login():
 def signup():
     return render_template('auth/signup.html')
 
-
 @bp.route('/login', methods=['POST'])
 def login_post():
     username = (request.json or {}).get('username')
     password = (request.json or {}).get('password')
 
     if not username or not password:
-        return "Missing fields", 400
+        return jsonify({"message": "Missing fields"}), 400
     
     user = User.query.filter_by(username = username).first() or User.query.filter_by(email = username).first()
     if not isinstance(user, User) or not user.authenticate(password):
-        return "Invalid credentials", 401
-
+        return jsonify({"message": "Invalid credentials"}), 401
+    
     login_user(user)
 
     return redirect('/')
@@ -41,7 +40,7 @@ def signup_post():
     password = request.form.get('password')
 
     if not username or not email or not password:
-        return "Missing fields", 400
+        return jsonify({"message": "Missing fields"}), 400
     
     pwd_hash = werkzeug.security.generate_password_hash(password)
     
