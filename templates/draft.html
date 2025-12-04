@@ -128,7 +128,7 @@
                 importedImageLinks: {}, // { species: string -> [
                                         //     { imageLink: string, label: string, id: int, selected: boolean }
                                         // ] }
-                accessUsers: JSON.parse('{{ draft.get_access_users()|tojson|safe }}'), // list of { id: int, name: string, email: string }
+                accessUsers: JSON.parse('{{ draft.get_access_users()|tojson }}'), // list of { id: int, name: string, email: string }
 
                 init() {
                     this.$refs.titleInput.focus();

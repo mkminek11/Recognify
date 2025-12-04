@@ -1,8 +1,24 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <div x-data="container()">
-        <h1>Welcome to Recognify</h1>
+    <div x-data="container">
+        {% include 'components/navigation.html' %}
+
+        <h1>Learn to Recognize & Identify</h1>
+        <p>
+            Recognify is a tool to help you learn to recognize and identify various subjects through spaced
+            repetition flashcards. Create your own sets of flashcards or explore existing ones to enhance your
+            learning experience.
+        </p>
+        <div>
+            {% if current_user.is_authenticated %}
+                <a href="/set/new" class="btn btn-primary">Create a New Set</a>
+            {% else %}
+                <a href="/auth/signup" class="btn btn-primary">Sign up for free</a>
+            {% endif %}
+            <a href="/a"></a>
+        </div>
+        <!-- <h1>Welcome to Recognify</h1>
         <p>Sets:</p>
         <ul>
             {% for set in sets %}
@@ -37,24 +53,24 @@
         {% if current_user.is_authenticated and current_user.is_admin() %}
             <a href="#" onclick="deleteAllSets();">Delete all sets</a>
             <a href="#" onclick="deleteAllDrafts();">Delete all drafts</a>
-        {% endif %}
+        {% endif %} -->
     </div>
 {% endblock %}
 
 {% block scripts %}
     <script>
-        function container() {
-            return {}
-        }
-
-        function deleteAllSets() {
-            if (!confirm("Are you sure you want to delete all sets? This action cannot be undone.")) {return;}
-            axios.delete('/api/set');
-        }
-
-        function deleteAllDrafts() {
-            if (!confirm("Are you sure you want to delete all drafts? This action cannot be undone.")) {return;}
-            axios.delete('/api/draft');
-        }
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('container', () => ({
+                searchQuery: "",
+                deleteAllSets() {
+                    if (!confirm("Are you sure you want to delete all sets? This action cannot be undone.")) {return;}
+                    axios.delete('/api/set');
+                },
+                deleteAllDrafts() {
+                    if (!confirm("Are you sure you want to delete all drafts? This action cannot be undone.")) {return;}
+                    axios.delete('/api/draft');
+                }
+            }));
+        });
     </script>
 {% endblock %}

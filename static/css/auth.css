@@ -1,11 +1,6 @@
 body {
-    display: flex;
-    flex-direction: column;
-    background-color: var(--c-grey7);
-    align-items: center;
     gap: 120px;
     padding: 80px 100px 60px;
-    color: var(--c-white);
 }
 
 .title {

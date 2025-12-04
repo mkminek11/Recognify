@@ -1,0 +1,29 @@
+
+{% from 'components/input.html' import input %}
+
+<nav x-data="navigation()">
+    <div class="nav-logo">
+        <a href="/"><img src="/static/img/logo.png" alt="Recognify."></a>
+    </div>
+
+    <a href="/sets">Browse sets</a>
+
+    <div class="nav-center">
+        {% call input(placeholder="Search...", ref="searchInput", kw={"x-model": "searchQuery", "@keydown.enter": "search()"}) %}
+            <i class="fas fa-search" @click="search()"></i>
+        {% endcall %}
+    </div>
+</nav>
+
+<script>
+    function navigation() {
+        return {
+            searchQuery: "",
+            init() {},
+            search() {
+                // alert("Searching for: " + this.searchQuery);
+                window.location.href = `/search?q=${encodeURIComponent(this.searchQuery)}`;
+            }
+        }
+    }
+</script>

@@ -33,9 +33,21 @@
     letter-spacing: 1%;
 }
 
-body {min-height: 100vh;}
+body {
+    min-height: 100vh;
+    background-color: var(--c-grey7);
+    color: var(--c-white);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
 
-.icon {cursor: pointer;}
+body > [x-data] {
+    width: 100%;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
 
 .hidden {display: none;}
 .hidden-fixed {position: fixed; top: 0px; display: none;}

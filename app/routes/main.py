@@ -1,11 +1,15 @@
 
-from flask import Blueprint, jsonify, redirect, render_template
+from flask import Blueprint, jsonify, redirect, render_template, request
 from flask_login import current_user
 from app.models import Draft, Image, Set, SkipImage
 from app.app import db, draft_access_required, login_required, hid, decode
 from app.presentation import create_draft
 
 bp = Blueprint("main", __name__)
+
+@bp.route('/search')
+def search():
+    return render_template('not_implemented.html', data=request.args)
 
 @bp.route('/')
 @bp.route('/set')
