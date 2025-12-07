@@ -1,26 +1,20 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <div x-data="container" class="container">
+    <div x-data="{}" class="container">
         {% include 'components/navigation.html' %}
 
         <h1>Not Implemented</h1>
         <p>This feature is not yet implemented. Please check back later.</p>
         <h2>Debug</h2>
         <ul>
-            {% for key, value in data.items() %}
-                <li><strong>{{ key }}:</strong> {{ value }}</li>
-            {% endfor %}
+            {% if data is defined %}
+                {% for key, value in data.items() %}
+                    <li><strong>{{ key }}:</strong> {{ value }}</li>
+                {% endfor %}
+            {% else %}
+                <li>No debug data available</li>
+            {% endif %}
         </ul>
     </div>
-{% endblock %}
-
-{% block scripts %}
-    <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('container', () => ({
-                data: JSON.parse('{{ data|tojson }}'),
-            }));
-        });
-    </script>
 {% endblock %}

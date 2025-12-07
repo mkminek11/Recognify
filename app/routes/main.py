@@ -1,7 +1,7 @@
 
 from flask import Blueprint, jsonify, redirect, render_template, request
 from flask_login import current_user
-from app.models import Draft, Image, Set, SkipImage
+from app.models import Draft, Image, Set, SkipImage, User
 from app.app import db, draft_access_required, login_required, hid, decode
 from app.presentation import create_draft
 
@@ -84,3 +84,28 @@ def draft_view(draft: Draft):
     if not current_user.has_access_to(draft): return "Access denied", 403
     
     return render_template('draft.html', draft = draft)
+
+@bp.route('/settings')
+@login_required
+def settings():
+    return render_template('not_implemented.html')
+
+@bp.route('/profile/<string:user_hash>')
+def profile(user_hash: str):
+    user_id = decode(user_hash)
+    if not isinstance(user_id, int): return "User not found", 400
+    user = db.session.execute(User.query.where(User.id == user_id)).scalar_one_or_none()
+    if not isinstance(user, User): return "User not found", 404
+
+    return render_template('not_implemented.html', data = {"user": user})
+
+@bp.route('/profile')
+@login_required
+def my_profile():
+    return redirect(f'/profile/{hid.encode(current_user.id)}')
+
+@bp.route('/profile/sets')
+@login_required
+def my_sets():
+    user = db.session.execute(User.query.where(User.id == current_user.id)).scalar_one_or_none()
+    return render_template('not_implemented.html', data = {"user": user})

@@ -6,7 +6,7 @@
         <p>Description: {{ set.description }}</p>
         <p>Created at: {{ set.created_at }}</p>
         <a href="/sets/{{ set.id }}/play">Play</a>
-        {% if current_user.is_authenticated and current_user.id == set.owner_id %}
+        {% if current_user.is_authenticated and current_user.has_access_to(set.draft_id) %}
             <a href="/draft/{{ set.draft_id }}">Edit</a>
         {% endif %}
 

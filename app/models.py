@@ -7,7 +7,7 @@ import os.path
 import datetime
 import werkzeug.security
 
-from app.app import db, app, login, hid
+from app.app import db, app, decode, login, hid
 
 
 class User(db.Model, UserMixin):
@@ -40,9 +40,13 @@ class User(db.Model, UserMixin):
             "email": self.email,
         }
 
-    def has_access_to(self, draft: "Draft") -> bool:
-        if draft.owner_id == self.id:
-            return True
+    def has_access_to(self, draft: "Draft | int | str | None") -> bool:
+        if isinstance(draft, str):
+            draft = decode(draft)
+        if isinstance(draft, int):
+            draft = Draft.query.get(draft)
+        if draft is None or not isinstance(draft, Draft): return False
+        if draft.owner_id == self.id: return True
         return any(access.user_id == self.id for access in draft.access_users)
 
     def avatar_url(self, size: int = 128) -> str:
@@ -75,6 +79,9 @@ class Set(db.Model):
         self.owner_id = current_user.id if current_user and current_user.is_authenticated else 0
 
     def hash(self) -> str: return hid.encode(self.id)
+
+    def get_draft(self) -> "Draft | None":
+        return db.session.execute(Draft.query.where(Draft.set_id == self.id)).scalar_one_or_none()
 
 
 class Image(db.Model):
