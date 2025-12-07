@@ -17,6 +17,7 @@
     --c-grey2: #d6d6d6;
     --c-grey1: #e6e6e6;
     --c-white: #f3f3f3;
+    --c-black-50: #00000080;
 
     --fs-small: 0.8rem;
     --fs-medium: 1rem;
@@ -42,11 +43,13 @@ body {
     align-items: center;
 }
 
-body > [x-data] {
+body > .container {
     width: 100%;
     flex-grow: 1;
     display: flex;
     flex-direction: column;
+    padding: 40px 100px;
+    gap: 60px;
 }
 
 .hidden {display: none;}
@@ -94,9 +97,7 @@ a {
 }
 
 button, .btn {
-    background-color: var(--c-primary-dark);
     border: 2px solid var(--c-primary-light);
-    color: var(--c-white);
     text-decoration: none;
     padding: 13px 18px;
     font-size: var(--fs-medium);
@@ -104,10 +105,64 @@ button, .btn {
     cursor: pointer;
     transition: var(--transition);
 
-    &:hover {background-color: var(--c-primary);}
-
     &.shadow {
         box-shadow: 0px 4px 20px -15px var(--c-white);
         &:hover {box-shadow: 0px 4px 30px -20px var(--c-white);}
+    }
+
+    &.btn-primary {
+        background-color: var(--c-primary-dark);
+        color: var(--c-white);
+        &:hover {background-color: var(--c-primary);}
+    }
+
+    &.btn-secondary {
+        background-color: var(--c-black-50);
+        color: var(--c-primary-light);
+        &:hover {background-color: var(--c-black);}
+    }
+}
+
+h1 {
+    font-size: 4rem;
+    font-weight: 800;
+}
+
+h2 {
+    font-size: 1.75rem;
+    font-weight: 800;
+}
+
+h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.cards-row {
+    display: flex;
+    flex-direction: row;
+    gap: 30px;
+    overflow-x: auto;
+
+    & .card {
+        width: 200px;
+        height: 240px;
+        border-radius: 15px;
+        background-image: linear-gradient(to bottom, transparent, var(--c-black-50));
+        border: 2px solid var(--c-grey3);
+        padding: 13px; /* -2px for inset border */
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        position: relative;
+        overflow: hidden;
+
+        &::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-color: var(--c-grey6);
+            z-index: -1;
+        }
     }
 }

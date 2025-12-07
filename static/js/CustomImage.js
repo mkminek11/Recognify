@@ -34,6 +34,10 @@ export class CustomImage extends Image {
     }
   }
 
+  getData() {
+    return this.data;
+  }
+
   static fromFile(file, id = null) {
     /* Create CustomImage from File object */
     return new CustomImage(URL.createObjectURL(file), id);

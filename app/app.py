@@ -36,6 +36,7 @@ app.config.from_mapping(
     DATABASE = os.path.join(app.instance_path, "db.sqlite"),
     SQLALCHEMY_DATABASE_URI = f"sqlite:///db.sqlite",
     SQLALCHEMY_TRACK_MODIFICATIONS = False,
+    TEMPLATES_AUTO_RELOAD = True,
 )
 
 ROOT_PATH = os.path.split(app.root_path)[0]

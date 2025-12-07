@@ -1,0 +1,50 @@
+
+.hero {
+    background-image: linear-gradient(to right, var(--c-black-50), transparent);
+    padding: 80px 100px;
+    display: flex;
+    flex-direction: column;
+    gap: 50px;
+    position: relative;
+    overflow: hidden;
+    border-radius: 15px;
+    box-shadow: 0 5px 25px var(--c-black);
+
+    &::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: url("/static/img/nature.jpeg");
+        background-size: cover;
+        background-position: center;
+        z-index: -1;
+    }
+
+    & .hero-text {
+        max-width: 600px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        text-align: justify;
+    }
+
+    & .hero-buttons {
+        display: flex;
+        flex-direction: row;
+        gap: 15px;
+    }
+}
+
+.popular-sets {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+
+    & .card {
+        justify-content: flex-end;
+        text-decoration: none;
+        color: var(--c-white);
+
+        & p {height: 45px;}
+    }
+}

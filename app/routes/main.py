@@ -22,7 +22,7 @@ def index():
             { "id": hid.encode(draft.id), "name": draft.name }
             for draft in Draft.query.where(Draft.owner_id == current_user.id).all()]
     
-    return render_template('index.html', sets = sets, drafts = drafts)
+    return render_template('index.html', sets = sets, drafts = drafts, popular_sets = sets[:5])
 
 @bp.route('/sets/new', methods=['GET'])
 @login_required

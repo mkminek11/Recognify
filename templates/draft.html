@@ -346,9 +346,7 @@
                 async submitForm(event) {
                     if (event) event.preventDefault();
 
-                    await axios.post('/api/draft/{{ draft.hash() }}/submit', {
-                        images: this.images.map(img => ({ img: img.image.data(), label: this.imageLabels[img.image.hash] }))
-                    });
+                    await axios.post('/api/draft/{{ draft.hash() }}/submit');
                 },
 
                 async deleteSet() {

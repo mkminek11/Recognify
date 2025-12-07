@@ -1,23 +1,43 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <div x-data="container">
+    <div x-data="container" class="container">
         {% include 'components/navigation.html' %}
 
-        <h1>Learn to Recognize & Identify</h1>
-        <p>
-            Recognify is a tool to help you learn to recognize and identify various subjects through spaced
-            repetition flashcards. Create your own sets of flashcards or explore existing ones to enhance your
-            learning experience.
-        </p>
-        <div>
-            {% if current_user.is_authenticated %}
+        <section class="hero">
+            <div class="hero-text">
+                <h2>Learn to Recognize & Identify</h2>
+                <p>
+                    Recognify is a tool to help you learn to recognize and identify various subjects through spaced
+                    repetition flashcards. Create your own sets of flashcards or explore existing ones to enhance your
+                    learning experience.
+                </p>
+            </div>
+
+            <div class="hero-buttons">
+                <a href="/sets" class="btn btn-secondary">Browse Sets</a>
+                {% if current_user.is_authenticated %}
                 <a href="/sets/new" class="btn btn-primary">Create a New Set</a>
-            {% else %}
+                {% else %}
                 <a href="/auth/signup" class="btn btn-primary">Sign up for free</a>
-            {% endif %}
-            <a href="/a"></a>
-        </div>
+                {% endif %}
+            </div>
+        </section>
+
+        <section class="popular-sets">
+            <h2>Popular sets</h2>
+            <div class="cards-row">
+                {% for set in popular_sets %}
+                    <a href="/sets/{{ set.id }}" class="card">
+                        <h3>{{ set.name }}</h3>
+                        <p>{{ set.description }}</p>
+                    </a>
+                {% else %}
+                    <p>No popular sets available.</p>
+                {% endfor %}
+            </div>
+        </section>
+
         <!-- <h1>Welcome to Recognify</h1>
         <p>Sets:</p>
         <ul>
@@ -73,4 +93,8 @@
             }));
         });
     </script>
+{% endblock %}
+
+{% block styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
 {% endblock %}
