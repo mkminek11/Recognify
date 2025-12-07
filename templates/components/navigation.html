@@ -8,7 +8,7 @@
         <a href="/"><img src="/static/img/logo.png" alt="Recognify."></a>
     </div>
 
-    <a href="/sets" class="nav-link">Browse sets</a>
+    <a href="/sets" class="icon-link">Browse sets</a>
 
     <div class="nav-center">
         {% call input(placeholder="Search...", ref="searchInput", kw={"x-model": "searchQuery", "@keydown.enter": "search()"}) %}
@@ -16,9 +16,24 @@
         {% endcall %}
     </div>
 
-    <a href="/sets/new" class="nav-link"><i class="fas fa-plus"></i> Create</a>
-    <a href="/settings" class="nav-link"><i class="fas fa-cog"></i> Settings</a>
-    <a href="/auth/login" class="btn btn-primary">Log in</a>
+    <a href="/sets/new" class="icon-link"><i class="fas fa-plus"></i> Create</a>
+    <a href="/settings" class="icon-link"><i class="fas fa-cog"></i> Settings</a>
+
+    {% if current_user.is_authenticated %}
+        <div class="dropdown nav-user-dropdown">
+            <div class="dropdown-trigger">
+                <img src="{{ current_user.avatar_url(size=30) }}" alt="Avatar" class="nav-avatar">
+            </div>
+            <div class="dropdown-menu">
+                <a href="/profile"      class="dropdown-item icon-link"><i class="fas fa-user"></i> Profile</a>
+                <a href="/profile/sets" class="dropdown-item icon-link"><i class="fas fa-book"></i> My sets</a>
+                <a href="/auth/logout"  class="dropdown-item icon-link"><i class="fas fa-sign-out-alt"></i> Log out</a>
+            </div>
+        </div>
+    {% else %}
+        <a href="/auth/login" class="btn btn-primary">Log in</a>
+        <!-- <a href="/auth/signup" class="btn btn-secondary">Sign up</a> -->
+    {% endif %}
 </nav>
 
 <script>

@@ -44,6 +44,12 @@ class User(db.Model, UserMixin):
         if draft.owner_id == self.id:
             return True
         return any(access.user_id == self.id for access in draft.access_users)
+
+    def avatar_url(self, size: int = 128) -> str:
+        import hashlib
+        email = self.email.lower().encode('utf-8') if self.email else b""
+        hash_email = hashlib.md5(email).hexdigest()
+        return f"https://www.gravatar.com/avatar/{hash_email}?d=identicon&s={size}"
     
 
 class Set(db.Model):

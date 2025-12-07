@@ -13,20 +13,6 @@ nav {
     align-items: center;
     gap: 60px;
 
-    & .nav-link {
-        color: var(--c-white);
-        text-decoration: none;
-        transition: var(--transition);
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        gap: 7.5px;
-
-        &:hover {
-            color: var(--c-primary-light);
-        }
-    }
-
     & .nav-center {
         flex-grow: 1;
         display: flex;
@@ -35,6 +21,22 @@ nav {
         & .input-wrapper {
             max-width: 500px;
             flex-grow: 1;
+        }
+    }
+
+    & .nav-user-dropdown {
+        --menu-distance: 25px;
+        /* --menu-distance-total: 50px; */
+
+        & .nav-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            box-shadow: 0px 4px 8px -4px var(--c-black-50);
+        }
+
+        & .dropdown-menu {
+            right: -40px;
         }
     }
 }
