@@ -394,12 +394,10 @@
 
                         // Set the value and focus next input
                         this.imageLabels[image.hash] = label;
+                        input.value = label;
+                        this.saveImageLabel(index);
                         
-                        // Focus the next input using getElementById
-                        if (nextIndex >= this.images.length) {return;}
-                        this.$nextTick(() => {
-                            this.saveImageLabel(index);
-                            
+                        if (nextIndex < this.images.length) {
                             const nextInput = document.getElementById(`input_${nextIndex}`);
                             console.log("Next input:", nextInput, "index:", nextIndex);
                             if (nextInput) {
@@ -408,7 +406,7 @@
                             } else {
                                 console.log("Input not found for id:", `input_${nextIndex}`);
                             }
-                        });
+                        }
                     });
                 },
 

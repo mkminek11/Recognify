@@ -37,6 +37,22 @@
                 {% endfor %}
             </div>
         </section>
+
+        {% if current_user.is_authenticated %}
+            <section class="popular-sets">
+                <h2>Your drafts</h2>
+                <div class="cards-row">
+                    {% for draft in drafts %}
+                        <a href="/draft/{{ draft.id }}" class="card">
+                            <h3>{{ draft.name }}</h3>
+                            <p>{{ draft.description }}</p>
+                        </a>
+                    {% else %}
+                        <p>You have no drafts.</p>
+                    {% endfor %}
+                </div>
+            </section>
+        {% endif %}
     </div>
 {% endblock %}
 

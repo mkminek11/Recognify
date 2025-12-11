@@ -50,7 +50,9 @@ def delete_all_drafts():
 @bp.route('/draft/<string:draft_hash>/', methods=['DELETE'])
 @draft_access_required
 def delete_draft(draft: Draft):
-    shutil.rmtree(os.path.join(UPLOAD_PATH, "sets", f"draft_{draft.id}"))
+    draft_path = os.path.join(UPLOAD_PATH, "sets", f"draft_{draft.id}")
+    if os.path.exists(draft_path):
+        shutil.rmtree(draft_path)
     DraftImage.query.filter(DraftImage.draft_id == draft.id).delete()
     DraftLabel.query.filter(DraftLabel.draft_id == draft.id).delete()
     db.session.delete(draft)

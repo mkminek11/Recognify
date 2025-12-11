@@ -19,7 +19,7 @@ def index():
     drafts = []
     if current_user.is_authenticated:
         drafts = [
-            { "id": hid.encode(draft.id), "name": draft.name }
+            { "id": hid.encode(draft.id), "name": draft.name, "description": draft.description }
             for draft in Draft.query.where(Draft.owner_id == current_user.id).all()]
     
     return render_template('index.html', sets = sets, drafts = drafts, popular_sets = sets[:5])
