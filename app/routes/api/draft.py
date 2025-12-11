@@ -4,7 +4,7 @@ import os.path
 import requests
 from flask_login import current_user
 from flask import jsonify, request, send_file
-from app.models import Draft, DraftAccess, DraftImage, DraftLabel, Image, Set, User
+from app.models import Draft, DraftAccess, DraftImage, DraftLabel, Image, Set, SkipImage, User
 from app.app import VALID_IMG_EXTENSIONS, db, UPLOAD_PATH, draft_access_required, hid, decode, permission_required
 from app.presentation import extract_images, get_free_filename, get_free_index, temp_remove
 from app.routes.api import bp
@@ -55,6 +55,10 @@ def delete_draft(draft: Draft):
         shutil.rmtree(draft_path)
     DraftImage.query.filter(DraftImage.draft_id == draft.id).delete()
     DraftLabel.query.filter(DraftLabel.draft_id == draft.id).delete()
+    DraftAccess.query.filter(DraftAccess.draft_id == draft.id).delete()
+    SkipImage.query.join(Image).filter(Image.set_id == draft.set_id).delete()
+    Image.query.filter(Image.set_id == draft.set_id).delete()
+    Set.query.filter(Set.id == draft.set_id).delete()
     db.session.delete(draft)
     db.session.commit()
     return jsonify({"message": "Draft deleted successfully."}), 200
