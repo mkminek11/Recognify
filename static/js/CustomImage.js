@@ -45,7 +45,11 @@ export class CustomImage extends Image {
 
   static async fromUrl(url, id = null) {
     /* Create CustomImage from URL string */
-    const response = await fetch(url);
+    // Use proxy for external URLs to avoid CORS issues
+    const isExternalUrl = url.startsWith('http://') || url.startsWith('https://');
+    const fetchUrl = isExternalUrl ? `/proxy-image?url=${encodeURIComponent(url)}` : url;
+    
+    const response = await fetch(fetchUrl);
     const blob = await response.blob();
     return new CustomImage(URL.createObjectURL(blob), id);
   }

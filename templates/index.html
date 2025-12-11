@@ -37,43 +37,6 @@
                 {% endfor %}
             </div>
         </section>
-
-        <!-- <h1>Welcome to Recognify</h1>
-        <p>Sets:</p>
-        <ul>
-            {% for set in sets %}
-                <li>
-                    <a href="/sets/{{ set.id }}">{{ set.name }}</a>
-                </li>
-            {% else %}
-                <li>No sets available.</li>
-            {% endfor %}
-        </ul>
-        <p>My drafts:</p>
-        <ul>
-            {% for draft in drafts %}
-                <li>
-                    <a href="/draft/{{ draft.id }}">Draft {{ draft.name }}</a>
-                </li>
-            {% else %}
-                <li>No drafts available.</li>
-            {% endfor %}
-        </ul>
-        {% if current_user.is_anonymous %}
-            <a href="/auth/login">Login</a>
-            <a href="/auth/signup">Sign up</a>
-        {% else %}
-            <a href="/auth/logout">Logout</a>
-        {% endif %}
-
-        {% if current_user.is_authenticated %}
-            <a href="/sets/new">Create a new set</a>
-        {% endif %}
-
-        {% if current_user.is_authenticated and current_user.is_admin() %}
-            <a href="#" onclick="deleteAllSets();">Delete all sets</a>
-            <a href="#" onclick="deleteAllDrafts();">Delete all drafts</a>
-        {% endif %} -->
     </div>
 {% endblock %}
 

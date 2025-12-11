@@ -159,6 +159,7 @@ def add_image(draft: Draft):
 
     path = os.path.join(UPLOAD_PATH, "sets", f"draft_{draft.id}")
     index = get_free_index(path, "img", "*")
+    added_images = []
     for image in images:
         extension = os.path.splitext(image.filename or "")[1].lower().lstrip('.')
         os.makedirs(path, exist_ok=True)
@@ -170,8 +171,10 @@ def add_image(draft: Draft):
 
         i = DraftImage(draft.id, filename, 0, 0)
         db.session.add(i)
+        db.session.flush()
+        added_images.append({"id": i.id, "filename": i.filename, "label": i.label, "slide": i.slide})
     db.session.commit()
-    return jsonify({"message": "Gallery updated successfully."}), 200
+    return jsonify({"images": added_images}), 200
 
 
 

@@ -1,0 +1,19 @@
+
+.draft-title {text-align: center;}
+
+main.draft-body {
+    display: flex;
+    flex-direction: row;
+    gap: 150px;
+
+    & section.sidebar {
+        width: 360px;
+        background-color: var(--c-grey6);
+        padding: 23px;
+        border-radius: 15px;
+        box-shadow: 0px 5px 25px var(--c-black);
+        border: 2px solid var(--c-grey3);
+    }
+
+    & section.main {}
+}

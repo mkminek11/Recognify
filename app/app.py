@@ -1,20 +1,25 @@
 
-from flask import Flask, redirect
+from flask import Flask, redirect, request, send_file
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
 from functools import wraps
 from flask_login import current_user
 from typing import Callable, Literal
+from flask_cors import CORS
+from io import BytesIO
 import hashids
 import os
 import re
+import requests
 
 
 app = Flask(__name__, 
              instance_relative_config = True,
              template_folder = '../templates',
              static_folder = '../static')
+
+CORS(app)
 
 class Base(DeclarativeBase): pass
 
@@ -95,3 +100,20 @@ def format_number(value: int | float) -> str:
         return f"{value / 1_000:.0f} K"
     else:
         return f"{value / 1_000_000:.0f} M"
+
+@app.route('/proxy-image')
+def proxy_image():
+    url = request.args.get('url')
+    if not url: return "URL parameter is required", 400
+    
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        
+        return send_file(
+            BytesIO(response.content),
+            mimetype=response.headers.get('Content-Type', 'image/jpeg'),
+            as_attachment=False
+        )
+    except requests.RequestException as e:
+        return f"Error fetching image: {str(e)}", 500

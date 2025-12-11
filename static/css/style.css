@@ -59,6 +59,8 @@ a {
     color: var(--c-primary-light);
 }
 
+.icon {cursor: pointer;}
+
 .input-wrapper {
     display: flex;
     flex-direction: row;
@@ -92,7 +94,6 @@ a {
         text-align: center;
         color: var(--c-grey4);
         margin-right: 20px;
-        cursor: pointer;
     }
 }
 
