@@ -251,8 +251,8 @@
                     });
 
                     for (let i = 0; i < added; i++) {
-                        this.images[this.images.length - added + i - 1].image.dbid = ids.data.images[i].id;
-                        this.images[this.images.length - added + i - 1].slide = ids.data.images[i].slide;
+                        this.images[this.images.length - added + i].image.dbid = ids.data.images[i].id;
+                        this.images[this.images.length - added + i].slide = ids.data.images[i].slide;
                     }
                 },
 
@@ -358,6 +358,7 @@
                     
                     for (const { cimg, imageData } of imageResults) {
                         if (!this.images.some(existing => existing.image.hash === cimg.hash)) {
+                            cimg.dbid = imageData.id;
                             this.images.push({ image: cimg, slide: imageData.slide });
                             this.imageLabels[cimg.hash] = imageData.label || '';
                         }

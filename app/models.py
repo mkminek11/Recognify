@@ -91,14 +91,16 @@ class Image(db.Model):
     filename: Mapped[str] = mapped_column(String(128), nullable = False)
     set_id: Mapped[int] = mapped_column(ForeignKey("sets.id"), nullable = False)
     label: Mapped[str] = mapped_column(String(128), nullable = True)
+    draft_image_id: Mapped[int | None] = mapped_column(ForeignKey("draft_images.id"), nullable = True, default = None)
 
     set: Mapped["Set"] = relationship("Set", back_populates = "images", lazy = "select")
+    draft_image: Mapped["DraftImage | None"] = relationship("DraftImage", lazy = "select")
 
-    def __init__(self, filename: str, label: str = "", set_id: int = 0):
+    def __init__(self, filename: str, label: str = "", set_id: int = 0, draft_image_id: int | None = None):
         self.filename = filename
         self.label = label
         self.set_id = set_id
-
+        self.draft_image_id = draft_image_id
 
 class Draft(db.Model):
     __tablename__ = "drafts"

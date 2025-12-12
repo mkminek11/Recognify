@@ -81,7 +81,7 @@ def play_set(set_hash: str):
 @bp.route('/draft/<string:draft_hash>')
 @draft_access_required
 def draft_view(draft: Draft):
-    if not current_user.has_access_to(draft): return "Access denied", 403
+    if not current_user.is_authenticated or not current_user.has_access_to(draft): return "Access denied", 403
     
     return render_template('draft.html', draft = draft)
 

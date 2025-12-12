@@ -56,7 +56,8 @@ def delete_draft(draft: Draft):
     DraftImage.query.filter(DraftImage.draft_id == draft.id).delete()
     DraftLabel.query.filter(DraftLabel.draft_id == draft.id).delete()
     DraftAccess.query.filter(DraftAccess.draft_id == draft.id).delete()
-    SkipImage.query.join(Image).filter(Image.set_id == draft.set_id).delete()
+    image_ids = [i.id for i in Image.query.filter(Image.set_id == draft.set_id).all()]
+    SkipImage.query.filter(SkipImage.image_id.in_(image_ids)).delete(synchronize_session=False)
     Image.query.filter(Image.set_id == draft.set_id).delete()
     Set.query.filter(Set.id == draft.set_id).delete()
     db.session.delete(draft)
@@ -308,12 +309,13 @@ def change_image_from_url(draft: Draft):
 
 @bp.route('/draft/<string:draft_hash>/submit', methods=['POST'])
 @draft_access_required
-def submit_draft(draft: Draft):
-    if not current_user.has_access_to(draft): return jsonify({"error": "Unauthorized."}), 403
+def publish_draft(draft: Draft):
+    if not current_user.is_authenticated or not current_user.has_access_to(draft): return jsonify({"error": "Unauthorized."}), 403
     if not draft.images: return jsonify({"error": "Draft has no images."}), 400
 
     set_id = draft.set_id
     if set_id is None:
+        # Create new set
         set_ = Set(name = draft.name or "Untitled Set", description = draft.description or "", is_public = True)
         db.session.add(set_)
         db.session.commit()
@@ -324,12 +326,41 @@ def submit_draft(draft: Draft):
             db.session.add(new_img)
             set_.images.append(new_img)
 
-        set_id = set_.id
-    
-    draft.set_id = set_id
-    db.session.commit()
+        draft.set_id = set_.id
+        db.session.commit()
+    else:
+        # Update existing set
+        set_ = Set.query.get(set_id)
+        if not isinstance(set_, Set):
+            return jsonify({"error": "Associated set not found."}), 404
+        set_.name = draft.name or set_.name
+        set_.description = draft.description or set_.description
 
-    return jsonify({"message": "Draft submitted successfully.", "set_id": hid.encode(set_id)}), 200
+        set_images = {img.id: False for img in set_.images}
+        for draft_img in draft.images:
+            if draft_img.id in set_images:
+                # Existing image, update label
+                img = Image.query.get(draft_img.id)
+                if not isinstance(img, Image): continue
+                img.label = draft_img.label
+                set_images[draft_img.id] = True
+            else:
+                # New image, add to set
+                new_img = Image(filename = draft_img.filename, set_id = set_.id, label = draft_img.label, draft_image_id = draft_img.id)
+                db.session.add(new_img)
+                set_.images.append(new_img)
+        
+        for img_id, found in set_images.items():
+            if found: continue
+
+            img = Image.query.get(img_id)
+            if not isinstance(img, Image): continue
+            SkipImage.query.filter(SkipImage.image_id == img.id).delete()
+            db.session.delete(img)
+
+        db.session.commit()
+
+    return jsonify({"message": "Draft published successfully.", "set_id": hid.encode(set_id)}), 200
 
 
 
