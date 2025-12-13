@@ -229,3 +229,46 @@ h3 {
         color: var(--c-primary-light);
     }
 }
+
+.collapse {
+    background-color: var(--c-grey55);
+    border-radius: 100px;
+    box-shadow: 0px 4px 8px -4px var(--c-black);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    width: min-content;
+
+    &.expanded {
+        padding-left: 15px;
+    }
+
+    & i {
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+    }
+
+    & .collapse-button {
+        padding: 7.5px;
+        cursor: pointer;
+
+        & i {
+            background-color: var(--c-grey3);
+            color: var(--c-grey55);
+        }
+    }
+
+    & .collapse-content {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+        overflow: hidden;
+        transition: var(--transition);
+    }
+}

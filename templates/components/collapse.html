@@ -1,0 +1,9 @@
+
+{% macro collapse() %}
+    <div class="collapse" x-data="{ expanded: false }" :class="{ 'expanded': expanded }">
+        <div class="collapse-content" x-show="expanded" x-transition>
+            {{ caller() }}
+        </div>
+        <div class="collapse-button" @click="expanded = !expanded"><i class="icon fas fa-plus"></i></div>
+    </div>
+{% endmacro %}

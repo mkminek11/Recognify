@@ -36,6 +36,13 @@ main.draft-body {
         &.sidebar-left  {grid-area: ls;}
         &.sidebar-right {grid-area: rs;}
 
+        & .sidebar-header {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+        }
+
         & .image-gallery {
             display: flex;
             flex-direction: column;
@@ -69,9 +76,15 @@ main.draft-body {
                     align-self: center;
                     object-fit: cover;
                     filter: brightness(50%) saturate(80%);
+                    transition: var(--transition);
                 }
 
-                & i {color: var(--c-grey5);}
+                & i {
+                    color: var(--c-grey5);
+                    transition: var(--transition);
+
+                    &:hover {color: var(--c-white);}
+                }
             }
         }
     }

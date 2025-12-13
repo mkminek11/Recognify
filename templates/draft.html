@@ -1,6 +1,7 @@
 
 {% extends "base.html" %}
 {% from 'components/input.html' import input %}
+{% from 'components/collapse.html' import collapse %}
 
 {% block content %}
     <div x-data="formHandler" class="container">
@@ -62,17 +63,15 @@
                 <div class="sidebar-header">
                     <h3>Images</h3>
 
-                    <div class="collapse">
-                        <div class="collapse-content">
-                            <label for="images" class="collapse-item"><i class="icon fas fa-file-arrow-up"></i></label>
-                            <input type="file" id="images" class="hidden" x-ref="imageInput" multiple @change="addImages($event)" />
-                            <div class="collapse-item"><i class="icon fas fa-cloud-arrow-up"></i></div>
-                            <div class="collapse-item"><i class="icon fas fa-dove"></i></div>
-                            <input type="file" id="pres" class="hidden" x-ref="presInput" @change="preparePres($event)" />
-                            <label for="pres" class="collapse-item"><i class="icon fas fa-person-chalkboard"></i></label>
-                        </div>
-                        <div class="collapse-button"><i class="icon fas fa-plus"></i></div>
-                    </div>
+                    <input type="file" id="images" class="hidden" x-ref="imageInput" multiple @change="addImages($event)" />
+                    <input type="file" id="pres" class="hidden" x-ref="presInput" @change="preparePres($event)" />
+
+                    {% call collapse() %}
+                        <label for="images" class="collapse-item" title="Add image from file"><i class="icon fas fa-file-arrow-up"></i></label>
+                        <div class="collapse-item" title="Add from URL" @click="addURL()"><i class="icon fas fa-cloud-arrow-up"></i></div>
+                        <div class="collapse-item" title="Import from iNaturalist" @click="$refs.inaturalistDialog.showModal()"><i class="icon fas fa-dove"></i></div>
+                        <label for="pres" class="collapse-item" title="Extract from a presentation"><i class="icon fas fa-person-chalkboard"></i></label>
+                    {% endcall %}
                 </div>
 
                 <div class="image-gallery">
@@ -94,6 +93,13 @@
                         <i class="icon fas fa-pen"></i>
                         <i class="icon fas fa-trash-can"></i>
                     </div>
+
+                    <input type="file"
+                        id="change_from_file"
+                        class="hidden-fixed"
+                        x-ref="changeFromFileInput"
+                        @change="changeFromFileEvent($event)"
+                        accept="image/*" />
                 </div>
 
                 <div class="image-label">
@@ -198,13 +204,6 @@
     
         <button @click="submitForm">Create Set</button>
         -->
-
-        <input type="file"
-            id="change_from_file"
-            class="hidden-fixed"
-            x-ref="changeFromFileInput"
-            @change="changeFromFileEvent($event)"
-            accept="image/*" />
     </div>
 {% endblock %}
 
