@@ -336,14 +336,14 @@ def publish_draft(draft: Draft):
         set_.name = draft.name or set_.name
         set_.description = draft.description or set_.description
 
-        set_images = {img.id: False for img in set_.images}
+        set_images = {img.filename: False for img in set_.images}
         for draft_img in draft.images:
-            if draft_img.id in set_images:
+            if draft_img.filename in set_images:
                 # Existing image, update label
-                img = Image.query.get(draft_img.id)
+                img = Image.query.filter_by(filename=draft_img.filename).first()
                 if not isinstance(img, Image): continue
                 img.label = draft_img.label
-                set_images[draft_img.id] = True
+                set_images[draft_img.filename] = True
             else:
                 # New image, add to set
                 new_img = Image(filename = draft_img.filename, set_id = set_.id, label = draft_img.label, draft_image_id = draft_img.id)
