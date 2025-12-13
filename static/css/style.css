@@ -272,3 +272,12 @@ h3 {
         transition: var(--transition);
     }
 }
+
+dialog {
+    margin: auto;
+
+    &::backdrop {
+        background-color: var(--c-black-50);
+        backdrop-filter: blur(5px);
+    }
+}
