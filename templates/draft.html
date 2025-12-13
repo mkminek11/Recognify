@@ -53,65 +53,101 @@
             </div>
         </dialog>
 
-        <!-- {% include 'components/navigation.html' %}
+        {% include 'components/navigation.html' %}
 
         <h2 class="draft-title">Editing draft "<span x-text="title"></span>"</h2>
 
         <main class="draft-body">
-            <section class="sidebar">
+            <section class="sidebar sidebar-left">
                 <div class="sidebar-header">
                     <h3>Images</h3>
 
                     <div class="collapse">
                         <div class="collapse-content">
-                            <div class="collapse-item"><i class="icon fas fa-file-arrow-up"></i></div>
+                            <label for="images" class="collapse-item"><i class="icon fas fa-file-arrow-up"></i></label>
+                            <input type="file" id="images" class="hidden" x-ref="imageInput" multiple @change="addImages($event)" />
                             <div class="collapse-item"><i class="icon fas fa-cloud-arrow-up"></i></div>
                             <div class="collapse-item"><i class="icon fas fa-dove"></i></div>
-                            <div class="collapse-item"><i class="icon fas fa-person-chalkboard"></i></div>
+                            <input type="file" id="pres" class="hidden" x-ref="presInput" @change="preparePres($event)" />
+                            <label for="pres" class="collapse-item"><i class="icon fas fa-person-chalkboard"></i></label>
                         </div>
                         <div class="collapse-button"><i class="icon fas fa-plus"></i></div>
                     </div>
                 </div>
 
-                <div class="image-gallery"></div>
+                <div class="image-gallery">
+                    <template x-for="(imageWrapper, index) in images" :key="index">
+                        <div class="gallery-item" :class="{ 'active': index === currentIndex }" @click="currentIndex = index">
+                            <img :src="imageWrapper.image.data" />
+                            <p x-text="imageLabels[imageWrapper.image.hash] || '-'"></p>
+                            <i class="icon fas fa-trash-can" @click.stop="removeImage(index)"></i>
+                        </div>
+                    </template>
+                </div>
             </section>
 
             <section class="main">
                 <div class="image-main">
-                    <img src="" />
+                    <img :src="images[currentIndex]?.image.data" />
 
-                    <i class="icon fas fa-pen"></i>
-                    <i class="icon fas fa-trash-can"></i>
+                    <div class="image-icons">
+                        <i class="icon fas fa-pen"></i>
+                        <i class="icon fas fa-trash-can"></i>
+                    </div>
                 </div>
 
                 <div class="image-label">
                     <h3>Image label</h3>
-                    {% call input(placeholder="Enter image label...") %}
+                    {% call input(placeholder="Enter image label...", kw={"x-model": "imageLabels[images[currentIndex]?.image.hash]"}) %}
                         <i class="icon fas fa-check"></i>
                     {% endcall %}
+                </div>
 
-                    <div class="suggestions"></div>
+                <div class="suggestions" x-show="labels.filter(l => l.slide === images[currentIndex]?.slide).length > 0">
+                    <template x-for="(label, index) in labels.filter(l => l.slide === images[currentIndex]?.slide)" :key="index">
+                        <div class="suggestion-item">
+                            <span class="suggestion-index" x-text="index + 1"></span>
+                            <span class="suggestion-label" x-text="label.label"></span>
+                        </div>
+                    </template>
+                </div>
             </section>
 
-            <section class="sidebar">
+            <section class="sidebar sidebar-right">
                 <div class="sidebar-header">
                     <h3>Settings</h3>
                 </div>
 
                 <dl>
-                    <dt><span>Title</span><i class="icon fas fa-pen"></i></dt>
-                    <dd><span x-text="title"></span></dd>
+                    <dt>
+                        <span>Title</span>
+                        <i class="icon fas" :class="{'fa-pen': !titleEditMode, 'fa-check': titleEditMode}"
+                                @click="titleEditMode = !titleEditMode"></i>
+                    </dt>
+                    <dd>
+                        <span x-text="title" x-show="!titleEditMode"></span>
+                        <input type="text" x-ref="titleInput" x-model="title" x-show="titleEditMode" @blur="saveTitle();" />
+                    </dd>
 
-                    <dt><span>Description</span><i class="icon fas fa-pen"></i></dt>
-                    <dd><span x-text="setDescription"></span></dd>
+                    <dt>
+                        <span>Description</span>
+                        <i class="icon fas" :class="{'fa-pen': !descriptionEditMode, 'fa-check': descriptionEditMode}"
+                                @click="descriptionEditMode = !descriptionEditMode"></i>
+                    </dt>
+                    <dd>
+                        <span x-text="setDescription" x-show="!descriptionEditMode"></span>
+                        <textarea x-ref="descriptionInput" x-model="setDescription"
+                                x-show="descriptionEditMode" @blur="saveDescription();"></textarea>
+                    </dd>
                 </dl>
 
-                <p class="link danger">Delete draft</p>
+                <p class="link danger" @click="deleteDraft()">Delete draft</p>
 
-                <button class="btn-primary">Publish</button>
+                <button class="btn-primary" @click="publishDraft()">Publish</button>
             </section>
-        </main> -->
+        </main>
 
+        <!--
         <div>
             <label for="name">Set title:</label>
             <input type="text" id="name" x-ref="titleInput" x-model="title" x-show="titleEditMode" @blur="saveTitle();" />
@@ -161,6 +197,7 @@
         </div>
     
         <button @click="submitForm">Create Set</button>
+        -->
 
         <input type="file"
             id="change_from_file"
@@ -182,7 +219,8 @@
             Alpine.data('formHandler', () => ({
                 title: '{{ draft.name or "Untitled Set" }}',
                 setDescription: '{{ draft.description or "" }}',
-                titleEditMode: true,
+                titleEditMode: false,
+                descriptionEditMode: false,
                 images: [], // [ { image: CustomImage, slide: string } ]
                 imageLabels: {}, // { imageHash: string -> label: string }
                 labels: [], // list of { label: string, slide: string }
@@ -190,9 +228,13 @@
                                         //     { imageLink: string, label: string, id: int, selected: boolean }
                                         // ] }
                 accessUsers: JSON.parse('{{ draft.get_access_users()|tojson }}'), // list of { id: int, name: string, email: string }
+                currentIndex: 0,
 
                 init() {
-                    this.$refs.titleInput.focus();
+                    if (this.title === 'Untitled Set' || !this.title.trim()) {
+                        this.titleEditMode = true;
+                        this.$refs.titleInput.focus();
+                    }
                     this.$refs.imageInput.value = '';
                     this.$refs.presInput.value = '';
                     this.fetchGallery();
@@ -257,7 +299,8 @@
                 },
 
                 async addURL() {
-                    const url = this.$refs.imgURL.value.trim();
+                    // const url = this.$refs.imgURL.value.trim();
+                    const url = prompt("Insert image URL:");
                     if (!url) return;
 
                     try {
@@ -275,7 +318,7 @@
                         this.images.push({ image: cimg, slide: "" });
                         this.imageLabels[cimg.hash] = '';
 
-                        this.$refs.imgURL.value = '';
+                        // this.$refs.imgURL.value = '';
                     } catch (error) {
                         alert("Failed to add image from URL.");
                         console.error(error);
@@ -344,6 +387,7 @@
                     const images = result.data.images || [];
                     const labels = result.data.labels || [];
                     await this.addToGallery(images, labels);
+                    console.log("Fetched gallery images:", images);
                 },
 
                 async addToGallery(images, labels = []) {
@@ -411,10 +455,15 @@
                     });
                 },
 
-                async submitForm(event) {
-                    if (event) event.preventDefault();
+                async publishDraft(event) {
+                    // TODO: make sure to save everything
+                    if (event) {event.preventDefault();}
+                    if (!confirm("Are you sure you want to publish this set? You will be able to edit it later.")) {return;}
 
-                    await axios.post('/api/draft/{{ draft.hash() }}/submit');
+                    let result = await axios.post('/api/draft/{{ draft.hash() }}/submit');
+                    if (result.status === 200) {
+                        alert("Set published successfully!");
+                    }
                 },
 
                 async deleteSet() {
@@ -525,5 +574,5 @@
 {% endblock %}
 
 {% block styles %}
-    <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/draft.css') }}"> -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/draft.css') }}">
 {% endblock %}

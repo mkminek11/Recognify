@@ -55,9 +55,9 @@ body > .container {
 .hidden {display: none;}
 .hidden-fixed {position: fixed; top: 0px; display: none;}
 
-a {
-    color: var(--c-primary-light);
-}
+a {color: var(--c-primary-light);}
+
+img {display: block;}
 
 .icon {cursor: pointer;}
 
