@@ -225,15 +225,15 @@ def add_image_url(draft: Draft):
 
 
 
-@bp.route('/draft/<string:draft_hash>/change/image', methods=['POST'])
+@bp.route('/draft/<string:draft_hash>/replace/image', methods=['POST'])
 @draft_access_required
-def change_image_from_file(draft: Draft):
-    change_id = request.form.get('change_id', type=int)
-    if not change_id: return jsonify({"error": "No change ID provided."}), 400
+def replace_image_from_file(draft: Draft):
+    replace_id = request.form.get('replace_id', type=int)
+    if not replace_id: return jsonify({"error": "No replace ID provided."}), 400
 
     image_file = request.files.get('image')
     if not image_file: return jsonify({"error": "No image file provided."}), 400
-    draft_image = DraftImage.query.get(change_id)
+    draft_image = DraftImage.query.get(replace_id)
     if not isinstance(draft_image, DraftImage) or draft_image.draft_id != draft.id:
         return jsonify({"error": "Image not found in draft."}), 404
 
@@ -251,22 +251,22 @@ def change_image_from_file(draft: Draft):
 
     draft_image.filename = filename
     db.session.commit()
-    return jsonify({"message": "Image changed successfully."}), 200
+    return jsonify({"message": "Image replaced successfully."}), 200
 
 
 
-@bp.route('/draft/<string:draft_hash>/change/url', methods=['POST'])
+@bp.route('/draft/<string:draft_hash>/replace/url', methods=['POST'])
 @draft_access_required
-def change_image_from_url(draft: Draft):
+def replace_image_from_url(draft: Draft):
     if draft.owner != current_user: return jsonify({"error": "Unauthorized."}), 403
 
-    change_id = request.form.get('change_id', 0, type = int)
-    if not change_id: return jsonify({"error": "No change ID provided."}), 400
+    replace_id = request.form.get('replace_id', 0, type = int)
+    if not replace_id: return jsonify({"error": "No replace ID provided."}), 400
 
     url = request.form.get('url', '')
     if not url: return jsonify({"error": "No URL provided."}), 400
 
-    draft_image = DraftImage.query.get(change_id)
+    draft_image = DraftImage.query.get(replace_id)
     if not isinstance(draft_image, DraftImage) or draft_image.draft_id != draft.id:
         return jsonify({"error": "Image not found in draft."}), 404
     
@@ -303,7 +303,7 @@ def change_image_from_url(draft: Draft):
     draft_image.slide = -10000
 
     db.session.commit()
-    return jsonify({"message": "Image changed successfully."}), 200
+    return jsonify({"message": "Image replaced successfully."}), 200
 
 
 

@@ -1,13 +1,53 @@
 
 {% extends "auth/base.html" %}
+{% from 'components/input.html' import input, password_input %}
 
 {% block content %}
-    <h1>Sign Up</h1>
-    <form method="POST" action="{{ url_for('auth.signup') }}">
-        <label class="input-wrapper"><input type="text"     name="username" required /></label>
-        <label class="input-wrapper"><input type="email"    name="email"    required /></label>
-        <label class="input-wrapper"><input type="password" name="password" required /></label>
-        
-        <button type="submit">Sign Up</button>
-    </form>
+    <h1 class="title">Welcome to Recognify</h1>
+
+    <div class="form-container" x-data="signupForm()">
+        <div class="user-icon"><i class="fas fa-user"></i></div>
+
+        <h2>Sign Up</h2>
+        <div class="inputs">
+            {% call input(type="text", placeholder="Username", ref="username") %}{% endcall %}
+            {% call input(type="email", placeholder="Email", ref="email") %}{% endcall %}
+            {{ password_input(placeholder="Password", ref="password", show="showPassword", toggle="togglePassword") }}
+            {{ password_input(placeholder="Confirm Password", ref="confirm_password", show="showConfirmPassword", toggle="toggleConfirmPassword") }}
+
+            <p class="message error" x-text="message" x-show="message"></p>
+        </div>
+        <button class="btn-primary shadow" @click="submit()">Sign Up</button>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        function signupForm() {
+            return {
+                message: '{{ message or "" }}',
+                showPassword: false,
+                showConfirmPassword: false,
+                togglePassword() {this.showPassword = !this.showPassword;},
+                toggleConfirmPassword() {this.showConfirmPassword = !this.showConfirmPassword;},
+
+                async submit() {
+                    const username = this.$refs.username.value;
+                    const email = this.$refs.email.value;
+                    const password = this.$refs.password.value;
+                    const confirm_password = this.$refs.confirm_password.value;
+
+                    await axios.post('/auth/signup', {username, email, password, confirm_password}).then(response => {
+                        if (response.status === 200) {
+                            window.location.href = '/auth/login';
+                        } else {
+                            this.message = response.data.message;
+                        }
+                    }).catch(error => {
+                        this.message = error.response.data.message || 'An error occurred. Please try again.';
+                    });
+                }
+            }
+        }
+    </script>
 {% endblock %}

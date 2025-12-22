@@ -123,5 +123,16 @@ main.draft-body {
         & .image-label {
             & h3 {margin-bottom: 10px;}
         }
+
+        & .suggestions {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            gap: 10px;
+
+            & .suggestion-item {
+                background-color: var(--c-primary-dark);
+            }
+        }
     }
 }

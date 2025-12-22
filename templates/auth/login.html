@@ -6,19 +6,15 @@
     <h1 class="title">Welcome to Recognify</h1>
 
     <div class="form-container" x-data="loginForm()">
-        <div class="user-icon">
-            <i class="fas fa-user"></i>
-        </div>
+        <div class="user-icon"><i class="fas fa-user"></i></div>
 
         <h2>Log in</h2>
 
         <div class="inputs">
             {% call input(placeholder="Username", ref="username") %}{% endcall %}
-            
             {% call input(placeholder="Password", ref="password", kw={":type": "showPassword ? 'text' : 'password'"}) %}
                 <i @click="togglePassword()" class="icon fas" :class="showPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
             {% endcall %}
-
 
             <p class="message error" x-text="message" x-show="message"></p>
         </div>

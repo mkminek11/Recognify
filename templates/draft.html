@@ -90,21 +90,26 @@
                     <img :src="images[currentIndex]?.image.data" />
 
                     <div class="image-icons">
-                        <i class="icon fas fa-pen"></i>
-                        <i class="icon fas fa-trash-can"></i>
+                        <i class="icon fas fa-pen" title="Replace image"></i>
+                        <i class="icon fas fa-trash-can" title="Delete image" @click="removeImage(currentIndex)"></i>
                     </div>
 
                     <input type="file"
-                        id="change_from_file"
-                        class="hidden-fixed"
-                        x-ref="changeFromFileInput"
-                        @change="changeFromFileEvent($event)"
+                        id="replace_from_file"
+                        class="hidden"
+                        x-ref="replaceFromFileInput"
+                        @change="replaceFromFileEvent($event)"
                         accept="image/*" />
                 </div>
 
                 <div class="image-label">
                     <h3>Image label</h3>
-                    {% call input(placeholder="Enter image label...", kw={"x-model": "imageLabels[images[currentIndex]?.image.hash]"}) %}
+                    {% call input(placeholder="Enter image label...", kw={
+                        "x-model": "imageLabels[images[currentIndex]?.image.hash]",
+                        "x-ref": "imageLabelInput",
+                        "@blur": "saveImageLabel()",
+                        "@input": "imageInput()"}) %}
+
                         <i class="icon fas fa-check"></i>
                     {% endcall %}
                 </div>
@@ -147,7 +152,7 @@
                     </dd>
                 </dl>
 
-                <p class="link danger" @click="deleteDraft()">Delete draft</p>
+                <p class="link danger" @click="deleteSet()">Delete draft</p>
 
                 <button class="btn-primary" @click="publishDraft()">Publish</button>
             </section>
@@ -190,8 +195,8 @@
                                @blur="saveImageLabel(index)" 
                                @input="imageInput($event, index)" />
                         <button @click="removeImage(index)" tabindex="-1">Remove</button>
-                        <label for="change_from_file" @click="changeFromFile(index)" tabindex="-1">Change from file</label>
-                        <button @click="changeFromURL(index)" tabindex="-1">Change from URL</button>
+                        <label for="replace_from_file" @click="replaceFromFile(index)" tabindex="-1">replace from file</label>
+                        <button @click="replaceFromURL(index)" tabindex="-1">replace from URL</button>
                         <ul>
                             <template x-for="(label, labelIndex) in labels.filter(l => l.slide === image.slide)" :key="labelIndex">
                                 <li x-text="`${labelIndex + 1}. ${label.label}`"></li>
@@ -324,30 +329,30 @@
                     }
                 },
 
-                changeFromFile(index) {
-                    this.$refs.changeFromFileInput.dataset.index = index;
+                replaceFromFile(index) {
+                    this.$refs.replaceFromFileInput.dataset.index = index;
                 },
 
-                async changeFromFileEvent(event) {
-                    const index = this.$refs.changeFromFileInput.dataset.index;
+                async replaceFromFileEvent(event) {
+                    const index = this.$refs.replaceFromFileInput.dataset.index;
                     const file = event.target.files[0];
                     if (!file) return;
 
                     const fd = new FormData();
                     fd.append('image', file);
-                    fd.append('change_id', this.images[index].image.dbid);
+                    fd.append('replace_id', this.images[index].image.dbid);
                     const cimg = window.CustomImage.fromFile(file, this.images[index].image.dbid);
                     await cimg.ready;
 
-                    await axios.post('/api/draft/{{ draft.hash() }}/change/image', fd, {
+                    await axios.post('/api/draft/{{ draft.hash() }}/replace/image', fd, {
                         headers: { 'Content-Type': 'multipart/form-data' }
                     });
 
                     this.images[index].image = cimg;
-                    this.$refs.changeFromFileInput.value = '';
+                    this.$refs.replaceFromFileInput.value = '';
                 },
 
-                async changeFromURL(index) {
+                async replaceFromURL(index) {
                     url = prompt("Insert image URL:");
                     if (!url) {return;}
                     const cimg = await window.CustomImage.fromUrl(url, this.images[index].image.dbid);
@@ -355,8 +360,8 @@
                     
                     const fd = new FormData();
                     fd.append('url', url);
-                    fd.append('change_id', cimg.dbid);
-                    await axios.post('/api/draft/{{ draft.hash() }}/change/url', fd);
+                    fd.append('replace_id', cimg.dbid);
+                    await axios.post('/api/draft/{{ draft.hash() }}/replace/url', fd);
 
                     this.images[index].image = cimg;
                 },
@@ -414,10 +419,10 @@
                     }
                 },
 
-                imageInput(event, index) {
-                    const image = this.images[index].image;
-                    const imageWrapper = this.images[index];
-                    const input = event.target;
+                imageInput() {
+                    const image = this.images[this.currentIndex].image;
+                    const imageWrapper = this.images[this.currentIndex];
+                    const input = this.$refs.imageLabelInput;
                     const value = input.value;
 
                     console.log("Input ", input, " changed for image", image.hash, "to", value);
@@ -426,7 +431,7 @@
 
                     console.log("Valid number input:", value);
 
-                    const nextIndex = index + 1;
+                    const nextIndex = this.currentIndex + 1;
                     this.$nextTick(() => {
                         const number = parseInt(value, 10);
                         console.log("Parsed number:", number);
@@ -439,17 +444,12 @@
                         // Set the value and focus next input
                         this.imageLabels[image.hash] = label;
                         input.value = label;
-                        this.saveImageLabel(index);
+                        this.saveImageLabel(this.currentIndex);
                         
                         if (nextIndex < this.images.length) {
-                            const nextInput = document.getElementById(`input_${nextIndex}`);
-                            console.log("Next input:", nextInput, "index:", nextIndex);
-                            if (nextInput) {
-                                nextInput.focus();
-                                nextInput.select(); // Select text for better UX
-                            } else {
-                                console.log("Input not found for id:", `input_${nextIndex}`);
-                            }
+                            this.currentIndex = nextIndex;
+                            input.imageLabelInput.focus();
+                            input.imageLabelInput.select();
                         }
                     });
                 },

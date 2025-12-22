@@ -1,8 +1,15 @@
 
-{% macro input(type="text", placeholder="", ref="", value="", kw={}) %}
+{% macro input(type="text", placeholder="", ref="", value="", name="", required=False, kw={}) %}
     <div class="input-wrapper">
         <input type="{{ type }}" placeholder="{{ placeholder }}" {% if ref %}x-ref="{{ ref }}"{% endif %} value="{{ value }}"
-            {% for attr, val in kw.items() %} {{ attr }}="{{ val }}"{% endfor %} />
+            {% if name %}name="{{ name }}" {% endif %}{% if required %}required{% endif %} {% for attr, val in kw.items() %} {{ attr }}="{{ val }}"{% endfor %} />
         {{ caller() if caller is defined else "" }}
     </div>
+{% endmacro %}
+
+{% macro password_input(placeholder="", ref="", show="", toggle="", required=False, kw={}) %}
+    {% set _ = kw.update({":type": show + " ? 'text' : 'password'"}) %}
+    {% call input(placeholder=placeholder, ref=ref, required=required, kw=kw) %}
+        <i class="icon fas" @click="{{ toggle }}()" :class="{'fa-eye': !{{ show }}, 'fa-eye-slash': {{ show }}}"></i>
+    {% endcall %}
 {% endmacro %}
