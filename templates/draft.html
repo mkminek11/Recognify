@@ -182,6 +182,8 @@
                                         // ] }
                 accessUsers: JSON.parse('{{ draft.get_access_users()|tojson }}'), // list of { id: int, name: string, email: string }
                 currentIndex: 0,
+                loadingImages: new Set(), // Track which image indices are currently being loaded
+
 
                 init() {
                     if (this.title === 'Untitled Set' || !this.title.trim()) {
@@ -191,6 +193,11 @@
                     this.$refs.imageInput.value = '';
                     this.$refs.presInput.value = '';
                     this.fetchGallery();
+                    
+                    // Watch for currentIndex changes to load focused image immediately
+                    this.$watch('currentIndex', (newIndex) => {
+                        this.loadImageAtIndex(newIndex);
+                    });
                 },
 
                 async saveTitle() {
@@ -213,13 +220,54 @@
                 },
 
                 async saveAndNext() {
-                    await this.saveImageLabel(this.currentIndex);
+                    this.saveImageLabel(this.currentIndex);
+                    
                     if (this.currentIndex < this.images.length - 1) {
                         this.currentIndex++;
                         this.$nextTick(() => {
                             this.$refs.imageLabelInput.focus();
                             this.$refs.imageLabelInput.select();
                         });
+                    }
+                },
+
+                async replacePlaceholderWithImage(index, imageData) {
+                    const cimg = await window.CustomImage.fromUrl('/api/draft/{{ draft.hash() }}/image/' + imageData.id, imageData.id);
+                    await cimg.ready;
+                    cimg.dbid = imageData.id;
+                    
+                    // Replace the placeholder
+                    const placeholderKey = 'placeholder_' + index;
+                    const existingLabel = this.imageLabels[placeholderKey];
+                    const labelToSet = existingLabel || imageData.label || '';
+                    
+                    const newLabels = { ...this.imageLabels };
+                    delete newLabels[placeholderKey];
+                    newLabels[cimg.hash] = labelToSet;
+                    this.imageLabels = newLabels;
+                    
+                    this.images[index] = { image: cimg, slide: imageData.slide };
+                },
+
+                async loadImageAtIndex(index) {
+                    if (index < 0 || index >= this.images.length) return;
+                    const imageWrapper = this.images[index];
+                    
+                    // Skip if already loaded or currently loading
+                    if (!imageWrapper || !imageWrapper.isPlaceholder || this.loadingImages.has(index)) {
+                        return;
+                    }
+                    
+                    // Mark as loading
+                    this.loadingImages.add(index);
+                    
+                    try {
+                        await this.replacePlaceholderWithImage(index, imageWrapper.originalData);
+                    } catch (error) {
+                        console.error('Failed to load image at index', index, error);
+                    } finally {
+                        // Remove from loading set when done (success or failure)
+                        this.loadingImages.delete(index);
                     }
                 },
 
@@ -400,29 +448,22 @@
                         for (let i = 0; i < newImages.length; i++) {
                             const imageData = newImages[i];
                             const arrayIndex = startIndex + i;
+                            
+                            // Skip if already loaded or currently being loaded
+                            if (!this.images[arrayIndex] || !this.images[arrayIndex].isPlaceholder || this.loadingImages.has(arrayIndex)) {
+                                continue;
+                            }
+                            
+                            // Mark as loading
+                            this.loadingImages.add(arrayIndex);
+                            
                             try {
-                                const cimg = await window.CustomImage.fromUrl('/api/draft/{{ draft.hash() }}/image/' + imageData.id, imageData.id);
-                                await cimg.ready;
-                                cimg.dbid = imageData.id;
-                                
-                                // Replace the placeholder with actual image
-                                if (this.images[arrayIndex] && this.images[arrayIndex].isPlaceholder) {
-                                    const placeholderKey = 'placeholder_' + arrayIndex;
-                                    const existingLabel = this.imageLabels[placeholderKey];
-                                    const labelToSet = existingLabel || imageData.label || '';
-                                    console.log(`Replacing placeholder ${arrayIndex}: hash=${cimg.hash}, label="${labelToSet}"`);
-                                    
-                                    // Force Alpine reactivity by creating new object
-                                    const newLabels = { ...this.imageLabels };
-                                    delete newLabels[placeholderKey];
-                                    newLabels[cimg.hash] = labelToSet;
-                                    this.imageLabels = newLabels;
-                                    
-                                    this.images[arrayIndex] = { image: cimg, slide: imageData.slide };
-                                    console.log('imageLabels after replace:', Object.keys(this.imageLabels).length, this.imageLabels);
-                                }
+                                await this.replacePlaceholderWithImage(arrayIndex, imageData);
                             } catch (error) {
                                 console.error('Failed to load image:', imageData.id, error);
+                            } finally {
+                                // Remove from loading set
+                                this.loadingImages.delete(arrayIndex);
                             }
                         }
                     })();

@@ -102,7 +102,7 @@ main.draft-body {
             & img {
                 max-width: 100%;
                 min-width: 80px;
-                background-color: var(--c-primary-dark);
+                background-color: var(--c-grey6);
                 border: none;
                 height: 360px;
                 object-fit: contain;
