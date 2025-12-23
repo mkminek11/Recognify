@@ -132,6 +132,18 @@ main.draft-body {
 
             & .suggestion-item {
                 background-color: var(--c-primary-dark);
+                padding: 5px 10px;
+                border-radius: 5px;
+                cursor: pointer;
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                gap: 10px;
+                border: 2px solid var(--c-primary-light);
+                box-shadow: 0px 4px 8px -4px var(--c-black);
+
+                & .suggestion-index {color: var(--c-white);}
+                & .suggestion-label {color: var(--c-black);}
             }
         }
     }

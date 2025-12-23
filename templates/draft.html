@@ -107,7 +107,7 @@
                     {% call input(placeholder="Enter image label...", kw={
                         "x-model": "imageLabels[images[currentIndex]?.image.hash]",
                         "x-ref": "imageLabelInput",
-                        "@blur": "saveImageLabel()",
+                        "@blur": "saveImageLabel(currentIndex)",
                         "@input": "imageInput()"}) %}
 
                         <i class="icon fas fa-check"></i>
@@ -157,58 +157,6 @@
                 <button class="btn-primary" @click="publishDraft()">Publish</button>
             </section>
         </main>
-
-        <!--
-        <div>
-            <label for="name">Set title:</label>
-            <input type="text" id="name" x-ref="titleInput" x-model="title" x-show="titleEditMode" @blur="saveTitle();" />
-            <span x-text="title" x-show="!titleEditMode" @click="titleEditMode = true; $nextTick(() => $refs.titleInput.focus())"></span>
-        </div>
-    
-        <label for="description">Description:</label>
-        <textarea id="description" x-model="setDescription" @blur="saveDescription()"></textarea>
-
-        <button @click="deleteSet">Delete Set</button>
-        <button @click="$refs.accessDialog.showModal()">Manage Set Access</button>
-    
-        <div>
-            <p>Add images:</p>
-            <label for="images" class="btn">Upload</label>
-            <input type="file" id="images" class="hidden" x-ref="imageInput" multiple @change="addImages($event)" />
-
-            <input type="url" id="img_url" x-ref="imgURL" placeholder="Image URL" />
-            <button @click="addURL">Add URL</button>
-
-            <label for="pres" class="btn">Extract from a presentation</label>
-            <input type="file" id="pres" class="hidden" x-ref="presInput" @change="preparePres($event)" />
-
-            <button @click="$refs.inaturalistDialog.showModal()">Import from iNaturalist</button>
-
-            <div x-ref="imageList">
-                <template x-for="(image, index) in images" :key="index">
-                    <div>
-                        <img :src="image.image.data" width="100" />
-                        <input type="text" 
-                               :id="`input_${index}`"
-                               x-model="imageLabels[image.image.hash]" 
-                               placeholder="Enter image caption" 
-                               @blur="saveImageLabel(index)" 
-                               @input="imageInput($event, index)" />
-                        <button @click="removeImage(index)" tabindex="-1">Remove</button>
-                        <label for="replace_from_file" @click="replaceFromFile(index)" tabindex="-1">replace from file</label>
-                        <button @click="replaceFromURL(index)" tabindex="-1">replace from URL</button>
-                        <ul>
-                            <template x-for="(label, labelIndex) in labels.filter(l => l.slide === image.slide)" :key="labelIndex">
-                                <li x-text="`${labelIndex + 1}. ${label.label}`"></li>
-                            </template>
-                        </ul>
-                    </div>
-                </template>
-            </div>
-        </div>
-    
-        <button @click="submitForm">Create Set</button>
-        -->
     </div>
 {% endblock %}
 
@@ -404,11 +352,20 @@
 
                     if (images.length == 0) {return;}
                     
-                    // Create placeholder objects for all images immediately
-                    const placeholders = images.map((imageData, index) => ({
+                    // Filter out images that are already loaded (by dbid)
+                    const existingDbIds = new Set(this.images.map(img => img.image.dbid).filter(id => id));
+                    const newImages = images.filter(imageData => !existingDbIds.has(imageData.id));
+                    
+                    if (newImages.length == 0) {return;}
+                    
+                    // Track the starting position in the images array
+                    const startIndex = this.images.length;
+                    
+                    // Create placeholder objects for all new images immediately
+                    const placeholders = newImages.map((imageData, index) => ({
                         image: {
                             data: 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22%3E%3Crect fill=%22%23ddd%22 width=%22200%22 height=%22200%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22 font-family=%22sans-serif%22 font-size=%2214%22%3ELoading %23' + (index + 1) + '%3C/text%3E%3C/svg%3E',
-                            hash: 'placeholder_' + index,
+                            hash: 'placeholder_' + (startIndex + index),
                             dbid: imageData.id,
                         },
                         slide: imageData.slide,
@@ -422,24 +379,35 @@
                     
                     // Initialize labels for placeholders
                     for (let i = 0; i < placeholders.length; i++) {
-                        const imageData = images[i];
-                        this.imageLabels['placeholder_' + i] = imageData.label || '';
+                        const imageData = newImages[i];
+                        this.imageLabels['placeholder_' + (startIndex + i)] = imageData.label || '';
                     }
                     
                     // Load actual images one by one in the background, replacing placeholders
                     (async () => {
-                        for (let i = 0; i < images.length; i++) {
-                            const imageData = images[i];
+                        for (let i = 0; i < newImages.length; i++) {
+                            const imageData = newImages[i];
+                            const arrayIndex = startIndex + i;
                             try {
                                 const cimg = await window.CustomImage.fromUrl('/api/draft/{{ draft.hash() }}/image/' + imageData.id, imageData.id);
                                 await cimg.ready;
                                 cimg.dbid = imageData.id;
                                 
                                 // Replace the placeholder with actual image
-                                if (this.images[i] && this.images[i].isPlaceholder) {
-                                    delete this.imageLabels['placeholder_' + i];
-                                    this.imageLabels[cimg.hash] = imageData.label || '';
-                                    this.images[i] = { image: cimg, slide: imageData.slide };
+                                if (this.images[arrayIndex] && this.images[arrayIndex].isPlaceholder) {
+                                    const placeholderKey = 'placeholder_' + arrayIndex;
+                                    const existingLabel = this.imageLabels[placeholderKey];
+                                    const labelToSet = existingLabel || imageData.label || '';
+                                    console.log(`Replacing placeholder ${arrayIndex}: hash=${cimg.hash}, label="${labelToSet}"`);
+                                    
+                                    // Force Alpine reactivity by creating new object
+                                    const newLabels = { ...this.imageLabels };
+                                    delete newLabels[placeholderKey];
+                                    newLabels[cimg.hash] = labelToSet;
+                                    this.imageLabels = newLabels;
+                                    
+                                    this.images[arrayIndex] = { image: cimg, slide: imageData.slide };
+                                    console.log('imageLabels after replace:', Object.keys(this.imageLabels).length, this.imageLabels);
                                 }
                             } catch (error) {
                                 console.error('Failed to load image:', imageData.id, error);
@@ -464,7 +432,7 @@
                     this.$nextTick(() => {
                         const number = parseInt(value, 10);
                         console.log("Parsed number:", number);
-                        
+
                         // Filter labels by the EXACT slide identifier (which is unique per presentation)
                         const filtered = this.labels.filter(l => l.slide === imageWrapper.slide);
                         console.log("Filtered labels for slide", imageWrapper.slide, ":", filtered);
