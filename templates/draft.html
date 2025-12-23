@@ -464,6 +464,8 @@
                     this.$nextTick(() => {
                         const number = parseInt(value, 10);
                         console.log("Parsed number:", number);
+                        
+                        // Filter labels by the EXACT slide identifier (which is unique per presentation)
                         const filtered = this.labels.filter(l => l.slide === imageWrapper.slide);
                         console.log("Filtered labels for slide", imageWrapper.slide, ":", filtered);
                         if (filtered.length < number) {return;}
@@ -477,8 +479,10 @@
                         
                         if (nextIndex < this.images.length) {
                             this.currentIndex = nextIndex;
-                            input.imageLabelInput.focus();
-                            input.imageLabelInput.select();
+                            this.$nextTick(() => {
+                                input.focus();
+                                input.select();
+                            });
                         }
                     });
                 },

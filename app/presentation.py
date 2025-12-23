@@ -74,7 +74,11 @@ def extract_images(presentation_file: FileStorage, draft_id: int) -> tuple[str, 
                 if not text: continue
                 l = save_labels(text, pres_n,   slide_n, draft_id)
                 for s in l: labels.append({"text": s, "slide": slide_encoded})
+    
+    # Increment the presentation counter for the next import
+    draft.presentations += 1
     db.session.commit()
+    
     for img in _images:
         images.append({"id": img["id"].id, "filename": img["filename"], "label": img["label"], "slide": img["slide"]})
     
