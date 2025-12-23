@@ -35,12 +35,19 @@ def login_post():
 
 @bp.route('/signup', methods=['POST'])
 def signup_post():
-    username = request.form.get('username')
-    email    = request.form.get('email')
-    password = request.form.get('password')
+    data = request.get_json() or {}
+    username = data.get('username')
+    email    = data.get('email')
+    password = data.get('password')
 
     if not username or not email or not password:
         return jsonify({"message": "Missing fields"}), 400
+
+    if User.query.filter_by(username = username).first() is not None:
+        return jsonify({"message": "Username already taken"}), 409
+    
+    if User.query.filter_by(email = email).first() is not None:
+        return jsonify({"message": "Email already registered"}), 409
     
     pwd_hash = werkzeug.security.generate_password_hash(password)
     
