@@ -4,7 +4,7 @@ import werkzeug.security
 from flask_login import login_user, logout_user
 
 from app.models import User
-from app.app import db
+from app.app import db, logger
 
 
 bp = Blueprint("auth", __name__, url_prefix = "/auth")
@@ -54,6 +54,8 @@ def signup_post():
     user = User(username = username, email = email, password = pwd_hash)
     db.session.add(user)
     db.session.commit()
+
+    logger.info(f"New user registered: {username}")
 
     return redirect('/auth/login?message=Account created, please log in.')
 

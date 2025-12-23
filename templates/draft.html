@@ -208,15 +208,15 @@
                     const result = await axios.post('/api/draft/{{ draft.hash() }}/rename', { title: this.title });
                 },
 
-                async saveDescription() {
-                    const result = await axios.post('/api/draft/{{ draft.hash() }}/description', { description: this.setDescription });
+                saveDescription() {
+                    axios.post('/api/draft/{{ draft.hash() }}/description', { description: this.setDescription });
                 },
 
-                async saveImageLabel(index) {
+                saveImageLabel(index) {
                     console.log("Blur");
                     const image = this.images[index].image;
                     const label = this.imageLabels[image.hash] || '';
-                    await axios.post('/api/draft/{{ draft.hash() }}/image/' + image.dbid, { label });
+                    axios.post('/api/draft/{{ draft.hash() }}/image/' + image.dbid, { label });
                 },
 
                 async saveAndNext() {
@@ -277,6 +277,10 @@
                         delete this.imageLabels[image.hash];
                     }
                     this.images.splice(index, 1);
+
+                    if (this.currentIndex >= this.images.length) {
+                        this.currentIndex = this.images.length - 1;
+                    }
 
                     axios.delete('/api/draft/{{ draft.hash() }}/image/' + image.dbid);
                 },

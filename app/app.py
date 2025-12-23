@@ -1,18 +1,21 @@
 
 from flask import Flask, redirect, request, send_file
-from flask_login import LoginManager
+from flask_login import LoginManager, current_user
+from flask_cors import CORS
+
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.pool import NullPool
+
 from functools import wraps
-from flask_login import current_user
 from typing import Callable, Literal
-from flask_cors import CORS
 from io import BytesIO
+
+import requests
 import hashids
+import logging
 import os
 import re
-import requests
 
 
 app = Flask(__name__, 
@@ -29,11 +32,16 @@ db = SQLAlchemy(model_class = Base)
 
 hid = hashids.Hashids(min_length = 8, salt = os.environ.get("HASHID_SALT", os.environ.get("HASHID_SALT", "dev")))
 
-def decode(hashid: str) -> int | Literal[False]:
-    decoded = hid.decode(hashid)
-    if not decoded: return False
-    if not isinstance(decoded[0], int): return False
-    return decoded[0]
+logger = logging.getLogger("recognify")
+logging.basicConfig(
+    level = logging.INFO,
+    format = '%(levelname)-8s [%(asctime)s] - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+    filename='logs/log.txt',
+    filemode='a')
+
+if not os.path.exists('logs'):
+    os.makedirs('logs')
 
 os.makedirs(app.instance_path, exist_ok=True)
 
@@ -54,9 +62,17 @@ app.config.from_mapping(
     },
 )
 
+
+
 ROOT_PATH = os.path.split(app.root_path)[0]
 UPLOAD_PATH = os.path.join(ROOT_PATH, "static", "uploads")
 VALID_IMG_EXTENSIONS = ["png", "jpg", "jpeg"]
+
+def decode(hashid: str) -> int | Literal[False]:
+    decoded = hid.decode(hashid)
+    if not decoded: return False
+    if not isinstance(decoded[0], int): return False
+    return decoded[0]
 
 def login_required(func: Callable) -> Callable:
     @wraps(func)
