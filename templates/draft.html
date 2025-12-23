@@ -395,28 +395,57 @@
                 },
 
                 async addToGallery(images, labels = []) {
-                    // Process all images in parallel instead of sequentially
-                    const imagePromises = images.map(async (imageData) => {
-                        const cimg = await window.CustomImage.fromUrl('/api/draft/{{ draft.hash() }}/image/' + imageData.id, imageData.id);
-                        await cimg.ready;
-                        return { cimg, imageData };
-                    });
-                    
-                    const imageResults = await Promise.all(imagePromises);
-                    
-                    for (const { cimg, imageData } of imageResults) {
-                        if (!this.images.some(existing => existing.image.hash === cimg.hash)) {
-                            cimg.dbid = imageData.id;
-                            this.images.push({ image: cimg, slide: imageData.slide });
-                            this.imageLabels[cimg.hash] = imageData.label || '';
-                        }
-                    }
-
+                    // Add labels first (lightweight)
                     for (const labelData of labels) {
                         if (!this.labels.some(existing => existing.label === labelData.text && existing.slide === labelData.slide)) {
                             this.labels.push({ label: labelData.text, slide: labelData.slide });
                         }
                     }
+
+                    if (images.length == 0) {return;}
+                    
+                    // Create placeholder objects for all images immediately
+                    const placeholders = images.map((imageData, index) => ({
+                        image: {
+                            data: 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22%3E%3Crect fill=%22%23ddd%22 width=%22200%22 height=%22200%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22 font-family=%22sans-serif%22 font-size=%2214%22%3ELoading %23' + (index + 1) + '%3C/text%3E%3C/svg%3E',
+                            hash: 'placeholder_' + index,
+                            dbid: imageData.id,
+                        },
+                        slide: imageData.slide,
+                        isPlaceholder: true,
+                        imageDataId: imageData.id,
+                        originalData: imageData,
+                    }));
+                    
+                    // Add all placeholders to show what's coming
+                    this.images.push(...placeholders);
+                    
+                    // Initialize labels for placeholders
+                    for (let i = 0; i < placeholders.length; i++) {
+                        const imageData = images[i];
+                        this.imageLabels['placeholder_' + i] = imageData.label || '';
+                    }
+                    
+                    // Load actual images one by one in the background, replacing placeholders
+                    (async () => {
+                        for (let i = 0; i < images.length; i++) {
+                            const imageData = images[i];
+                            try {
+                                const cimg = await window.CustomImage.fromUrl('/api/draft/{{ draft.hash() }}/image/' + imageData.id, imageData.id);
+                                await cimg.ready;
+                                cimg.dbid = imageData.id;
+                                
+                                // Replace the placeholder with actual image
+                                if (this.images[i] && this.images[i].isPlaceholder) {
+                                    delete this.imageLabels['placeholder_' + i];
+                                    this.imageLabels[cimg.hash] = imageData.label || '';
+                                    this.images[i] = { image: cimg, slide: imageData.slide };
+                                }
+                            } catch (error) {
+                                console.error('Failed to load image:', imageData.id, error);
+                            }
+                        }
+                    })();
                 },
 
                 imageInput() {
