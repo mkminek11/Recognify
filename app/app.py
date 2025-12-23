@@ -3,6 +3,7 @@ from flask import Flask, redirect, request, send_file
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.pool import NullPool
 from functools import wraps
 from flask_login import current_user
 from typing import Callable, Literal
@@ -39,9 +40,18 @@ os.makedirs(app.instance_path, exist_ok=True)
 app.config.from_mapping(
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev"),
     DATABASE = os.path.join(app.instance_path, "db.sqlite"),
-    SQLALCHEMY_DATABASE_URI = f"sqlite:///db.sqlite",
+    SQLALCHEMY_DATABASE_URI = f"sqlite:///db.sqlite?timeout=30&check_same_thread=False",
     SQLALCHEMY_TRACK_MODIFICATIONS = False,
     TEMPLATES_AUTO_RELOAD = True,
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "connect_args": {
+            "timeout": 30,
+            "check_same_thread": False,
+        },
+        "pool_pre_ping": True,
+        "pool_recycle": 3600,
+        "poolclass": NullPool,
+    },
 )
 
 ROOT_PATH = os.path.split(app.root_path)[0]
