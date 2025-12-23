@@ -2,7 +2,7 @@
 from flask import Blueprint, jsonify, redirect, render_template, request
 from flask_login import current_user
 from app.models import Draft, Image, Set, SkipImage, User
-from app.app import db, draft_access_required, login_required, hid, decode, logger
+from app.app import db, draft_access_required, login_required, hid, decode, log_info
 from app.presentation import create_draft
 
 bp = Blueprint("main", __name__)
@@ -28,7 +28,7 @@ def index():
 @login_required
 def new_set():
     draft_id = create_draft()
-    logger.info(f"User {current_user.username} created a new draft {draft_id}")
+    log_info(f"User {current_user.username} created a new draft {draft_id}")
     return redirect(f'/draft/{hid.encode(draft_id)}')
 
 @bp.route('/sets/<string:set_hash>')

@@ -3,7 +3,7 @@ import os.path
 from flask_login import current_user
 from flask import jsonify, request, send_file
 from app.models import Draft, Image, Set, SkipImage, User
-from app.app import db, UPLOAD_PATH, decode, logger
+from app.app import db, UPLOAD_PATH, decode, log_info
 from app.routes.api import bp
 
 
@@ -22,7 +22,7 @@ def delete_all_sets():
     db.session.query(Set).delete()
     db.session.commit()
 
-    logger.info(f"All sets deleted by admin user {user.username} ({user.id}).")
+    log_info(f"All sets deleted by admin user {user.username} ({user.id}).")
 
     return "", 204
 
@@ -40,7 +40,7 @@ def delete_set(set_hash: str):
     db.session.delete(set_)
     db.session.commit()
 
-    logger.info(f"Set {set_.name} ({set_.id}) deleted by user {current_user.username} ({current_user.id}).")
+    log_info(f"Set {set_.name} ({set_.id}) deleted by user {current_user.username} ({current_user.id}).")
 
     return jsonify({"message": "Set deleted successfully."}), 200
 

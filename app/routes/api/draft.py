@@ -5,7 +5,7 @@ import requests
 from flask_login import current_user
 from flask import jsonify, request, send_file
 from app.models import Draft, DraftAccess, DraftImage, DraftLabel, Image, Set, SkipImage, User
-from app.app import VALID_IMG_EXTENSIONS, db, UPLOAD_PATH, draft_access_required, hid, decode, permission_required, logger
+from app.app import VALID_IMG_EXTENSIONS, db, UPLOAD_PATH, draft_access_required, hid, decode, permission_required, log_info
 from app.presentation import extract_images, get_free_filename, get_free_index, temp_remove
 from app.routes.api import bp
 
@@ -26,7 +26,7 @@ def process_presentation(draft: Draft):
     tmp_addr, images, labels = result
     temp_remove(tmp_addr)
 
-    logger.info(f"Extracted {len(images)} images from presentation for draft {draft.id} by user {current_user.id}")
+    log_info(f"Extracted {len(images)} images from presentation for draft {draft.id} by user {current_user.id}")
 
     return jsonify({"images": images, "labels": labels}), 200
 
@@ -47,7 +47,7 @@ def delete_all_drafts():
     db.session.query(Set).delete()
     db.session.commit()
 
-    logger.info(f"All drafts deleted by admin user {current_user.username} ({current_user.id})")
+    log_info(f"All drafts deleted by admin user {current_user.username} ({current_user.id})")
 
     return "", 204
 
@@ -69,7 +69,7 @@ def delete_draft(draft: Draft):
     db.session.delete(draft)
     db.session.commit()
 
-    logger.info(f"Draft {draft.id} deleted by user {current_user.id}")
+    log_info(f"Draft {draft.id} deleted successfully by user {current_user.id}")
 
     return jsonify({"message": "Draft deleted successfully."}), 200
 
@@ -369,7 +369,7 @@ def publish_draft(draft: Draft):
 
         db.session.commit()
 
-    logger.info(f"Draft {draft.id} published by user {current_user.id} as set {set_.name} ({set_.id})")
+    log_info(f"Draft {draft.id} published by user {current_user.id} as set {set_.name} ({set_.id})")
 
     return jsonify({"message": "Draft published successfully.", "set_id": hid.encode(set_id)}), 200
 

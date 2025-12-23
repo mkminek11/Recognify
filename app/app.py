@@ -18,6 +18,37 @@ import os
 import re
 
 
+# Create logs directory first
+if not os.path.exists('logs'):
+    os.makedirs('logs', exist_ok=True)
+
+# Configure logging BEFORE creating Flask app
+logger = logging.getLogger('recognify')
+logger.setLevel(logging.INFO)
+logger.propagate = False
+
+# Clear any existing handlers
+for handler in logger.handlers[:]:
+    logger.removeHandler(handler)
+
+# Create file handler with immediate flushing
+file_handler = logging.FileHandler('logs/log.txt', mode='a', encoding='utf-8')
+file_handler.setLevel(logging.INFO)
+file_handler.setFormatter(logging.Formatter(
+    '%(levelname)-8s [%(asctime)s] - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+))
+logger.addHandler(file_handler)
+
+# Add console handler too
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+console_handler.setFormatter(logging.Formatter(
+    '%(levelname)-8s [%(asctime)s] - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+))
+logger.addHandler(console_handler)
+
 app = Flask(__name__, 
              instance_relative_config = True,
              template_folder = '../templates',
@@ -31,17 +62,6 @@ login = LoginManager()
 db = SQLAlchemy(model_class = Base)
 
 hid = hashids.Hashids(min_length = 8, salt = os.environ.get("HASHID_SALT", os.environ.get("HASHID_SALT", "dev")))
-
-logger = logging.getLogger("recognify")
-logging.basicConfig(
-    level = logging.INFO,
-    format = '%(levelname)-8s [%(asctime)s] - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S',
-    filename='logs/log.txt',
-    filemode='a')
-
-if not os.path.exists('logs'):
-    os.makedirs('logs')
 
 os.makedirs(app.instance_path, exist_ok=True)
 
@@ -62,7 +82,12 @@ app.config.from_mapping(
     },
 )
 
-
+# Helper function to log with immediate flush
+def log_info(message):
+    """Log a message and immediately flush to disk"""
+    logger.info(message)
+    for handler in logger.handlers:
+        handler.flush()
 
 ROOT_PATH = os.path.split(app.root_path)[0]
 UPLOAD_PATH = os.path.join(ROOT_PATH, "static", "uploads")
