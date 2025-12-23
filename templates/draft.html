@@ -108,6 +108,7 @@
                         "x-model": "imageLabels[images[currentIndex]?.image.hash]",
                         "x-ref": "imageLabelInput",
                         "@blur": "saveImageLabel(currentIndex)",
+                        "@keydown.enter": "saveAndNext()",
                         "@input": "imageInput()"}) %}
 
                         <i class="icon fas fa-check"></i>
@@ -209,6 +210,17 @@
                     const image = this.images[index].image;
                     const label = this.imageLabels[image.hash] || '';
                     await axios.post('/api/draft/{{ draft.hash() }}/image/' + image.dbid, { label });
+                },
+
+                async saveAndNext() {
+                    await this.saveImageLabel(this.currentIndex);
+                    if (this.currentIndex < this.images.length - 1) {
+                        this.currentIndex++;
+                        this.$nextTick(() => {
+                            this.$refs.imageLabelInput.focus();
+                            this.$refs.imageLabelInput.select();
+                        });
+                    }
                 },
 
                 removeImage(index) {
