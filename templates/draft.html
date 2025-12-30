@@ -197,6 +197,21 @@
                     // Watch for currentIndex changes to load focused image immediately
                     this.$watch('currentIndex', (newIndex) => {
                         this.loadImageAtIndex(newIndex);
+                        
+                        // Scroll the selected gallery item into view if it's not visible
+                        this.$nextTick(() => {
+                            const gallery = document.querySelector('.image-gallery');
+                            const activeItem = gallery?.querySelector('.gallery-item.active');
+                            if (activeItem && gallery) {
+                                const galleryRect = gallery.getBoundingClientRect();
+                                const itemRect = activeItem.getBoundingClientRect();
+                                
+                                // Check if item is outside visible area
+                                if (itemRect.top < galleryRect.top || itemRect.bottom > galleryRect.bottom) {
+                                    activeItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                }
+                            }
+                        });
                     });
                 },
 
@@ -205,18 +220,18 @@
                     if (!this.title.trim()) {this.title = 'Untitled Set';}
 
                     this.title = this.title.trim();
-                    const result = await axios.post('/api/draft/{{ draft.hash() }}/rename', { title: this.title });
+                    const result = await axios.post('/api/draft/{{ draft.hid() }}/rename', { title: this.title });
                 },
 
                 saveDescription() {
-                    axios.post('/api/draft/{{ draft.hash() }}/description', { description: this.setDescription });
+                    axios.post('/api/draft/{{ draft.hid() }}/description', { description: this.setDescription });
                 },
 
                 saveImageLabel(index) {
                     console.log("Blur");
                     const image = this.images[index].image;
                     const label = this.imageLabels[image.hash] || '';
-                    axios.post('/api/draft/{{ draft.hash() }}/image/' + image.dbid, { label });
+                    axios.post('/api/draft/{{ draft.hid() }}/image/' + image.dbid, { label });
                 },
 
                 async saveAndNext() {
@@ -232,7 +247,7 @@
                 },
 
                 async replacePlaceholderWithImage(index, imageData) {
-                    const cimg = await window.CustomImage.fromUrl('/api/draft/{{ draft.hash() }}/image/' + imageData.id, imageData.id);
+                    const cimg = await window.CustomImage.fromUrl('/api/draft/{{ draft.hid() }}/image/' + imageData.id, imageData.id);
                     await cimg.ready;
                     cimg.dbid = imageData.id;
                     
@@ -273,16 +288,20 @@
 
                 removeImage(index) {
                     const image = this.images[index].image;
+                    
+                    // Remove the image from the array first
+                    this.images.splice(index, 1);
+
+                    // Then delete its label (after splice to ensure reactivity works correctly)
                     if (image && image.hash) {
                         delete this.imageLabels[image.hash];
                     }
-                    this.images.splice(index, 1);
 
                     if (this.currentIndex >= this.images.length) {
                         this.currentIndex = this.images.length - 1;
                     }
 
-                    axios.delete('/api/draft/{{ draft.hash() }}/image/' + image.dbid);
+                    axios.delete('/api/draft/{{ draft.hid() }}/image/' + image.dbid);
                 },
 
                 async addImages(event) {
@@ -304,7 +323,7 @@
                         }
                     }
 
-                    let ids = await axios.post('/api/draft/{{ draft.hash() }}/gallery', fd, {
+                    let ids = await axios.post('/api/draft/{{ draft.hid() }}/gallery', fd, {
                         headers: { 'Content-Type': 'multipart/form-data' }
                     });
 
@@ -328,7 +347,7 @@
                             return;
                         }
 
-                        const result = await axios.post('/api/draft/{{ draft.hash() }}/gallery/url', { url });
+                        const result = await axios.post('/api/draft/{{ draft.hid() }}/gallery/url', { url });
                         cimg.dbid = result.data.id;
 
                         this.images.push({ image: cimg, slide: "" });
@@ -356,7 +375,7 @@
                     const cimg = window.CustomImage.fromFile(file, this.images[index].image.dbid);
                     await cimg.ready;
 
-                    await axios.post('/api/draft/{{ draft.hash() }}/replace/image', fd, {
+                    await axios.post('/api/draft/{{ draft.hid() }}/replace/image', fd, {
                         headers: { 'Content-Type': 'multipart/form-data' }
                     });
 
@@ -373,7 +392,7 @@
                     const fd = new FormData();
                     fd.append('url', url);
                     fd.append('replace_id', cimg.dbid);
-                    await axios.post('/api/draft/{{ draft.hash() }}/replace/url', fd);
+                    await axios.post('/api/draft/{{ draft.hid() }}/replace/url', fd);
 
                     this.images[index].image = cimg;
                 },
@@ -386,9 +405,9 @@
 
                     const formData = new FormData();
                     formData.append('presentation', file);
-                    formData.append('draft', '{{ draft.hash() }}');
+                    formData.append('draft', '{{ draft.hid() }}');
 
-                    const results = await axios.post('/api/draft/{{ draft.hash() }}/presentation', formData, {
+                    const results = await axios.post('/api/draft/{{ draft.hid() }}/presentation', formData, {
                         headers: { 'Content-Type': 'multipart/form-data' }
                     });
 
@@ -399,7 +418,7 @@
                 },
 
                 async fetchGallery() {
-                    const result = await axios.get('/api/draft/{{ draft.hash() }}/gallery');
+                    const result = await axios.get('/api/draft/{{ draft.hid() }}/gallery');
                     const images = result.data.images || [];
                     const labels = result.data.labels || [];
                     await this.addToGallery(images, labels);
@@ -517,7 +536,7 @@
                     if (event) {event.preventDefault();}
                     if (!confirm("Are you sure you want to publish this set? You will be able to edit it later.")) {return;}
 
-                    let result = await axios.post('/api/draft/{{ draft.hash() }}/submit');
+                    let result = await axios.post('/api/draft/{{ draft.hid() }}/submit');
                     if (result.status === 200) {
                         alert("Set published successfully!");
                     }
@@ -528,7 +547,7 @@
                         return;
                     }
 
-                    await axios.delete('/api/draft/{{ draft.hash() }}');
+                    await axios.delete('/api/draft/{{ draft.hid() }}');
                     window.location.href = '/';
                 },
 
@@ -589,13 +608,13 @@
                             continue;
                         }
 
-                        const result = await axios.post('/api/draft/{{ draft.hash() }}/gallery/url', { url });
+                        const result = await axios.post('/api/draft/{{ draft.hid() }}/gallery/url', { url });
                         cimg.dbid = result.data.id;
 
                         this.images.push({ image: cimg, slide: "" });
                         this.imageLabels[cimg.hash] = label;
 
-                        axios.post('/api/draft/{{ draft.hash() }}/image/' + cimg.dbid, { label });
+                        axios.post('/api/draft/{{ draft.hid() }}/image/' + cimg.dbid, { label });
                     }
                 },
 
@@ -607,7 +626,7 @@
                     const nameOrEmail = this.$refs.accessAddInput.value.trim();
                     if (!nameOrEmail) return;
 
-                    await axios.post('/api/draft/{{ draft.hash() }}/access', { user: nameOrEmail }).then((response) => {
+                    await axios.post('/api/draft/{{ draft.hid() }}/access', { user: nameOrEmail }).then((response) => {
                         const user = response.data.user;
                         if (!user) {alert("User not found."); return;}
                         this.accessUsers.push(user);
@@ -619,7 +638,7 @@
 
                 async removeUserAccess(index) {
                     const user = this.accessUsers[index];
-                    await axios.delete('/api/draft/{{ draft.hash() }}/access', { user: user.id }).then((response) => {
+                    await axios.delete('/api/draft/{{ draft.hid() }}/access', { user: user.id }).then((response) => {
                         if (response.status === 200) {this.accessUsers.splice(index, 1);}
                     }).catch((error) => {
                         alert("Failed to remove user access: " + error.response.data.error);

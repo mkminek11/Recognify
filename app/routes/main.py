@@ -2,7 +2,7 @@
 from flask import Blueprint, jsonify, redirect, render_template, request
 from flask_login import current_user
 from app.models import Draft, Image, Set, SkipImage, User
-from app.app import db, draft_access_required, login_required, hid, decode, log_info
+from app.app import db, draft_access_required, encode, get_data, login_required, decode, encode, log_info
 from app.presentation import create_draft
 
 bp = Blueprint("main", __name__)
@@ -10,33 +10,30 @@ bp = Blueprint("main", __name__)
 @bp.route('/')
 @bp.route('/sets')
 def index():
-    sets = [{ "id": hid.encode(set_.id), "name": set_.name, "description": set_.description } for set_ in Set.query.all()]
-
+    sets = get_data(Set.query.all())
     drafts = []
 
     if current_user.is_authenticated:
-        draft_list = Draft.query.where(Draft.owner_id == current_user.id).all()
-        drafts = [ { "id": hid.encode(draft.id), "name": draft.name, "description": draft.description } for draft in draft_list]
+        drafts = get_data(Draft.query.where(Draft.owner_id == current_user.id).all())
     
     return render_template('index.html', sets = sets, drafts = drafts, popular_sets = sets[:5])
 
 @bp.route('/search')
 def search():
     query = request.args.get('q', '')
-    sets = []
-    sets.extend(Set.query.where(Set.name.ilike(f'%{query}%')).all())
-    sets.extend(filter(lambda x: x not in sets, Set.query.where(Set.description.ilike(f'%{query}%')).all()))
 
-    results = [{ "id": hid.encode(set_.id), "name": set_.name, "description": set_.description } for set_ in sets]
+    results = []
+    results.extend(Set.query.where(Set.name.ilike(f'%{query}%')).all())
+    results.extend(filter(lambda x: x not in results, Set.query.where(Set.description.ilike(f'%{query}%')).all()))
 
-    return render_template('search.html', search_query = query, search_results = results)
+    return render_template('search.html', search_query = query, search_results = get_data(results))
 
 @bp.route('/sets/new', methods=['GET'])
 @login_required
 def new_set():
     draft_id = create_draft()
     log_info(f"User {current_user.username} created a new draft {draft_id}")
-    return redirect(f'/draft/{hid.encode(draft_id)}')
+    return redirect(f'/draft/{encode(draft_id)}')
 
 @bp.route('/sets/<string:set_hash>')
 def view_set(set_hash: str):
@@ -48,16 +45,8 @@ def view_set(set_hash: str):
     draft = Draft.query.filter(Draft.set_id == set_.id).first()
     if not isinstance(draft, Draft): return "Associated draft not found", 404
     
-    data = {
-        "id": set_hash,
-        "name": set_.name,
-        "draft_id": hid.encode(draft.id),
-        "description": set_.description,
-        "created_at": set_.created_at.isoformat(),
-        "images": [
-            { "id": i.id, "label": i.label } for i in set_.images
-        ]
-    }
+    data = set_.data()
+    data['images'] = [img.data() for img in set_.images]
     
     return render_template('set_view.html', set = data)
 
@@ -75,16 +64,7 @@ def play_set(set_hash: str):
 
     images = [{ "id": i.id, "filename": i.filename, "label": i.label } for i in img_query]
 
-    data = {
-        "id": set_.hash(),
-        "name": set_.name,
-        "description": set_.description,
-        "created_at": set_.created_at.isoformat(),
-        "hash": set_.hash(),
-        "images": images
-    }
-
-    return render_template('play_set.html', set = data, anonymous = int(current_user.is_anonymous))
+    return render_template('play_set.html', set = set_.data(), anonymous = current_user.is_anonymous)
 
 @bp.route('/draft/<string:draft_hash>')
 @draft_access_required
@@ -110,7 +90,7 @@ def profile(user_hash: str):
 @bp.route('/profile')
 @login_required
 def my_profile():
-    return redirect(f'/profile/{hid.encode(current_user.id)}')
+    return redirect(f'/profile/{current_user.hid()}')
 
 @bp.route('/profile/sets')
 @login_required

@@ -5,7 +5,7 @@ import requests
 from flask_login import current_user
 from flask import jsonify, request, send_file
 from app.models import Draft, DraftAccess, DraftImage, DraftLabel, Image, Set, SkipImage, User
-from app.app import VALID_IMG_EXTENSIONS, db, UPLOAD_PATH, draft_access_required, hid, decode, permission_required, log_info
+from app.app import VALID_IMG_EXTENSIONS, db, UPLOAD_PATH, draft_access_required, decode, encode, permission_required, log_info
 from app.presentation import extract_images, get_free_filename, get_free_index, temp_remove
 from app.routes.api import bp
 
@@ -188,7 +188,7 @@ def add_image(draft: Draft):
         i = DraftImage(draft.id, filename, 0, 0)
         db.session.add(i)
         db.session.flush()
-        added_images.append({"id": i.id, "filename": i.filename, "label": i.label, "slide": i.slide})
+        added_images.append(i.data())
     db.session.commit()
     return jsonify({"images": added_images}), 200
 
@@ -372,7 +372,7 @@ def publish_draft(draft: Draft):
 
     log_info(f"Draft {draft.id} published by user {current_user.id} as set {set_.name} ({set_.id})")
 
-    return jsonify({"message": "Draft published successfully.", "set_id": hid.encode(set_id)}), 200
+    return jsonify({"message": "Draft published successfully.", "set_id": encode(set_id)}), 200
 
 
 
@@ -390,8 +390,7 @@ def add_draft_access(draft: Draft):
     db.session.add(draft_access)
     db.session.commit()
 
-    return jsonify({"message": "Access granted successfully.", 
-                    "user": { "id": user_obj.id, "name": user_obj.username, "email": user_obj.email }}), 200
+    return jsonify({"message": "Access granted successfully.", "user": user_obj.data()}), 200
 
 
 

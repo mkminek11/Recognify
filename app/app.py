@@ -8,7 +8,7 @@ from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.pool import NullPool
 
 from functools import wraps
-from typing import Callable, Literal
+from typing import Any, Callable, Literal
 from io import BytesIO
 
 import requests
@@ -98,6 +98,18 @@ def decode(hashid: str) -> int | Literal[False]:
     if not decoded: return False
     if not isinstance(decoded[0], int): return False
     return decoded[0]
+
+def encode(number: int) -> str:
+    return hid.encode(number)
+
+def get_data(objects: list[Any]) -> list[dict[str, int | str | None]]:
+    results: list[dict[str, int | str | None]] = []
+    
+    for obj in objects:
+        if hasattr(obj, 'data') and callable(getattr(obj, 'data')): results.append(obj.data())
+        else: results.append({})
+
+    return results
 
 def login_required(func: Callable) -> Callable:
     @wraps(func)

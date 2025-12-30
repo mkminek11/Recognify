@@ -7,7 +7,7 @@ import os.path
 import datetime
 import werkzeug.security
 
-from app.app import db, app, decode, login, hid
+from app.app import db, app, decode, encode, login
 
 
 class User(db.Model, UserMixin):
@@ -32,10 +32,13 @@ class User(db.Model, UserMixin):
 
     def is_admin(self) -> bool:
         return self.permission >= 10
+
+    def hid(self) -> str:
+        return encode(self.id)
     
     def data(self) -> dict:
         return {
-            "id": self.id,
+            "id": self.hid(),
             "username": self.username,
             "email": self.email,
         }
@@ -64,6 +67,7 @@ class Set(db.Model):
     description: Mapped[str] = mapped_column(Text, default = "", nullable = False)
     is_public: Mapped[bool] = mapped_column(Boolean, default = False, nullable = False)
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default = datetime.datetime.utcnow, nullable = False)
+    # TODO: modified_at
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable = False)
 
     owner: Mapped["User"] = relationship("User", back_populates = "sets", lazy = "select")
@@ -78,7 +82,18 @@ class Set(db.Model):
         self.is_public = is_public
         self.owner_id = current_user.id if current_user and current_user.is_authenticated else 0
 
-    def hash(self) -> str: return hid.encode(self.id)
+    def hid(self) -> str:
+        return encode(self.id)
+    
+    def data(self) -> dict:
+        return {
+            "id": self.hid(),
+            "name": self.name,
+            "description": self.description,
+            "owner_id": encode(self.owner_id),
+            "created_at": self.created_at.isoformat(),
+            "is_public": self.is_public
+        }
 
     def get_draft(self) -> "Draft | None":
         return db.session.execute(Draft.query.where(Draft.set_id == self.id)).scalar_one_or_none()
@@ -102,6 +117,17 @@ class Image(db.Model):
         self.set_id = set_id
         self.draft_image_id = draft_image_id
 
+    def hid(self) -> str:
+        return encode(self.id)
+    
+    def data(self) -> dict:
+        return {
+            "id": self.hid(),
+            "filename": self.filename,
+            "label": self.label,
+            "set_id": encode(self.set_id)
+        }
+
 class Draft(db.Model):
     __tablename__ = "drafts"
 
@@ -122,7 +148,18 @@ class Draft(db.Model):
     def __init__(self):
         self.owner_id = current_user.id if current_user and current_user.is_authenticated else 0
 
-    def hash(self) -> str: return hid.encode(self.id)
+    def hid(self) -> str:
+        return encode(self.id)
+    
+    def data(self) -> dict:
+        return {
+            "id": self.hid(),
+            "name": self.name,
+            "description": self.description,
+            "owner_id": encode(self.owner_id),
+            "created_at": self.created_at.isoformat(),
+            "set_id": encode(self.set_id) if self.set_id else None
+        }
 
     def get_access_users(self) -> list[dict]:
         users = []
@@ -147,6 +184,18 @@ class DraftImage(db.Model):
         slide = presentation_n * 10_000 + slide_n
         for attr, value in locals().items():
             setattr(self, attr, value)
+
+    def hid(self) -> str:
+        return encode(self.id)
+    
+    def data(self) -> dict:
+        return {
+            "id": self.hid(),
+            "filename": self.filename,
+            "label": self.label,
+            "slide": self.slide,
+            "draft_id": encode(self.draft_id)
+        }
 
 
 class DraftLabel(db.Model):
