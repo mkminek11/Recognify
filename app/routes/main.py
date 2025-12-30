@@ -7,22 +7,29 @@ from app.presentation import create_draft
 
 bp = Blueprint("main", __name__)
 
-@bp.route('/search')
-def search():
-    return render_template('not_implemented.html', data=request.args)
-
 @bp.route('/')
 @bp.route('/sets')
 def index():
-    sets = [{ "id": hid.encode(set.id), "name": set.name } for set in Set.query.all()]
+    sets = [{ "id": hid.encode(set_.id), "name": set_.name, "description": set_.description } for set_ in Set.query.all()]
 
     drafts = []
+
     if current_user.is_authenticated:
-        drafts = [
-            { "id": hid.encode(draft.id), "name": draft.name, "description": draft.description }
-            for draft in Draft.query.where(Draft.owner_id == current_user.id).all()]
+        draft_list = Draft.query.where(Draft.owner_id == current_user.id).all()
+        drafts = [ { "id": hid.encode(draft.id), "name": draft.name, "description": draft.description } for draft in draft_list]
     
     return render_template('index.html', sets = sets, drafts = drafts, popular_sets = sets[:5])
+
+@bp.route('/search')
+def search():
+    query = request.args.get('q', '')
+    sets = []
+    sets.extend(Set.query.where(Set.name.ilike(f'%{query}%')).all())
+    sets.extend(filter(lambda x: x not in sets, Set.query.where(Set.description.ilike(f'%{query}%')).all()))
+
+    results = [{ "id": hid.encode(set_.id), "name": set_.name, "description": set_.description } for set_ in sets]
+
+    return render_template('search.html', search_query = query, search_results = results)
 
 @bp.route('/sets/new', methods=['GET'])
 @login_required

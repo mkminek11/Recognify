@@ -38,10 +38,10 @@
 <script>
     function navigation() {
         return {
-            searchQuery: "",
+            searchQuery: "{{ search_query or '' }}",
             init() {},
             search() {
-                // alert("Searching for: " + this.searchQuery);
+                if (this.searchQuery.trim() === "") {return;}
                 window.location.href = `/search?q=${encodeURIComponent(this.searchQuery)}`;
             }
         }

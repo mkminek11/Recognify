@@ -1,0 +1,50 @@
+
+<!--
+Args:
+  - search_query: str - The search query string.
+  - search_results: list[Set] - List of sets matching the search query.
+-->
+
+{% extends "base.html" %}
+
+{% block content %}
+    <div x-data="container" class="container">
+        {% include 'components/navigation.html' with context %}
+
+        <section class="cards-section">
+            <h2>Search Results for "{{ search_query }}"</h2>
+            <div class="cards-row">
+                {% for set in search_results %}
+                    <a href="/sets/{{ set.id }}" class="card">
+                        <h3>{{ set.name }}</h3>
+                        <p>{{ set.description }}</p>
+                    </a>
+                {% else %}
+                    <p>No search results.</p>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('container', () => ({
+                searchQuery: "",
+                deleteAllSets() {
+                    if (!confirm("Are you sure you want to delete all sets? This action cannot be undone.")) {return;}
+                    axios.delete('/api/sets');
+                },
+                deleteAllDrafts() {
+                    if (!confirm("Are you sure you want to delete all drafts? This action cannot be undone.")) {return;}
+                    axios.delete('/api/draft');
+                }
+            }));
+        });
+    </script>
+{% endblock %}
+
+{% block styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+{% endblock %}

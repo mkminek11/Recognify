@@ -24,7 +24,7 @@
             </div>
         </section>
 
-        <section class="popular-sets">
+        <section class="cards-section popular-sets">
             <h2>Popular sets</h2>
             <div class="cards-row">
                 {% for set in popular_sets %}
@@ -39,7 +39,7 @@
         </section>
 
         {% if current_user.is_authenticated %}
-            <section class="popular-sets">
+            <section class="cards-section drafts-section">
                 <h2>Your drafts</h2>
                 <div class="cards-row">
                     {% for draft in drafts %}

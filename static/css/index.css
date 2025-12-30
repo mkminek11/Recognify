@@ -35,16 +35,16 @@
     }
 }
 
-.popular-sets {
+.cards-section {
     display: flex;
     flex-direction: column;
     gap: 20px;
+}
 
-    & .card {
-        justify-content: flex-end;
-        text-decoration: none;
-        color: var(--c-white);
+.card {
+    justify-content: flex-end;
+    text-decoration: none;
+    color: var(--c-white);
 
-        & p {height: 45px;}
-    }
+    & p {height: 45px;}
 }

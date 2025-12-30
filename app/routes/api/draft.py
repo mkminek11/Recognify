@@ -336,6 +336,7 @@ def publish_draft(draft: Draft):
             set_.images.append(new_img)
 
         draft.set_id = set_.id
+        set_id = set_.id
         db.session.commit()
     else:
         # Update existing set
