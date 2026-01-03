@@ -31,7 +31,7 @@ main.draft-body {
         background-color: var(--c-grey6);
         border-radius: 15px;
         border: 2px solid var(--c-grey3);
-        box-shadow: 0px 5px 25px var(--c-black);
+        box-shadow: var(--shadow-lg);
 
         &.sidebar-left  {grid-area: ls;}
         &.sidebar-right {grid-area: rs;}
@@ -107,7 +107,7 @@ main.draft-body {
                 height: 360px;
                 object-fit: contain;
                 border-radius: 15px;
-                box-shadow: 0px 5px 25px var(--c-black);
+                box-shadow: var(--shadow-lg);
             }
 
             & .image-icons {
@@ -140,7 +140,7 @@ main.draft-body {
                 align-items: center;
                 gap: 10px;
                 border: 2px solid var(--c-primary-light);
-                box-shadow: 0px 4px 8px -4px var(--c-black);
+                box-shadow: var(--shadow-md);
 
                 & .suggestion-index {color: var(--c-white);}
                 & .suggestion-label {color: var(--c-black);}

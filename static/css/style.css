@@ -17,10 +17,19 @@
     --c-white: #f3f3f3;
     --c-black-50: #00000080;
 
+    --c-info:    #1191CC;
+    --c-success: #28A745;
+    --c-warning: #FFC107;
+    --c-error:   #DC3545;
+
     --fs-small: 0.8rem;
     --fs-medium: 1rem;
     --fs-large: 1.2rem;
     --fs-xlarge: 1.5rem;
+
+    --shadow-sm: 0px 4px 8px -4px var(--c-black-50);
+    --shadow-md: 0px 4px 8px -4px var(--c-black);
+    --shadow-lg: 0px 5px 25px var(--c-black);
 
     --transition: all 0.2s ease;
 }
@@ -120,6 +129,15 @@ button, .btn {
         color: var(--c-primary-light);
         &:hover {background-color: var(--c-black);}
     }
+
+    &.btn-flat {
+        background-color: transparent;
+        color: var(--c-white);
+        border: none;
+        padding: 5px;
+
+        &:hover {color: var(--c-grey3);}
+    }
 }
 
 h1 {
@@ -182,7 +200,7 @@ h3 {
         background-color: var(--c-grey6);
         border: 2px solid var(--c-grey3);
         border-radius: 10px;
-        box-shadow: 0px 5px 25px var(--c-black);
+        box-shadow: var(--shadow-lg);
         display: none;
         flex-direction: column;
         min-width: 150px;
@@ -231,7 +249,7 @@ h3 {
 .collapse {
     background-color: var(--c-grey55);
     border-radius: 100px;
-    box-shadow: 0px 4px 8px -4px var(--c-black);
+    box-shadow: var(--shadow-md);
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -277,5 +295,50 @@ dialog {
     &::backdrop {
         background-color: var(--c-black-50);
         backdrop-filter: blur(5px);
+    }
+}
+
+.popup-list {
+    position: fixed;
+    bottom: 50px;
+    right:  50px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 1000;
+
+    & .popup-message {
+        background-color: var(--c-grey6);
+        padding: 15px 25px;
+        border-radius: 5px;
+        border: 2px solid var(--c-grey3);
+        box-shadow: var(--shadow-lg);
+        min-width: 300px;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+
+        --highlight-color: var(--c-white);
+        --close-button: visible;
+
+        &::before {
+            content: "";
+            position: absolute;
+            left:   5px;
+            top:    5px;
+            bottom: 5px;
+            width: 5px;
+            background-color: var(--highlight-color);
+        }
+
+        &.popup-message-info {--highlight-color: var(--c-info);}
+        &.popup-message-success {--highlight-color: var(--c-success);}
+        &.popup-message-warning {--highlight-color: var(--c-warning);}
+        &.popup-message-error {--highlight-color: var(--c-error);}
+        &.popup-message-loading {--highlight-color: var(--c-grey3); --close-button: hidden;}
     }
 }

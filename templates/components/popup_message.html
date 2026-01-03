@@ -1,0 +1,15 @@
+
+{% macro message_list(ref="", initial=[]) %}
+    <div class="popup-list" x-ref="{{ ref }}" x-data="{ messages: {{ initial|tojson }}, hide: [] }"
+            @add-message.window="messages.push($event.detail)"
+            @remove-message.window="hide.push($event.detail.id);">
+        <!-- Message properties: id, type, text, duration -->
+        <template x-for="(msg, index) in messages" :key="index">
+            <div class="popup-message" :class="`popup-message-${msg.type}`" x-show="!hide.includes(msg.id)" x-transition
+                    x-init="setTimeout(() => { hide.push(msg.id); }, msg.duration < 0 ? Infinity : (msg.duration || 30000));">
+                <p x-text="msg.text"></p>
+                <button class="btn-flat" @click="hide.push(msg.id);"><i class="fas fa-times"></i></button>
+            </div>
+        </template>
+    </div>
+{% endmacro %}

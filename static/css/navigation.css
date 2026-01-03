@@ -3,7 +3,7 @@ nav {
     background-color: var(--c-grey6);
     color: var(--c-white);
     border: 2px solid var(--c-grey3);
-    box-shadow: 0px 5px 25px var(--c-black);
+    box-shadow: var(--shadow-lg);
     /* position: sticky; */
     /* top: 0px; */
     padding: 13px 38px; /* subtracted 2px for border as there is no easy way to include inset border in CSS */
@@ -23,7 +23,7 @@ nav {
         & .input-wrapper {
             max-width: 500px;
             flex-grow: 1;
-            box-shadow: 0px 4px 8px -4px var(--c-black-50);
+            box-shadow: var(--shadow-sm);
         }
     }
 
@@ -34,7 +34,7 @@ nav {
             width: 30px;
             height: 30px;
             border-radius: 50%;
-            box-shadow: 0px 4px 8px -4px var(--c-black-50);
+            box-shadow: var(--shadow-sm);
         }
 
         & .dropdown-menu {

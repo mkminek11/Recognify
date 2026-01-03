@@ -2,6 +2,7 @@
 {% extends "base.html" %}
 {% from 'components/input.html' import input %}
 {% from 'components/collapse.html' import collapse %}
+{% from 'components/popup_message.html' import message_list %}
 
 {% block content %}
     <div x-data="formHandler" class="container">
@@ -58,6 +59,8 @@
 
         <h2 class="draft-title">Editing draft "<span x-text="title"></span>"</h2>
 
+        {{ message_list(ref="popupMessages") }}
+
         <main class="draft-body">
             <section class="sidebar sidebar-left">
                 <div class="sidebar-header">
@@ -90,7 +93,7 @@
                     <img :src="images[currentIndex]?.image.data" />
 
                     <div class="image-icons">
-                        <i class="icon fas fa-pen" title="Replace image"></i>
+                        <!-- <i class="icon fas fa-pen" title="Replace image"></i> -->
                         <i class="icon fas fa-trash-can" title="Delete image" @click="removeImage(currentIndex)"></i>
                     </div>
 
@@ -398,10 +401,10 @@
                 },
 
                 async preparePres(event) {
+                    let messageId = this.addMessage('loading', 'Extracting images from presentation. This may take a while...', -1);
+
                     const file = event.target.files[0];
                     if (!file) return;
-                    // if (file.size > 50 * 1024 * 1024) {return;} // 50MB limit
-                    // Musel jsem to zakomentovat kvuli prezentaci na rostliny, ktera mela pres pul giga xd
 
                     const formData = new FormData();
                     formData.append('presentation', file);
@@ -414,6 +417,8 @@
                     const images = results.data.images || [];
                     const labels = results.data.labels || [];
                     console.log("Presentation images:", images);
+
+                    this.removeMessage(messageId);
                     await this.addToGallery(images, labels);
                 },
 
@@ -552,6 +557,8 @@
                 },
 
                 async importFromInaturalist() {
+                    let messageId = this.addMessage('loading', 'Importing images from iNaturalist. This may take a while...', 1000);
+
                     const textarea = this.$refs.inaturalistTextarea;
                     const speciesNames = textarea.value.split('\n').map(name => name.trim()).filter(name => name);
                     this.$refs.inaturalistDialog.close();
@@ -576,6 +583,7 @@
                         }
 
                         console.log("Imported image links:", this.importedImageLinks);
+                        this.removeMessage(messageId);
                     });
                 },
             
@@ -643,6 +651,17 @@
                     }).catch((error) => {
                         alert("Failed to remove user access: " + error.response.data.error);
                     });
+                },
+            
+                addMessage(type, text, duration = 30) {
+                    let id = crypto.randomUUID();
+                    duration = duration * 1000;
+                    this.$dispatch('add-message', { id, type, text, duration });
+                    return id;
+                },
+
+                removeMessage(id) {
+                    this.$dispatch('remove-message', { id });
                 },
             }));
         });
