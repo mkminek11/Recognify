@@ -7,7 +7,7 @@ import os.path
 import datetime
 import werkzeug.security
 
-from app.app import db, app, decode, encode, login
+from app.app import db, app, decode, encode, encode_image, login
 
 
 class User(db.Model, UserMixin):
@@ -161,12 +161,8 @@ class Draft(db.Model):
             "set_id": encode(self.set_id) if self.set_id else None
         }
 
-    def get_access_users(self) -> list[dict]:
-        users = []
-        for access in self.access_users:
-            user = access.user
-            users.append(user.data())
-        return users
+    def get_access_users(self) -> list[User]:
+        return [user for access in self.access_users if (user := access.user)]
 
 
 class DraftImage(db.Model):
@@ -181,12 +177,13 @@ class DraftImage(db.Model):
     draft: Mapped["Draft"] = relationship("Draft", back_populates = "images")
 
     def __init__(self, draft_id: int, filename: str, presentation_n: int, slide_n: int, label: str = ""):
-        slide = presentation_n * 10_000 + slide_n
-        for attr, value in locals().items():
-            setattr(self, attr, value)
+        self.draft_id = draft_id
+        self.filename = filename
+        self.slide = presentation_n * 10_000 + slide_n
+        self.label = label
 
     def hid(self) -> str:
-        return encode(self.id)
+        return encode_image(self.draft_id, self.id)
     
     def data(self) -> dict:
         return {
@@ -209,9 +206,20 @@ class DraftLabel(db.Model):
     draft: Mapped["Draft"] = relationship("Draft", back_populates = "labels")
 
     def __init__(self, draft_id: int, label: str, presentation_n: int, slide_n: int):
-        slide = presentation_n * 10_000 + slide_n
-        for attr, value in locals().items():
-            setattr(self, attr, value)
+        self.draft_id = draft_id
+        self.label = label
+        self.slide = presentation_n * 10_000 + slide_n
+
+    def hid(self) -> str:
+        return encode_image(self.draft_id, self.id)
+
+    def data(self) -> dict:
+        return {
+            "id": self.hid(),
+            "label": self.label,
+            "slide": self.slide,
+            "draft_id": encode(self.draft_id)
+        }
 
 
 class SkipImage(db.Model):

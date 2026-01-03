@@ -28,7 +28,7 @@
             <h2>Popular sets</h2>
             <div class="cards-row">
                 {% for set in popular_sets %}
-                    <a href="/sets/{{ set.id }}" class="card">
+                    <a href="/sets/{{ set.hid() }}" class="card">
                         <h3>{{ set.name }}</h3>
                         <p>{{ set.description }}</p>
                     </a>
@@ -43,7 +43,7 @@
                 <h2>Your drafts</h2>
                 <div class="cards-row">
                     {% for draft in drafts %}
-                        <a href="/draft/{{ draft.id }}" class="card">
+                        <a href="/draft/{{ draft.hid() }}" class="card">
                             <h3>{{ draft.name }}</h3>
                             <p>{{ draft.description }}</p>
                         </a>

@@ -10,11 +10,11 @@ bp = Blueprint("main", __name__)
 @bp.route('/')
 @bp.route('/sets')
 def index():
-    sets = get_data(Set.query.all())
+    sets = Set.query.all()
     drafts = []
 
     if current_user.is_authenticated:
-        drafts = get_data(Draft.query.where(Draft.owner_id == current_user.id).all())
+        drafts = Draft.query.where(Draft.owner_id == current_user.id).all()
     
     return render_template('index.html', sets = sets, drafts = drafts, popular_sets = sets[:5])
 
@@ -26,7 +26,7 @@ def search():
     results.extend(Set.query.where(Set.name.ilike(f'%{query}%')).all())
     results.extend(filter(lambda x: x not in results, Set.query.where(Set.description.ilike(f'%{query}%')).all()))
 
-    return render_template('search.html', search_query = query, search_results = get_data(results))
+    return render_template('search.html', search_query = query, search_results = results)
 
 @bp.route('/sets/new', methods=['GET'])
 @login_required
@@ -42,13 +42,10 @@ def view_set(set_hash: str):
     set_ = Set.query.get(set_id)
     if not isinstance(set_, Set): return "Set not found", 404
 
-    draft = Draft.query.filter(Draft.set_id == set_.id).first()
-    if not isinstance(draft, Draft): return "Associated draft not found", 404
+    # draft = Draft.query.filter(Draft.set_id == set_.id).first()
+    # if not isinstance(draft, Draft): return "Associated draft not found", 404
     
-    data = set_.data()
-    data['images'] = [img.data() for img in set_.images]
-    
-    return render_template('set_view.html', set = data)
+    return render_template('set_view.html', set = set_)
 
 @bp.route('/sets/<string:set_hash>/play')
 def play_set(set_hash: str):
@@ -58,13 +55,11 @@ def play_set(set_hash: str):
     if not isinstance(set_, Set): return "Set not found", 404
 
     user_id = current_user.id if current_user.is_authenticated else -1
-    img_query = Image.query\
+    images = Image.query\
                 .outerjoin(SkipImage, (Image.id == SkipImage.image_id) & (SkipImage.user_id == user_id))\
                 .where(Image.set_id == set_.id, SkipImage.id == None).all()
 
-    images = [{ "id": i.id, "filename": i.filename, "label": i.label } for i in img_query]
-
-    return render_template('play_set.html', set = set_.data(), anonymous = current_user.is_anonymous)
+    return render_template('play_set.html', set = set_, anonymous = current_user.is_anonymous)
 
 @bp.route('/draft/<string:draft_hash>')
 @draft_access_required

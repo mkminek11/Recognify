@@ -3,12 +3,13 @@ from flask_login import current_user, login_user, logout_user
 
 from functools import wraps
 from typing import Callable
+import datetime
 import logging
 import sys
 
-import app.routes # Assign blueprints
-from app.app import app, db, login
-from app.models import User
+from app import routes # Assign blueprints
+from app.app import app, db, get_data, login
+from app.models import Draft, Set, User
 
 # Redirect Werkzeug reloader messages to stdout only
 werkzeug_logger = logging.getLogger('werkzeug')
@@ -20,8 +21,12 @@ werkzeug_logger.addHandler(console_handler)
 werkzeug_logger.propagate = False
 
 @login.user_loader
-def load_user(user_id):
+def load_user(user_id: int) -> User | None:
     return User.query.filter_by(id = user_id).first()
+
+@app.context_processor
+def inject_user():
+    return {"User": User, "Draft": Draft, "Set": Set, "datetime": datetime, "get_data": get_data}
 
 db.init_app(app)
 login.init_app(app)

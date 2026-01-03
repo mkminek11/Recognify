@@ -183,7 +183,7 @@
                 importedImageLinks: {}, // { species: string -> [
                                         //     { imageLink: string, label: string, id: int, selected: boolean }
                                         // ] }
-                accessUsers: JSON.parse('{{ draft.get_access_users()|tojson }}'), // list of { id: int, name: string, email: string }
+                accessUsers: JSON.parse('{{ get_data(draft.get_access_users()) }}'), // list of { id: str, name: string, email: string }
                 currentIndex: 0,
                 loadingImages: new Set(), // Track which image indices are currently being loaded
 
@@ -254,17 +254,19 @@
                     await cimg.ready;
                     cimg.dbid = imageData.id;
                     
-                    // Replace the placeholder
                     const placeholderKey = 'placeholder_' + index;
                     const existingLabel = this.imageLabels[placeholderKey];
                     const labelToSet = existingLabel || imageData.label || '';
                     
-                    const newLabels = { ...this.imageLabels };
-                    delete newLabels[placeholderKey];
-                    newLabels[cimg.hash] = labelToSet;
-                    this.imageLabels = newLabels;
-                    
+                    // Update the image object
                     this.images[index] = { image: cimg, slide: imageData.slide };
+                    
+                    // Update labels - delete old key first, then add new
+                    delete this.imageLabels[placeholderKey];
+                    this.imageLabels[cimg.hash] = labelToSet;
+                    
+                    // Force a minimal re-render by touching the images array
+                    this.images = [...this.images];
                 },
 
                 async loadImageAtIndex(index) {
@@ -337,7 +339,6 @@
                 },
 
                 async addURL() {
-                    // const url = this.$refs.imgURL.value.trim();
                     const url = prompt("Insert image URL:");
                     if (!url) return;
 
@@ -378,7 +379,7 @@
                     const cimg = window.CustomImage.fromFile(file, this.images[index].image.dbid);
                     await cimg.ready;
 
-                    await axios.post('/api/draft/{{ draft.hid() }}/replace/image', fd, {
+                    await axios.put('/api/draft/{{ draft.hid() }}/image/' + this.images[index].image.dbid + '/file', fd, {
                         headers: { 'Content-Type': 'multipart/form-data' }
                     });
 
@@ -395,7 +396,7 @@
                     const fd = new FormData();
                     fd.append('url', url);
                     fd.append('replace_id', cimg.dbid);
-                    await axios.post('/api/draft/{{ draft.hid() }}/replace/url', fd);
+                    await axios.put('/api/draft/{{ draft.hid() }}/image/' + this.images[index].image.dbid + '/url', fd);
 
                     this.images[index].image = cimg;
                 },
@@ -434,15 +435,15 @@
                     // Add labels first (lightweight)
                     for (const labelData of labels) {
                         if (!this.labels.some(existing => existing.label === labelData.text && existing.slide === labelData.slide)) {
-                            this.labels.push({ label: labelData.text, slide: labelData.slide });
+                            this.labels.push({ label: labelData.label, slide: labelData.slide });
                         }
                     }
 
                     if (images.length == 0) {return;}
                     
                     // Filter out images that are already loaded (by dbid)
-                    const existingDbIds = new Set(this.images.map(img => img.image.dbid).filter(id => id));
-                    const newImages = images.filter(imageData => !existingDbIds.has(imageData.id));
+                    const existing = new Set(this.images.map(img => img.image.dbid).filter(id => id));
+                    const newImages = images.filter(imageData => !existing.has(imageData.id));
                     
                     if (newImages.length == 0) {return;}
                     
@@ -588,6 +589,8 @@
                 },
             
                 async insertImportedImages() {
+                    this.addMessage('loading', 'Inserting selected images...', 1000);
+
                     this.$refs.importedImagesDialog.close();
 
                     // Collect all selected images first
@@ -612,7 +615,7 @@
                     // Add images to gallery sequentially to maintain order
                     for (const { cimg, label, url } of imageResults) {
                         if (this.images.some(existing => existing.image.hash === cimg.hash)) {
-                            alert("This image is already added.");
+                            console.log("This image is already added.");
                             continue;
                         }
 
@@ -624,6 +627,8 @@
 
                         axios.post('/api/draft/{{ draft.hid() }}/image/' + cimg.dbid, { label });
                     }
+
+                    this.removeMessage('loading');
                 },
 
                 anyImageSelected() {

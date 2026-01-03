@@ -99,6 +99,19 @@ def decode(hashid: str) -> int | Literal[False]:
     if not isinstance(decoded[0], int): return False
     return decoded[0]
 
+def decode_image(image_hash: str, set_id: int) -> int | Literal[False]:
+    decoded = hid.decode(image_hash)
+    if not decoded: return False
+    if len(decoded) != 2: return False
+    decoded_set, image_id = decoded
+    if not isinstance(decoded_set, int): return False
+    if not isinstance(image_id,    int): return False
+    if decoded_set != set_id: return False
+    return image_id
+
+def encode_image(set_id: int, image_id: int) -> str:
+    return hid.encode(set_id, image_id)
+
 def encode(number: int) -> str:
     return hid.encode(number)
 
@@ -141,7 +154,6 @@ def draft_access_required(func: Callable) -> Callable:
         if draft_id is False: return "Draft not found", 404
 
         draft = Draft.query.get(draft_id)
-        print(f"User {current_user.is_authenticated} accessing draft {draft_id}")
         if not isinstance(draft, Draft): return "Draft not found", 404
         if not current_user.is_authenticated or not current_user.has_access_to(draft): return "Access denied", 403
 

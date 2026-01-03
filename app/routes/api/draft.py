@@ -5,7 +5,7 @@ import requests
 from flask_login import current_user
 from flask import jsonify, request, send_file
 from app.models import Draft, DraftAccess, DraftImage, DraftLabel, Image, Set, SkipImage, User
-from app.app import VALID_IMG_EXTENSIONS, db, UPLOAD_PATH, draft_access_required, decode, encode, permission_required, log_info
+from app.app import VALID_IMG_EXTENSIONS, db, UPLOAD_PATH, decode_image, draft_access_required, decode, encode, get_data, permission_required, log_info
 from app.presentation import extract_images, get_free_filename, get_free_index, temp_remove
 from app.routes.api import bp
 
@@ -28,7 +28,7 @@ def process_presentation(draft: Draft):
 
     log_info(f"Extracted {len(images)} images from presentation for draft {draft.id} by user {current_user.id}")
 
-    return jsonify({"images": images, "labels": labels}), 200
+    return jsonify({"images": get_data(images), "labels": get_data(labels)}), 200
 
 
 
@@ -100,9 +100,12 @@ def update_draft_description(draft: Draft):
 
 
 
-@bp.route('/draft/<string:draft_hash>/image/<int:image_id>', methods=['POST'])
+@bp.route('/draft/<string:draft_hash>/image/<string:image_hash>', methods=['POST'])
 @draft_access_required
-def update_image_label(draft: Draft, image_id: int):
+def update_image_label(draft: Draft, image_hash: str):
+    image_id = decode_image(image_hash, draft.id)
+    if image_id is False: return jsonify({"error": "Invalid image hash."}), 400
+
     image = DraftImage.query.get(image_id)
     if not isinstance(image, DraftImage) or image.draft_id != draft.id:
         return jsonify({"error": "Image not found in draft."}), 404
@@ -116,17 +119,19 @@ def update_image_label(draft: Draft, image_id: int):
 
 
 
-@bp.route('/draft/<string:draft_hash>/image/<int:image_id>', methods=['GET'])
+@bp.route('/draft/<string:draft_hash>/image/<string:image_hash>', methods=['GET'])
 @draft_access_required
-def get_draft_image(draft: Draft, image_id: int):
+def get_draft_image(draft: Draft, image_hash: str):
+    image_id = decode_image(image_hash, draft.id)
+    if image_id is False: return jsonify({"error": "Invalid image hash."}), 400
+    
     image = db.session.query(DraftImage).join(Draft).filter(
         DraftImage.id == image_id,
         DraftImage.draft_id == draft.id,
         Draft.owner == current_user
     ).first()
     
-    if not image:
-        return jsonify({"error": "Image not found in draft."}), 404
+    if not image: return jsonify({"error": "Image not found in draft."}), 404
 
     image_path = os.path.join(UPLOAD_PATH, "sets", f"draft_{draft.id}", image.filename)
     if not os.path.exists(image_path): return jsonify({"error": "Image file not found."}), 404
@@ -135,9 +140,12 @@ def get_draft_image(draft: Draft, image_id: int):
 
 
 
-@bp.route('/draft/<string:draft_hash>/image/<int:image_id>', methods=['DELETE'])
+@bp.route('/draft/<string:draft_hash>/image/<string:image_hash>', methods=['DELETE'])
 @draft_access_required
-def delete_draft_image(draft: Draft, image_id: int):
+def delete_draft_image(draft: Draft, image_hash: str):
+    image_id = decode_image(image_hash, draft.id)
+    if image_id is False: return jsonify({"error": "Invalid image hash."}), 400
+
     image = db.session.query(DraftImage).join(Draft).filter(
         DraftImage.id == image_id,
         DraftImage.draft_id == draft.id
@@ -160,8 +168,9 @@ def delete_draft_image(draft: Draft, image_id: int):
 @draft_access_required
 def fetch_gallery(draft: Draft):
     """ Fetches all images and labels for a draft """
-    images = [{"id": img.id, "filename": img.filename, "label": img.label, "slide": img.slide} for img in draft.images]
-    labels = [{"text": lbl.label, "slide": lbl.slide} for lbl in draft.labels]
+    images = [img.data() for img in draft.images]
+    labels = [lbl.data() for lbl in draft.labels]
+    print(f"Fetched labels: {labels}")
     return jsonify({"images": images, "labels": labels}), 200
 
 
@@ -185,7 +194,7 @@ def add_image(draft: Draft):
         image_path = os.path.join(path, filename)
         image.save(image_path)
 
-        i = DraftImage(draft.id, filename, 0, 0)
+        i = DraftImage(draft.id, filename, -1, 0)
         db.session.add(i)
         db.session.flush()
         added_images.append(i.data())
@@ -230,19 +239,19 @@ def add_image_url(draft: Draft):
     i = DraftImage(draft.id, filename, -1, 0)
     db.session.add(i)
     db.session.commit()
-    return jsonify({"message": "Image added successfully.", "id": i.id}), 200
+    return jsonify({"message": "Image added successfully.", "id": i.hid()}), 200
 
 
 
-@bp.route('/draft/<string:draft_hash>/replace/image', methods=['POST'])
+@bp.route('/draft/<string:draft_hash>/image/<string:image_hash>/file', methods=['PUT'])
 @draft_access_required
-def replace_image_from_file(draft: Draft):
-    replace_id = request.form.get('replace_id', type=int)
-    if not replace_id: return jsonify({"error": "No replace ID provided."}), 400
+def replace_image_from_file(draft: Draft, image_hash: str):
+    image_id = decode_image(image_hash, draft.id)
+    if image_id is False: return jsonify({"error": "Invalid image hash."}), 400
 
     image_file = request.files.get('image')
     if not image_file: return jsonify({"error": "No image file provided."}), 400
-    draft_image = DraftImage.query.get(replace_id)
+    draft_image = DraftImage.query.get(image_id)
     if not isinstance(draft_image, DraftImage) or draft_image.draft_id != draft.id:
         return jsonify({"error": "Image not found in draft."}), 404
 
@@ -264,18 +273,15 @@ def replace_image_from_file(draft: Draft):
 
 
 
-@bp.route('/draft/<string:draft_hash>/replace/url', methods=['POST'])
+@bp.route('/draft/<string:draft_hash>/image/<string:image_hash>/url', methods=['PUT'])
 @draft_access_required
-def replace_image_from_url(draft: Draft):
-    if draft.owner != current_user: return jsonify({"error": "Unauthorized."}), 403
-
-    replace_id = request.form.get('replace_id', 0, type = int)
-    if not replace_id: return jsonify({"error": "No replace ID provided."}), 400
-
+def replace_image_from_url(draft: Draft, image_hash: str):
+    image_id = decode_image(image_hash, draft.id)
+    if image_id is False: return jsonify({"error": "Invalid image hash."}), 400
     url = request.form.get('url', '')
     if not url: return jsonify({"error": "No URL provided."}), 400
 
-    draft_image = DraftImage.query.get(replace_id)
+    draft_image = DraftImage.query.get(image_id)
     if not isinstance(draft_image, DraftImage) or draft_image.draft_id != draft.id:
         return jsonify({"error": "Image not found in draft."}), 404
     
@@ -319,7 +325,6 @@ def replace_image_from_url(draft: Draft):
 @bp.route('/draft/<string:draft_hash>/submit', methods=['POST'])
 @draft_access_required
 def publish_draft(draft: Draft):
-    if not current_user.is_authenticated or not current_user.has_access_to(draft): return jsonify({"error": "Unauthorized."}), 403
     if not draft.images: return jsonify({"error": "Draft has no images."}), 400
 
     set_id = draft.set_id

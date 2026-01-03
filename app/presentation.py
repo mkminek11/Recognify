@@ -14,7 +14,6 @@ from app.models import Draft, DraftImage, DraftLabel, Set, Image, db
 TEMP_UPLOAD_PATH = os.path.join(UPLOAD_PATH, "temp")
 
 SlideItem = dict[str, str]
-ItemsList = list[SlideItem]
 
 
 
@@ -30,7 +29,7 @@ def create_draft() -> int:
         raise e
 
 
-def extract_images(presentation_file: FileStorage, draft_id: int) -> tuple[str, ItemsList, ItemsList] | Literal[False]:
+def extract_images(presentation_file: FileStorage, draft_id: int) -> tuple[str, list[DraftImage], list[DraftLabel]] | Literal[False]:
     """
     Extract images and text labels from a presentation file and save them to the database.
     Returns a tuple containing the temporary presentation file address, a list of image filenames with slide numbers,
@@ -46,9 +45,8 @@ def extract_images(presentation_file: FileStorage, draft_id: int) -> tuple[str, 
     if not isinstance(draft, Draft): return False
     pres_n = draft.presentations
 
-    labels: list[dict[str, str]] = []
-    images: list[dict[str, str]] = []
-    _images: list[dict[str, Any]] = []
+    labels: list[DraftLabel] = []
+    images: list[DraftImage] = []
 
     image_n = 1
     for slide_n, slide in enumerate(pres.slides):
@@ -67,20 +65,18 @@ def extract_images(presentation_file: FileStorage, draft_id: int) -> tuple[str, 
                 print(f"Saved image {filename} from slide {slide_n + 1}")
                 draft_img = DraftImage(draft_id, filename, pres_n, slide_n, label = "")
                 db.session.add(draft_img)
-                _images.append({"id": draft_img, "filename": filename, "label": "", "slide": slide_encoded})
+                images.append(draft_img)
                 image_n += 1
             elif shape.has_text_frame:
                 text = getattr(shape, "text", "")
                 if not text: continue
-                l = save_labels(text, pres_n,   slide_n, draft_id)
-                for s in l: labels.append({"text": s, "slide": slide_encoded})
+                l = save_labels(text, pres_n, slide_n, draft_id)
+                labels.extend(l)
     
     # Increment the presentation counter for the next import
     draft.presentations += 1
+    db.session.flush()
     db.session.commit()
-    
-    for img in _images:
-        images.append({"id": img["id"].id, "filename": img["filename"], "label": img["label"], "slide": img["slide"]})
     
     return address, images, labels
 
@@ -143,11 +139,13 @@ def get_free_index(dir: str, prefix: str = "tmp", ext: str = "*", start: int = 1
         counter += 1
 
 
-def save_labels(text: str, pres_n: int, slide: int, draft_id: int) -> list[str]:
+def save_labels(text: str, pres_n: int, slide: int, draft_id: int) -> list[DraftLabel]:
     """ Save text labels to the database and return a list of labels. """
     if not text: return []
     labels = [line.strip() for line in text.splitlines() if line.strip()]
+    draft_labels: list[DraftLabel] = []
     for label in labels:
         draft_label = DraftLabel(draft_id, label, pres_n, slide)
+        draft_labels.append(draft_label)
         db.session.add(draft_label)
-    return labels
+    return draft_labels
