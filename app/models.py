@@ -118,7 +118,7 @@ class Image(db.Model):
         self.draft_image_id = draft_image_id
 
     def hid(self) -> str:
-        return encode(self.id)
+        return encode_image(self.set_id, self.id)
     
     def data(self) -> dict:
         return {

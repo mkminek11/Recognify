@@ -5,7 +5,7 @@
         <h1>{{ set.name }}</h1>
         <p>Description: {{ set.description }}</p>
         <p>Created at: {{ set.created_at }}</p>
-        <a href="/sets/{{ set.id }}/play">Play</a>
+        <a href="/sets/{{ set.hid() }}/play">Play</a>
         {% if current_user.is_authenticated and current_user.has_access_to(set.draft_id) %}
             <a href="/draft/{{ set.draft_id }}">Edit</a>
         {% endif %}
@@ -14,7 +14,7 @@
             <template x-for="image in images" :key="image.id">
                 <div style="margin-bottom: 20px;">
                     <p x-text="image.label"></p>
-                    <img :src="`/api/sets/{{ set.id }}/image/${image.id}`" height="200">
+                    <img :src="`/api/sets/{{ set.hid() }}/image/${image.id}`" height="200">
                 </div>
             </template>
         </div>
@@ -25,7 +25,7 @@
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('container', () => ({
-                images: JSON.parse('{{ set.images|tojson }}'),
+                images: JSON.parse('{{ get_data(set.images)|tojson }}'),
                 is_author: +'{{ current_user.is_authenticated and current_user.id == set.owner_id }}',
             }));
         }); 

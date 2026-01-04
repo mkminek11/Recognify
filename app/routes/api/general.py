@@ -3,7 +3,7 @@ import os.path
 from flask_login import current_user
 from flask import jsonify, request, send_file
 from app.models import Draft, Image, Set, SkipImage, User
-from app.app import db, UPLOAD_PATH, decode, log_info
+from app.app import db, UPLOAD_PATH, decode, decode_image, log_info
 from app.routes.api import bp
 
 
@@ -46,10 +46,12 @@ def delete_set(set_hash: str):
 
 
 
-@bp.route('/sets/<string:set_hash>/image/<int:image_id>', methods=['GET'])
-def get_set_image(set_hash: str, image_id: int):
+@bp.route('/sets/<string:set_hash>/image/<string:image_hash>', methods=['GET'])
+def get_set_image(set_hash: str, image_hash: str):
     set_id = decode(set_hash)
-    if not isinstance(set_id, int): return jsonify({"error": "Invalid set hash."}), 400
+    image_id = decode_image(image_hash, set_id)
+    if image_id is False: return jsonify({"error": "Invalid set or image hash."}), 400
+
     row = db.session.query(Image, Draft).join(Set, Image.set_id == Set.id).join(Draft, Draft.set_id == Set.id).filter(
         Image.id == image_id,
         Set.id == set_id

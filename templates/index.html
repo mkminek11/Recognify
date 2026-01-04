@@ -17,9 +17,9 @@
             <div class="hero-buttons">
                 <a href="/sets" class="btn btn-secondary">Browse Sets</a>
                 {% if current_user.is_authenticated %}
-                <a href="/sets/new" class="btn btn-primary">Create a New Set</a>
+                    <a href="/sets/new" class="btn btn-primary">Create a New Set</a>
                 {% else %}
-                <a href="/auth/signup" class="btn btn-primary">Sign up for free</a>
+                    <a href="/auth/signup" class="btn btn-primary">Sign up for free</a>
                 {% endif %}
             </div>
         </section>
