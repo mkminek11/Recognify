@@ -47,19 +47,19 @@ def view_set(set_hash: str):
     
     return render_template('set_view.html', set = set_)
 
-@bp.route('/sets/<string:set_hash>/play')
-def play_set(set_hash: str):
+@bp.route('/sets/<string:set_hash>/cards')
+def set_cards(set_hash: str):
     set_id = decode(set_hash)
     if not isinstance(set_id, int): return "Invalid set hash", 400
     set_ = Set.query.get(set_id)
     if not isinstance(set_, Set): return "Set not found", 404
 
-    user_id = current_user.id if current_user.is_authenticated else -1
-    images = Image.query\
-                .outerjoin(SkipImage, (Image.id == SkipImage.image_id) & (SkipImage.user_id == user_id))\
-                .where(Image.set_id == set_.id, SkipImage.id == None).all()
+    # user_id = current_user.id if current_user.is_authenticated else -1
+    # images = Image.query\
+    #             .outerjoin(SkipImage, (Image.id == SkipImage.image_id) & (SkipImage.user_id == user_id))\
+    #             .where(Image.set_id == set_.id, SkipImage.id == None).all()
 
-    return render_template('play_set.html', set = set_, anonymous = current_user.is_anonymous)
+    return render_template('set_cards.html', set = set_, anonymous = current_user.is_anonymous)
 
 @bp.route('/draft/<string:draft_hash>')
 @draft_access_required
