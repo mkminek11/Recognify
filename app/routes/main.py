@@ -3,7 +3,7 @@ from flask import Blueprint, jsonify, redirect, render_template, request
 from flask_login import current_user
 from app.models import Draft, Image, Set, SkipImage, User
 from app.app import db, draft_access_required, encode, get_data, login_required, decode, encode, log_info
-from app.presentation import create_draft
+from app.lib.presentation import create_draft
 
 bp = Blueprint("main", __name__)
 
