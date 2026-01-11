@@ -1,16 +1,12 @@
 
-from app.routes.main import bp as main_bp
-from app.routes.admin import bp as admin_bp
-from app.routes.api import bp as api_bp
-from app.routes.auth import bp as auth_bp
-
-import app.routes.api.draft
-import app.routes.api.general
-import app.routes.api.inaturalist
+from app.routes.main import        bp as bp_main
+from app.routes.auth import        bp as bp_auth
+from app.routes.api.general import bp as bp_api_general
+from app.routes.api.draft import   bp as bp_api_draft
 
 from app.app import app
 
-app.register_blueprint(main_bp)
-app.register_blueprint(admin_bp, url_prefix = "/admin")
-app.register_blueprint(api_bp, url_prefix = "/api")
-app.register_blueprint(auth_bp, url_prefix = "/auth")
+app.register_blueprint(bp_main)
+app.register_blueprint(bp_auth,        url_prefix = "/auth")
+app.register_blueprint(bp_api_general, url_prefix = "/api")
+app.register_blueprint(bp_api_draft,   url_prefix = "/api/draft")

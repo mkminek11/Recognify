@@ -1,10 +1,15 @@
 
-import os.path
+from flask import Blueprint, jsonify, request, send_file
 from flask_login import current_user
-from flask import jsonify, request, send_file
+from urllib.parse import unquote
+import os.path
+
 from app.models import Draft, Image, Set, SkipImage, User
 from app.app import db, UPLOAD_PATH, decode, decode_image, log_info
-from app.routes.api import bp
+from app.lib.inaturalist_api import get_inaturalist_image_links
+
+
+bp = Blueprint('api_general', __name__, url_prefix='/api')
 
 
 @bp.route('/')
@@ -83,3 +88,18 @@ def skip_set_image(set_hash: str):
     db.session.add(si)
     db.session.commit()
     return jsonify({"message": "Image marked as skipped."}), 200
+
+
+
+@bp.route('/inaturalist/links', methods=['GET'])
+def inaturalist_links():
+    species_param = request.args.get('species', '')
+    if not species_param:
+        return jsonify({"error": "No species provided."}), 400
+
+    species_list = [unquote(s.strip())for s in species_param.split(',') if s.strip()]
+    if not species_list:
+        return jsonify({"error": "No valid species provided."}), 400
+
+    links = get_inaturalist_image_links(species_list)
+    return jsonify({"links": links})

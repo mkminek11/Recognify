@@ -3,36 +3,16 @@ import shutil
 import os.path
 import requests
 from flask_login import current_user
-from flask import jsonify, request, send_file
+from flask import Blueprint, jsonify, request, send_file
 from app.models import Draft, DraftAccess, DraftImage, DraftLabel, Image, Set, SkipImage, User
 from app.app import VALID_IMG_EXTENSIONS, db, UPLOAD_PATH, decode_image, draft_access_required, decode, encode, get_data, permission_required, log_info
-from app.presentation import extract_images, get_free_filename, get_free_index, temp_remove
-from app.routes.api import bp
+from app.lib.presentation import extract_images, get_free_filename, get_free_index, temp_remove
 
 
-
-@bp.route('/draft/<string:draft_hash>/presentation', methods=['POST'])
-@draft_access_required
-def process_presentation(draft: Draft):
-    print("Processing presentation...", request.files["presentation"], request.form["draft"])
-    presentation = request.files['presentation']
-    if not presentation: return jsonify({"error": "No presentation file provided."}), 400
-
-    result = extract_images(presentation, draft.id)
-    if not result: return jsonify({"error": "Failed to process presentation."}), 500
-
-    print("Processing result:", result)
-
-    tmp_addr, images, labels = result
-    temp_remove(tmp_addr)
-
-    log_info(f"Extracted {len(images)} images from presentation for draft {draft.id} by user {current_user.id}")
-
-    return jsonify({"images": get_data(images), "labels": get_data(labels)}), 200
+bp = Blueprint('api_draft', __name__, url_prefix='/api/draft')
 
 
-
-@bp.route('/draft', methods=['DELETE'])
+@bp.route('', methods=['DELETE'])
 @permission_required(10)
 def delete_all_drafts():
     sets_path = os.path.join(UPLOAD_PATH, "sets")
@@ -53,7 +33,7 @@ def delete_all_drafts():
 
 
 
-@bp.route('/draft/<string:draft_hash>/', methods=['DELETE'])
+@bp.route('/<string:draft_hash>/', methods=['DELETE'])
 @draft_access_required
 def delete_draft(draft: Draft):
     draft_path = os.path.join(UPLOAD_PATH, "sets", f"draft_{draft.id}")
@@ -75,7 +55,7 @@ def delete_draft(draft: Draft):
 
 
 
-@bp.route('/draft/<string:draft_hash>/rename', methods=['POST'])
+@bp.route('/<string:draft_hash>/rename', methods=['POST'])
 @draft_access_required
 def rename_draft(draft: Draft):
     data: dict[str, str] = request.get_json()
@@ -88,7 +68,7 @@ def rename_draft(draft: Draft):
 
 
 
-@bp.route('/draft/<string:draft_hash>/description', methods=['POST'])
+@bp.route('/<string:draft_hash>/description', methods=['POST'])
 @draft_access_required
 def update_draft_description(draft: Draft):
     data: dict[str, str] = request.get_json()
@@ -100,7 +80,7 @@ def update_draft_description(draft: Draft):
 
 
 
-@bp.route('/draft/<string:draft_hash>/image/<string:image_hash>', methods=['POST'])
+@bp.route('/<string:draft_hash>/image/<string:image_hash>', methods=['POST'])
 @draft_access_required
 def update_image_label(draft: Draft, image_hash: str):
     image_id = decode_image(image_hash, draft.id)
@@ -119,7 +99,28 @@ def update_image_label(draft: Draft, image_hash: str):
 
 
 
-@bp.route('/draft/<string:draft_hash>/image/<string:image_hash>', methods=['GET'])
+@bp.route('/<string:draft_hash>/presentation', methods=['POST'])
+@draft_access_required
+def process_presentation(draft: Draft):
+    print("Processing presentation...", request.files["presentation"], request.form["draft"])
+    presentation = request.files['presentation']
+    if not presentation: return jsonify({"error": "No presentation file provided."}), 400
+
+    result = extract_images(presentation, draft.id)
+    if not result: return jsonify({"error": "Failed to process presentation."}), 500
+
+    print("Processing result:", result)
+
+    tmp_addr, images, labels = result
+    temp_remove(tmp_addr)
+
+    log_info(f"Extracted {len(images)} images from presentation for draft {draft.id} by user {current_user.id}")
+
+    return jsonify({"images": get_data(images), "labels": get_data(labels)}), 200
+
+
+
+@bp.route('/<string:draft_hash>/image/<string:image_hash>', methods=['GET'])
 @draft_access_required
 def get_draft_image(draft: Draft, image_hash: str):
     image_id = decode_image(image_hash, draft.id)
@@ -140,7 +141,7 @@ def get_draft_image(draft: Draft, image_hash: str):
 
 
 
-@bp.route('/draft/<string:draft_hash>/image/<string:image_hash>', methods=['DELETE'])
+@bp.route('/<string:draft_hash>/image/<string:image_hash>', methods=['DELETE'])
 @draft_access_required
 def delete_draft_image(draft: Draft, image_hash: str):
     image_id = decode_image(image_hash, draft.id)
@@ -164,7 +165,7 @@ def delete_draft_image(draft: Draft, image_hash: str):
 
 
 
-@bp.route('/draft/<string:draft_hash>/gallery', methods=['GET'])
+@bp.route('/<string:draft_hash>/gallery', methods=['GET'])
 @draft_access_required
 def fetch_gallery(draft: Draft):
     """ Fetches all images and labels for a draft """
@@ -175,7 +176,7 @@ def fetch_gallery(draft: Draft):
 
 
 
-@bp.route('/draft/<string:draft_hash>/gallery', methods=['POST'])
+@bp.route('/<string:draft_hash>/gallery', methods=['POST'])
 @draft_access_required
 def add_image(draft: Draft):
     """ Add image to draft from files """
@@ -203,7 +204,7 @@ def add_image(draft: Draft):
 
 
 
-@bp.route('/draft/<string:draft_hash>/gallery/url', methods=['POST'])
+@bp.route('/<string:draft_hash>/gallery/url', methods=['POST'])
 @draft_access_required
 def add_image_url(draft: Draft):
     """ Add image to draft gallery from URL """
@@ -243,7 +244,7 @@ def add_image_url(draft: Draft):
 
 
 
-@bp.route('/draft/<string:draft_hash>/image/<string:image_hash>/file', methods=['PUT'])
+@bp.route('/<string:draft_hash>/image/<string:image_hash>/file', methods=['PUT'])
 @draft_access_required
 def replace_image_from_file(draft: Draft, image_hash: str):
     image_id = decode_image(image_hash, draft.id)
@@ -273,7 +274,7 @@ def replace_image_from_file(draft: Draft, image_hash: str):
 
 
 
-@bp.route('/draft/<string:draft_hash>/image/<string:image_hash>/url', methods=['PUT'])
+@bp.route('/<string:draft_hash>/image/<string:image_hash>/url', methods=['PUT'])
 @draft_access_required
 def replace_image_from_url(draft: Draft, image_hash: str):
     image_id = decode_image(image_hash, draft.id)
@@ -322,7 +323,7 @@ def replace_image_from_url(draft: Draft, image_hash: str):
 
 
 
-@bp.route('/draft/<string:draft_hash>/submit', methods=['POST'])
+@bp.route('/<string:draft_hash>/submit', methods=['POST'])
 @draft_access_required
 def publish_draft(draft: Draft):
     if not draft.images: return jsonify({"error": "Draft has no images."}), 400
@@ -381,7 +382,7 @@ def publish_draft(draft: Draft):
 
 
 
-@bp.route('/draft/<string:draft_hash>/access', methods=['POST'])
+@bp.route('/<string:draft_hash>/access', methods=['POST'])
 @draft_access_required
 def add_draft_access(draft: Draft):
     data = request.get_json()
@@ -399,7 +400,7 @@ def add_draft_access(draft: Draft):
 
 
 
-@bp.route('/draft/<string:draft_hash>/access', methods=['DELETE'])
+@bp.route('/<string:draft_hash>/access', methods=['DELETE'])
 @draft_access_required
 def remove_draft_access(draft: Draft):
     data = request.get_json() or {}
