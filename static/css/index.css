@@ -39,12 +39,16 @@
     display: flex;
     flex-direction: column;
     gap: 20px;
-}
 
-.card {
-    justify-content: flex-end;
-    text-decoration: none;
-    color: var(--c-white);
-
-    & p {height: 45px;}
+    & .cards-row {
+        justify-content: flex-start;
+        flex-wrap: nowrap;
+        
+        & .card {
+            text-decoration: none;
+            color: var(--c-white);
+        
+            & p {height: 45px;}
+        }
+    }
 }

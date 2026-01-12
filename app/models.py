@@ -98,6 +98,10 @@ class Set(db.Model):
     def get_draft(self) -> "Draft | None":
         return db.session.execute(Draft.query.where(Draft.set_id == self.id)).scalar_one_or_none()
 
+    def skip_images(self, user_id: int) -> list[str]:
+        res = db.session.execute(SkipImage.query.join(Image).where(Image.set_id == self.id, SkipImage.user_id == user_id)).scalars().all()
+        return [skip.hid() for skip in res if isinstance(skip, SkipImage)]
+
 
 class Image(db.Model):
     __tablename__ = "images"
@@ -232,6 +236,17 @@ class SkipImage(db.Model):
     def __init__(self, user_id: int, image_id: int):
         self.user_id = user_id
         self.image_id = image_id
+
+    def hid(self) -> str:
+        img = Image.query.where(Image.id == self.image_id).first()
+        if not isinstance(img, Image): return ""
+        return encode_image(img.set_id, self.id)
+
+    def data(self) -> dict:
+        return {
+            "user_id": encode(self.user_id),
+            "image_id": encode_image(0, self.image_id)  # set_id is not known here
+        }
 
 
 class DraftAccess(db.Model):

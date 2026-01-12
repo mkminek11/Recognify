@@ -1,23 +1,49 @@
+
+<!--
+Args:
+  - set: Set
+-->
+
 {% extends "base.html" %}
 
 {% block content %}
-    <div x-data="container">
-        <h1>{{ set.name }}</h1>
-        <p>Description: {{ set.description }}</p>
-        <p>Created at: {{ set.created_at }}</p>
-        <a href="/sets/{{ set.hid() }}/cards">Play</a>
-        {% if current_user.is_authenticated and current_user.has_access_to(set.draft_id) %}
-            <a href="/draft/{{ set.draft_id }}">Edit</a>
-        {% endif %}
+    <div x-data="container" class="container">
+        {% include 'components/navigation.html' %}
 
-        <div>
-            <template x-for="image in images" :key="image.id">
-                <div style="margin-bottom: 20px;">
-                    <p x-text="image.label"></p>
-                    <img :src="`/api/sets/{{ set.hid() }}/image/${image.id}`" height="200">
-                </div>
-            </template>
-        </div>
+        <section class="title">
+            <h2>{{ set.name }}</h2>
+            <p>Description: {{ set.description }}</p>
+            <p>Created at: {{ set.created_at }}</p>
+            <a href="/sets/{{ set.hid() }}/cards">Play</a>
+
+            {% if current_user.is_authenticated and current_user.has_access_to(set.draft_id) %}
+                <a href="/draft/{{ set.draft_id }}">Edit</a>
+            {% endif %}
+        </section>
+
+        <section class="images">
+            <h2>Images</h2>
+            <div class="cards-row">
+                <template x-for="image in images" :key="image.id">
+                    <div class="card">
+                        <div class="card-image">
+                            <img :src="`/api/sets/{{ set.hid() }}/image/${image.id}`" alt="" />
+                        </div>
+                        <div class="card-body">
+                            <p x-text="image.label"></p>
+                        </div>
+                        <div class="buttons" x-show="isAuthenticated">
+                            <button x-show="!skipImages.includes(image.id)" class="btn-flat" @click="skipAdd(image.id)">
+                                <i class="fas fa-lightbulb"></i>
+                            </button>
+                            <button x-show="skipImages.includes(image.id)" class="btn-flat" @click="skipRemove(image.id)">
+                                <i class="fas fa-check"></i>
+                            </button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </section>
     </div>
 {% endblock %}
 
@@ -25,9 +51,58 @@
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('container', () => ({
+                skipImages: JSON.parse('{{ (set.skip_images(current_user.id) if current_user.is_authenticated else [])|tojson }}'),
                 images: JSON.parse('{{ get_data(set.images)|tojson }}'),
-                is_author: +'{{ current_user.is_authenticated and current_user.id == set.owner_id }}',
+                isAuthor: +'{{ current_user.is_authenticated and current_user.id == set.owner_id }}',
+                isAuthenticated: +'{{ current_user.is_authenticated|int }}',
+
+                skipAdd(imageId) {
+                    this.skipImages.push(imageId);
+
+                    fetch(`/api/sets/{{ set.hid() }}/skip`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ image_id: imageId }),
+                    }).then(response => {
+                        if (!response.ok) {
+                            this.skipImages.splice(this.skipImages.indexOf(imageId), 1);
+                        }
+                    });
+                },
+
+                skipRemove(imageId) {
+                    this.skipImages.splice(this.skipImages.indexOf(imageId), 1);
+
+                    fetch(`/api/sets/{{ set.hid() }}/skip`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ image_id: imageId }),
+                    }).then(response => {
+                        if (!response.ok) {
+                            this.skipImages.push(imageId);
+                        }
+                    });
+                },
             }));
         }); 
     </script>
+{% endblock %}
+
+{% block styles %}
+    <style>
+        .images .cards-row {
+            flex-wrap: wrap;
+            max-width: 100%;
+        }
+
+        section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+    </style>
 {% endblock %}

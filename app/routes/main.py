@@ -41,9 +41,6 @@ def view_set(set_hash: str):
     if not isinstance(set_id, int): return "Invalid set hash", 400
     set_ = Set.query.get(set_id)
     if not isinstance(set_, Set): return "Set not found", 404
-
-    # draft = Draft.query.filter(Draft.set_id == set_.id).first()
-    # if not isinstance(draft, Draft): return "Associated draft not found", 404
     
     return render_template('set_view.html', set = set_)
 
@@ -53,11 +50,6 @@ def set_cards(set_hash: str):
     if not isinstance(set_id, int): return "Invalid set hash", 400
     set_ = Set.query.get(set_id)
     if not isinstance(set_, Set): return "Set not found", 404
-
-    # user_id = current_user.id if current_user.is_authenticated else -1
-    # images = Image.query\
-    #             .outerjoin(SkipImage, (Image.id == SkipImage.image_id) & (SkipImage.user_id == user_id))\
-    #             .where(Image.set_id == set_.id, SkipImage.id == None).all()
 
     return render_template('set_cards.html', set = set_, anonymous = current_user.is_anonymous)
 

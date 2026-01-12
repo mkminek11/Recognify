@@ -73,13 +73,33 @@ def get_set_image(set_hash: str, image_hash: str):
 
 @bp.route('/sets/<string:set_hash>/skip', methods=['POST'])
 def skip_set_image(set_hash: str):
+    if not current_user.is_authenticated: return jsonify({"error": "Unauthorized."}), 403
     set_id = decode(set_hash)
     if not isinstance(set_id, int): return jsonify({"error": "Invalid set hash."}), 400
     set_ = Set.query.get(set_id)
     if not isinstance(set_, Set): return jsonify({"error": "Set not found."}), 404
-    if set_.owner != current_user: return jsonify({"error": "Unauthorized."}), 403
     data: dict[str, int] = request.get_json()
-    image_id = data.get('image_id', 0)
+    image_id = decode_image(str(data.get('image_id', '')), set_id)
+    image = Image.query.get(image_id)
+    if not isinstance(image, Image) or image.set_id != set_.id:
+        return jsonify({"error": "Image not found in set."}), 404
+    
+    si = SkipImage(current_user.id, image_id)
+    db.session.add(si)
+    db.session.commit()
+    return jsonify({"message": "Image marked as skipped."}), 200
+
+
+
+@bp.route('/sets/<string:set_hash>/skip', methods=['DELETE'])
+def remove_skip_set_image(set_hash: str):
+    if not current_user.is_authenticated: return jsonify({"error": "Unauthorized."}), 403
+    set_id = decode(set_hash)
+    if not isinstance(set_id, int): return jsonify({"error": "Invalid set hash."}), 400
+    set_ = Set.query.get(set_id)
+    if not isinstance(set_, Set): return jsonify({"error": "Set not found."}), 404
+    data: dict[str, int] = request.get_json()
+    image_id = decode_image(str(data.get('image_id', '')), set_id)
     image = Image.query.get(image_id)
     if not isinstance(image, Image) or image.set_id != set_.id:
         return jsonify({"error": "Image not found in set."}), 404

@@ -1,3 +1,10 @@
+
+<!-- 
+Args:
+  - popular_sets: list[Set] - List of popular sets to display.
+  - drafts: list[Draft] - List of user's draft sets (if authenticated).
+-->
+
 {% extends "base.html" %}
 
 {% block content %}
@@ -29,8 +36,11 @@
             <div class="cards-row">
                 {% for set in popular_sets %}
                     <a href="/sets/{{ set.hid() }}" class="card">
-                        <h3>{{ set.name }}</h3>
-                        <p>{{ set.description }}</p>
+                        <div class="card-image"></div>
+                        <div class="card-body">
+                            <h3>{{ set.name }}</h3>
+                            <p>{{ set.description }}</p>
+                        </div>
                     </a>
                 {% else %}
                     <p>No popular sets available.</p>
@@ -61,10 +71,12 @@
         document.addEventListener('alpine:init', () => {
             Alpine.data('container', () => ({
                 searchQuery: "",
+
                 deleteAllSets() {
                     if (!confirm("Are you sure you want to delete all sets? This action cannot be undone.")) {return;}
                     axios.delete('/api/sets');
                 },
+                
                 deleteAllDrafts() {
                     if (!confirm("Are you sure you want to delete all drafts? This action cannot be undone.")) {return;}
                     axios.delete('/api/draft');
