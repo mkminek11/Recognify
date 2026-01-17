@@ -6,7 +6,7 @@
 
 .draft-title {text-align: center;}
 
-main.draft-body {
+main {
     display: grid;
     grid-template-columns: 360px 1fr 360px;
     grid-template-rows: repeat(3, minmax(0px, 1fr));
@@ -14,8 +14,6 @@ main.draft-body {
         "ls main rs"
         "ls main rs"
         "ls main rs";
-    /* grid-template-areas: "ls main main" "rs main main" ".  main main"; */
-    /* grid-template-areas: "main main main" "ls ls ls" "rs rs rs"; */
     gap: 0px 150px;
     align-items: start;
     min-height: 0px;

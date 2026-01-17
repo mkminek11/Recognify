@@ -233,6 +233,9 @@ class SkipImage(db.Model):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable = False)
     image_id: Mapped[int] = mapped_column(ForeignKey("images.id"), nullable = False)
 
+    user: Mapped["User"] = relationship("User", lazy = "select")
+    image: Mapped["Image"] = relationship("Image", lazy = "select")
+
     def __init__(self, user_id: int, image_id: int):
         self.user_id = user_id
         self.image_id = image_id
@@ -240,7 +243,7 @@ class SkipImage(db.Model):
     def hid(self) -> str:
         img = Image.query.where(Image.id == self.image_id).first()
         if not isinstance(img, Image): return ""
-        return encode_image(img.set_id, self.id)
+        return img.hid()
 
     def data(self) -> dict:
         return {

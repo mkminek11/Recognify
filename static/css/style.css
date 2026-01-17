@@ -130,6 +130,18 @@ button, .btn {
         &:hover {background-color: var(--c-black);}
     }
 
+    &.btn-success {
+        background-color: var(--c-success);
+        color: var(--c-white);
+        border-color: var(--c-success);
+    }
+
+    &.btn-error {
+        background-color: var(--c-error);
+        color: var(--c-white);
+        border-color: var(--c-error);
+    }
+
     &.btn-flat {
         background-color: transparent;
         color: var(--c-white);
@@ -137,6 +149,13 @@ button, .btn {
         padding: 5px;
 
         &:hover {color: var(--c-grey3);}
+    }
+
+    &:disabled, &.btn-disabled, &:disabled:hover, &.btn-disabled:hover {
+        background-color: var(--c-grey6);
+        color: var(--c-grey4);
+        cursor: default;
+        border-color: var(--c-grey6);
     }
 }
 

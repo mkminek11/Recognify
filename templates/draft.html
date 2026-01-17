@@ -208,16 +208,13 @@ Args:
                         
                         // Scroll the selected gallery item into view if it's not visible
                         this.$nextTick(() => {
-                            const gallery = document.querySelector('.image-gallery');
-                            const activeItem = gallery?.querySelector('.gallery-item.active');
-                            if (activeItem && gallery) {
-                                const galleryRect = gallery.getBoundingClientRect();
-                                const itemRect = activeItem.getBoundingClientRect();
-                                
-                                // Check if item is outside visible area
-                                if (itemRect.top < galleryRect.top || itemRect.bottom > galleryRect.bottom) {
-                                    activeItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                                }
+                            const galleryRect = document.querySelector('.image-gallery')?.getBoundingClientRect();
+                            const itemRect = gallery?.querySelector('.gallery-item.active').getBoundingClientRect();
+                            if (!itemRect || !galleryRect) {return;}
+
+                            // Check if item is outside visible area
+                            if (itemRect.top < galleryRect.top || itemRect.bottom > galleryRect.bottom) {
+                                activeItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                             }
                         });
                     });
@@ -663,10 +660,9 @@ Args:
                     });
                 },
             
-                addMessage(type, text, duration = 30) {
+                addMessage(type, text, duration = 10) {
                     let id = crypto.randomUUID();
-                    duration = duration * 1000;
-                    this.$dispatch('add-message', { id, type, text, duration });
+                    this.$dispatch('add-message', { id, type, text, duration: duration * 1000 });
                     return id;
                 },
 

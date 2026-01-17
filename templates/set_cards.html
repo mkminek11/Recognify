@@ -5,38 +5,58 @@ Args:
 -->
 
 {% extends "base.html" %}
+{% from 'components/popup_message.html' import message_list %}
 
 {% block content %}
-    <div x-data="container" @keydown="onKeyDown($event)" tabindex="0">
-        <h1>{{ set.name }}</h1>
-        <p>Description: {{ set.description }}</p>
-        <p>Created at: {{ set.created_at }}</p>
+    <div x-data="container" class="container" @keydown="onKeyDown($event)" tabindex="0">
+        {% include 'components/navigation.html' %}
 
-        <div>
-            <div @mousedown.prevent="onKeyDown($event)" @contextmenu.prevent>
-                <div x-show="index < images.length">
-                    <p :style="{ visibility: showLabel ? 'visible' : 'hidden' }" x-text="label"></p>
-                    <img x-ref="image" :src="image" height="300">
+        <section class="info">
+            <h2>{{ set.name }}</h2>
+            <a href="/sets/{{ set.hid() }}">Back to set info</a>
+        </section>
+        
+        {{ message_list(ref="popupMessages") }}
+
+        <main>
+            <section class="sidebar"></section>
+
+            <section class="main">
+                <div class="image-wrapper">
+                    <p class="image-label" x-text="showLabel ? label : '?'"></p>
+
+                    <div x-show="index < images.length" class="image-main" @mousedown.prevent="onKeyDown($event)" @contextmenu.prevent>
+                        <img x-ref="image" :src="image" height="300">
+                    </div>
+
+                    <div x-show="index >= images.length" class="image-main">
+                        <h2>Set completed!</h2>
+                        <p>You got <span x-text="correct"></span> out of <span x-text="images.length"></span> correct.</p>
+                        <a href="">Try again</a>
+                    </div>
                 </div>
-                <div x-show="index >= images.length">
-                    <h2>Set completed!</h2>
-                    <p>You got <span x-text="correct"></span> out of <span x-text="images.length"></span> correct.</p>
-                    <a href="">Try again</a>
+
+                <div class="controls">
+                    <button class="btn-primary" @click="turn()"><i class="fas fa-rotate-left"></i></button>
+                    {% if current_user.is_authenticated %}
+                        <button class="btn-primary" @click="know()" title="Click this if you are already sure with this, so we won't show you this image anymore."><i class="fas fa-lightbulb"></i></button>
+                    {% else %}
+                        <button class="btn-primary btn-disabled" @click="addMessage('error', 'Please log in to skip known images.')" title="Log in to be able to skip known images."><i class="fas fa-lightbulb"></i></button>
+                    {% endif %}
+
+                    <button class="btn-success" @click="nextImage(1)"><i class="fas fa-check"></i></button>
+                    <button class="btn-error  " @click="nextImage(0)"><i class="fas fa-times"></i></button>
                 </div>
-            </div>
-            <button @click="nextImage(1)"><i class="fas fa-check"></i></button>
-            <button @click="turn()"><i class="fas fa-rotate-left"></i></button>
-            {% if current_user.is_authenticated %}
-                <button @click="know()" title="Click this if you are already sure with this, so we won't show you this image anymore."><i class="fas fa-lightbulb"></i></button>
-            {% endif %}
-            <button @click="nextImage(0)"><i class="fas fa-times"></i></button>
+            </section>
 
-            <label for="mouse_controls">Enable mouse controls</label>
-            <input type="checkbox" id="mouse_controls" x-model="mouseControls">
+            <section class="sidebar options">
+                <label for="mouse_controls">Enable mouse controls</label>
+                <input type="checkbox" id="mouse_controls" x-model="mouseControls">
 
-            <label for="keyboard_controls">Enable keyboard controls</label>
-            <input type="checkbox" id="keyboard_controls" x-model="keyboardControls">
-        </div>
+                <label for="keyboard_controls">Enable keyboard controls</label>
+                <input type="checkbox" id="keyboard_controls" x-model="keyboardControls">
+            </section>
+        </main>
     </div>
 {% endblock %}
 
@@ -125,7 +145,50 @@ Args:
 
                     event.preventDefault();
                 },
+
+                addMessage(type, text, duration = 10) {
+                    let id = crypto.randomUUID();
+                    this.$dispatch('add-message', { id, type, text, duration: duration * 1000 });
+                    return id;
+                },
+
+                removeMessage(id) {
+                    this.$dispatch('remove-message', { id });
+                },
             }));
         });
     </script>
+{% endblock %}
+
+{% block styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/draft.css') }}">
+    <style>
+        .image-label {
+            background-color: var(--c-grey6);
+            padding: 10px 20px;
+            border-radius: 10px;
+            box-shadow: var(--shadow-sm);
+            border: 2px solid var(--c-grey3);
+            text-align: center;
+        }
+
+        .image-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 20px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+
+            & button {padding: 8px 23px;}
+
+            & > :nth-child(2) {
+                margin-right: 10px;
+            }
+        }
+    </style>
 {% endblock %}
