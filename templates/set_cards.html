@@ -25,7 +25,7 @@ Args:
 
             <section class="main">
                 <div class="image-wrapper">
-                    <p class="image-label" x-text="isEnd() ? '' : (showLabel ? label : '?')"></p>
+                    <p class="image-label" x-text="(!isEnd() && showLabel) ? label : ''"></p>
 
                     <div x-show="!isEnd()" class="image-main" @mousedown.prevent="onKeyDown($event)" @contextmenu.prevent>
                         <img x-ref="image" :src="image" height="300">

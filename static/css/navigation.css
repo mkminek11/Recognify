@@ -1,11 +1,19 @@
 
+header {
+    position: sticky;
+    top: 0px;
+    padding-top: 40px;
+    background-color: var(--c-grey7);
+    border-bottom-left-radius: 15px;
+    border-bottom-right-radius: 15px;
+    z-index: 9999;
+}
+
 nav {
     background-color: var(--c-grey6);
     color: var(--c-white);
     border: 2px solid var(--c-grey3);
     box-shadow: var(--shadow-lg);
-    /* position: sticky; */
-    /* top: 0px; */
     padding: 13px 38px; /* subtracted 2px for border as there is no easy way to include inset border in CSS */
     border-radius: 15px;
     display: flex;
