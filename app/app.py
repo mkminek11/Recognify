@@ -127,7 +127,6 @@ def get_data(objects: list[Any]) -> list[dict[str, int | str | None]]:
 def login_required(func: Callable) -> Callable:
     @wraps(func)
     def wrapper(*args, **kwargs):
-        print(current_user.is_authenticated)
         if current_user.is_authenticated:
             return func(*args, **kwargs)
 

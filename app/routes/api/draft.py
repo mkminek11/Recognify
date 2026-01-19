@@ -171,7 +171,6 @@ def fetch_gallery(draft: Draft):
     """ Fetches all images and labels for a draft """
     images = [img.data() for img in draft.images]
     labels = [lbl.data() for lbl in draft.labels]
-    print(f"Fetched labels: {labels}")
     return jsonify({"images": images, "labels": labels}), 200
 
 

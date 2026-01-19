@@ -99,8 +99,18 @@ class Set(db.Model):
         return db.session.execute(Draft.query.where(Draft.set_id == self.id)).scalar_one_or_none()
 
     def skip_images(self, user_id: int) -> list[str]:
+        """ Returns list of image hids skipped by the user in this set """
         res = db.session.execute(SkipImage.query.join(Image).where(Image.set_id == self.id, SkipImage.user_id == user_id)).scalars().all()
         return [skip.hid() for skip in res if isinstance(skip, SkipImage)]
+
+    def images_for(self, user: User | None) -> list["Image"]:
+        """ Returns list of images in this set, excluding those skipped by the user """
+        if user is None or user.is_anonymous: return self.images
+
+        skipped_image_ids = {skip.image_id for skip in db.session.execute(
+            SkipImage.query.where(SkipImage.user_id == user.id)
+        ).scalars().all()}
+        return [img for img in self.images if img.id not in skipped_image_ids]
 
 
 class Image(db.Model):
@@ -131,6 +141,7 @@ class Image(db.Model):
             "label": self.label,
             "set_id": encode(self.set_id)
         }
+
 
 class Draft(db.Model):
     __tablename__ = "drafts"

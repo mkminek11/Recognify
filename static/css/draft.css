@@ -96,13 +96,21 @@ main {
         & .image-main {
             position: relative;
             align-self: center;
+            height: 300px;
+
+            &.set-completed {
+                background-color: var(--c-grey6);
+                border: 2px solid var(--c-grey3);
+                border-radius: 15px;
+                width: 100%;
+                padding: 20px 30px;
+            }
 
             & img {
                 max-width: 100%;
                 min-width: 80px;
                 background-color: var(--c-grey6);
                 border: none;
-                height: 360px;
                 object-fit: contain;
                 border-radius: 15px;
                 box-shadow: var(--shadow-lg);

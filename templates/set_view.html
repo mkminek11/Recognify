@@ -16,8 +16,8 @@ Args:
             <p>Created at: {{ set.created_at }}</p>
             <a href="/sets/{{ set.hid() }}/cards">Play</a>
 
-            {% if current_user.is_authenticated and current_user.has_access_to(set.draft_id) %}
-                <a href="/draft/{{ set.draft_id }}">Edit</a>
+            {% if current_user.is_authenticated and current_user.has_access_to(set.get_draft()) %}
+                <a href="/draft/{{ set.hid() }}">Edit</a>
             {% endif %}
         </section>
 
