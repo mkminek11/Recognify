@@ -159,6 +159,15 @@ Args:
                         <textarea x-ref="descriptionInput" x-model="setDescription"
                                 x-show="descriptionEditMode" @blur="saveDescription();"></textarea>
                     </dd>
+
+                    <dt>
+                        <span><label for="setVisibility">Visibility</label></span>
+                    </dt>
+                    <dd>
+                        <select id="setVisibility" x-model="visibility" @change="changeVisibility()">
+                            <option value="private">Private</option>
+                            <option value="public">Public</option>
+                        </select>
                 </dl>
 
                 <p class="link danger" @click="deleteSet()">Delete draft</p>
@@ -180,6 +189,7 @@ Args:
             Alpine.data('formHandler', () => ({
                 title: '{{ draft.name or "Untitled Set" }}',
                 setDescription: '{{ draft.description or "" }}',
+                visibility: '{{ "public" if draft.is_public else "private" }}',
                 titleEditMode: false,
                 descriptionEditMode: false,
                 images: [], // [ { image: CustomImage, slide: string } ]
@@ -631,6 +641,11 @@ Args:
                     }
 
                     this.removeMessage('loading');
+                },
+
+                changeVisibility() {
+                    const isPublic = this.visibility === 'public';
+                    axios.post('/api/draft/{{ draft.hid() }}/visibility', { is_public: isPublic });
                 },
 
                 anyImageSelected() {

@@ -175,6 +175,19 @@ def fetch_gallery(draft: Draft):
 
 
 
+@bp.route('/<string:draft_hash>/visibility', methods=['POST'])
+@draft_access_required
+def update_draft_visibility(draft: Draft):
+    data: dict[str, bool] = request.get_json()
+    is_public = data.get('is_public', None)
+    if is_public is None: return jsonify({"error": "No visibility value provided."}), 400
+
+    draft.is_public = bool(is_public)
+    db.session.commit()
+    return jsonify({"message": "Draft visibility updated successfully.", "is_public": draft.is_public}), 200
+
+
+
 @bp.route('/<string:draft_hash>/gallery', methods=['POST'])
 @draft_access_required
 def add_image(draft: Draft):
@@ -330,13 +343,13 @@ def publish_draft(draft: Draft):
     set_id = draft.set_id
     if set_id is None:
         # Create new set
-        set_ = Set(name = draft.name or "Untitled Set", description = draft.description or "", is_public = True)
+        set_ = Set(name = draft.name or "Untitled Set", description = draft.description or "", is_public = draft.is_public)
         db.session.add(set_)
         db.session.commit()
 
         for img in draft.images:
             if not img.label: continue
-            new_img = Image(filename = img.filename, set_id = set_.id, label = img.label)
+            new_img = Image(filename = img.filename, set_id = set_.id, label = img.label, draft_image_id = img.id)
             db.session.add(new_img)
             set_.images.append(new_img)
 

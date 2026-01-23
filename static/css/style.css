@@ -104,6 +104,13 @@ img {display: block;}
     }
 }
 
+.link {
+    text-decoration: underline;
+    cursor: pointer;
+
+    &.danger {color: var(--c-error);}
+}
+
 button, .btn {
     border: 2px solid var(--c-primary-light);
     text-decoration: none;

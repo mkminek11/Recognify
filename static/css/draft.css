@@ -1,6 +1,10 @@
 
 .draft-title {text-align: center;}
 
+.container {
+    max-height: 100vh;
+}
+
 main {
     display: grid;
     grid-template-columns: 360px 1fr 360px;

@@ -1,4 +1,3 @@
-
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from flask_login import UserMixin, current_user
 from sqlalchemy import Integer, String, Boolean, ForeignKey, DateTime, Text, Float
@@ -52,6 +51,10 @@ class User(db.Model, UserMixin):
         if draft.owner_id == self.id: return True
         return any(access.user_id == self.id for access in draft.access_users)
 
+    def get_drafts(self) -> list["Draft"]:
+        return list(db.session.execute(Draft.query.join(DraftAccess, Draft.id == DraftAccess.draft_id)\
+            .where((Draft.owner_id == self.id) | (DraftAccess.user_id == self.id))).scalars().all())
+
     def avatar_url(self, size: int = 128) -> str:
         import hashlib
         email = self.email.lower().encode('utf-8') if self.email else b""
@@ -74,7 +77,21 @@ class Set(db.Model):
     images: Mapped[list["Image"]] = relationship("Image", back_populates = "set", lazy = "select")
 
     @staticmethod
-    def all() -> list["Set"]: return Set.query.all()
+    def all() -> list["Set"]: return Set.query.where(Set.is_public == True).all()
+
+    @staticmethod
+    def all_for(user) -> list["Set"]:
+        """ Return all public sets and all sets this user has access to """
+        if user is None or user.is_anonymous: return Set.all()
+        
+        return Set.query.join(Draft, Set.id == Draft.set_id)\
+            .outerjoin(DraftAccess, Draft.id == DraftAccess.draft_id)\
+            .where(
+                (Set.is_public == True) | 
+                (Set.owner_id == user.id) | 
+                ((Draft.owner_id == user.id)) |
+                ((DraftAccess.user_id == user.id))
+            ).distinct().all()
 
     def __init__(self, name: str, description: str = "", is_public: bool = False):
         self.name = name
@@ -152,6 +169,7 @@ class Draft(db.Model):
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable = False)
     presentations: Mapped[int] = mapped_column(Integer, default = 0, nullable = False)
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default = datetime.datetime.utcnow, nullable = False)
+    is_public: Mapped[bool] = mapped_column(Boolean, default = False, nullable = False)
     set_id: Mapped[int | None] = mapped_column(ForeignKey("sets.id"), nullable = True, default = None)
 
     images: Mapped[list["DraftImage"]] = relationship("DraftImage", back_populates = "draft", lazy = "select", cascade = "all, delete-orphan")
@@ -173,7 +191,8 @@ class Draft(db.Model):
             "description": self.description,
             "owner_id": encode(self.owner_id),
             "created_at": self.created_at.isoformat(),
-            "set_id": encode(self.set_id) if self.set_id else None
+            "set_id": encode(self.set_id) if self.set_id else None,
+            "is_public": self.is_public
         }
 
     def get_access_users(self) -> list[User]:

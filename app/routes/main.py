@@ -10,11 +10,11 @@ bp = Blueprint("main", __name__)
 @bp.route('/')
 @bp.route('/sets')
 def index():
-    sets = Set.query.all()
+    sets = Set.all_for(current_user)
     drafts = []
 
     if current_user.is_authenticated:
-        drafts = Draft.query.where(Draft.owner_id == current_user.id).all()
+        drafts = current_user.get_drafts()
     
     return render_template('index.html', sets = sets, drafts = drafts, popular_sets = sets[:5])
 
