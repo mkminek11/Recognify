@@ -159,6 +159,22 @@ def draft_access_required(func: Callable) -> Callable:
         return func(draft, *args, **kwargs)
     return wrapper
 
+def set_access_required(func: Callable) -> Callable:
+    @wraps(func)
+    def wrapper(set_hash: str, *args, **kwargs):
+        from app.models import Set
+
+        set_id = decode(set_hash)
+        if set_id is False: return "Set not found", 404
+
+        set_ = Set.query.get(set_id)
+        if not isinstance(set_, Set): return "Set not found", 404
+        if set_.is_public: return func(set_, *args, **kwargs)
+        if not current_user.is_authenticated or not current_user.has_access_to(set_): return "Access denied", 403
+
+        return func(set_, *args, **kwargs)
+    return wrapper
+
 
 @app.template_filter('regex_replace')
 def regex_replace(string: str, find: str, replace: str) -> str:

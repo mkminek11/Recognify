@@ -42,14 +42,17 @@ class User(db.Model, UserMixin):
             "email": self.email,
         }
 
-    def has_access_to(self, draft: "Draft | int | str | None") -> bool:
-        if isinstance(draft, str):
-            draft = decode(draft)
-        if isinstance(draft, int):
-            draft = Draft.query.get(draft)
+    def has_access_to(self, to: "Draft | Set | None") -> bool:
+        if to is None or not isinstance(to, (Draft, Set)): return False
+        if to.owner_id == self.id: return True
+        draft = to
+        print(f"Checking access for user {self.username} to {'Draft' if isinstance(to, Draft) else 'Set'} {to.hid()}")
+        if isinstance(to, Set):
+            if to.is_public: return True
+            draft = to.get_draft()
         if draft is None or not isinstance(draft, Draft): return False
-        if draft.owner_id == self.id: return True
-        return any(access.user_id == self.id for access in draft.access_users)
+
+        return self.id in draft.get_access_users()
 
     def get_drafts(self) -> list["Draft"]:
         return list(db.session.execute(Draft.query.join(DraftAccess, Draft.id == DraftAccess.draft_id)\

@@ -2,7 +2,7 @@
 from flask import Blueprint, jsonify, redirect, render_template, request
 from flask_login import current_user
 from app.models import Draft, Image, Set, SkipImage, User
-from app.app import db, draft_access_required, encode, get_data, login_required, decode, encode, log_info
+from app.app import db, draft_access_required, encode, get_data, login_required, decode, encode, log_info, set_access_required
 from app.lib.presentation import create_draft
 
 bp = Blueprint("main", __name__)
@@ -36,12 +36,8 @@ def new_set():
     return redirect(f'/draft/{encode(draft_id)}')
 
 @bp.route('/sets/<string:set_hash>')
-def view_set(set_hash: str):
-    set_id = decode(set_hash)
-    if not isinstance(set_id, int): return "Invalid set hash", 400
-    set_ = Set.query.get(set_id)
-    if not isinstance(set_, Set): return "Set not found", 404
-    
+@set_access_required
+def view_set(set_: Set):
     return render_template('set_view.html', set = set_)
 
 @bp.route('/sets/<string:set_hash>/cards')
