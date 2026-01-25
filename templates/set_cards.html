@@ -58,13 +58,17 @@ Args:
             <section class="sidebar options">
                 <div class="checkbox">
                     <label for="mouse_controls">Enable mouse controls</label>
-                    <input type="checkbox" id="mouse_controls" x-model="mouseControls">
+                    <input type="checkbox" id="mouse_controls" x-model="mouseControls" @change="saveSettings('mouse_controls', mouseControls)">
                 </div>
 
                 <div class="checkbox">
                     <label for="keyboard_controls">Enable keyboard controls</label>
-                    <input type="checkbox" id="keyboard_controls" x-model="keyboardControls">
+                    <input type="checkbox" id="keyboard_controls" x-model="keyboardControls" @change="saveSettings('keyboard_controls', keyboardControls)">
                 </div>
+
+                {% if not current_user.is_authenticated %}
+                    <p class="info">Log in to save your settings permanently.</p>
+                {% endif %}
             </section>
         </main>
     </div>
@@ -80,8 +84,8 @@ Args:
                 images: JSON.parse('{{ get_data(set.images_for(current_user))|tojson }}'),
                 correct: 0,
                 showLabel: false,
-                mouseControls: true,
-                keyboardControls: true,
+                mouseControls: '{{ UserSettings.settings(current_user).mouse_controls|int }}' === '1',
+                keyboardControls: '{{ UserSettings.settings(current_user).keyboard_controls|int }}' === '1',
 
                 init() {
                     this.shuffle(this.images);
@@ -167,6 +171,14 @@ Args:
                 removeMessage(id) {
                     this.$dispatch('remove-message', { id });
                 },
+
+                saveSettings(key, value) {
+                    if ('{{ (not current_user.is_authenticated)|int }}' === '1') {return;}
+
+                    axios.post('/api/user/settings', {
+                        [key]: value ? 1 : 0,
+                    });
+                },
             }));
         });
     </script>
@@ -209,6 +221,11 @@ Args:
             justify-content: space-between;
             gap: 10px;
             user-select: none;
+        }
+
+        .sidebar .info {
+            color: var(--c-grey3);
+            font-style: italic;
         }
     </style>
 {% endblock %}

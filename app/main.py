@@ -5,7 +5,7 @@ import sys
 
 from app import routes # Assign blueprints
 from app.app import app, db, get_data, login
-from app.models import Draft, Set, User
+from app.models import Draft, Set, User, UserSettings
 
 # Redirect Werkzeug reloader messages to stdout only
 werkzeug_logger = logging.getLogger('werkzeug')
@@ -22,7 +22,7 @@ def load_user(user_id: int) -> User | None:
 
 @app.context_processor
 def inject_user():
-    return {"User": User, "Draft": Draft, "Set": Set, "datetime": datetime, "get_data": get_data}
+    return {"User": User, "Draft": Draft, "Set": Set, "datetime": datetime, "UserSettings": UserSettings, "get_data": get_data}
 
 db.init_app(app)
 login.init_app(app)

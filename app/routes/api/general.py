@@ -4,8 +4,8 @@ from flask_login import current_user
 from urllib.parse import unquote
 import os.path
 
-from app.models import Draft, Image, Set, SkipImage, User
-from app.app import db, UPLOAD_PATH, decode, decode_image, log_info
+from app.models import Draft, Image, Set, SkipImage, User, UserSettings
+from app.app import db, UPLOAD_PATH, decode, decode_image, log_info, login_required
 from app.lib.inaturalist_api import get_inaturalist_image_links
 
 
@@ -123,3 +123,40 @@ def inaturalist_links():
 
     links = get_inaturalist_image_links(species_list)
     return jsonify({"links": links})
+
+
+
+@login_required
+@bp.route('/user/settings', methods=['GET'])
+def get_user_settings():
+    if not isinstance(current_user, User): return jsonify({"error": "Unauthorized."}), 403
+    settings = current_user.settings()
+
+    return jsonify({
+        "theme": settings.theme,
+        "keyboard_controls": settings.keyboard_controls,
+        "mouse_controls": settings.mouse_controls
+    }), 200
+
+
+
+@login_required
+@bp.route('/user/settings', methods=['POST'])
+def update_user_settings():
+    if not isinstance(current_user, User): return jsonify({"error": "Unauthorized."}), 403
+    data: dict[str, str|bool] = request.get_json()
+    settings = current_user.settings()
+
+    for key, value in data.items():
+        if key in UserSettings.all():
+            target_type = type(getattr(settings, key))
+            if not isinstance(value, target_type):
+                try:
+                    value = target_type(value)
+                except ValueError:
+                    continue
+            setattr(settings, key, value)
+
+    db.session.commit()
+
+    return jsonify({"message": "Settings updated successfully."}), 200

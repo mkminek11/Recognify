@@ -5,6 +5,7 @@ from sqlalchemy import Integer, String, Boolean, ForeignKey, DateTime, Text, Flo
 import os.path
 import datetime
 import werkzeug.security
+import hashlib
 
 from app.app import db, app, decode, encode, encode_image, login
 
@@ -12,11 +13,11 @@ from app.app import db, app, decode, encode, encode_image, login
 class User(db.Model, UserMixin):
     __tablename__ = "users"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key = True)
-    username: Mapped[str] = mapped_column(String(32), unique = True, nullable = False)
-    email: Mapped[str] = mapped_column(String(120), unique = True, nullable = True)
-    password: Mapped[str] = mapped_column(String(64), nullable = False)
-    permission: Mapped[int] = mapped_column(Integer, default = 0, nullable = False)
+    id:         Mapped[int] = mapped_column(Integer,     primary_key = True)
+    username:   Mapped[str] = mapped_column(String(32),  unique = True, nullable = False)
+    email:      Mapped[str] = mapped_column(String(120), unique = True, nullable = True)
+    password:   Mapped[str] = mapped_column(String(64),  nullable = False)
+    permission: Mapped[int] = mapped_column(Integer,     default = 0, nullable = False)
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default = datetime.datetime.utcnow, nullable = False)
 
     sets: Mapped[list["Set"]] = relationship("Set", back_populates = "owner", lazy = "select")
@@ -55,26 +56,34 @@ class User(db.Model, UserMixin):
         return self.id in draft.get_access_users()
 
     def get_drafts(self) -> list["Draft"]:
-        return list(db.session.execute(Draft.query.join(DraftAccess, Draft.id == DraftAccess.draft_id)\
+        return list(db.session.execute(Draft.query.outerjoin(DraftAccess, Draft.id == DraftAccess.draft_id)\
             .where((Draft.owner_id == self.id) | (DraftAccess.user_id == self.id))).scalars().all())
 
     def avatar_url(self, size: int = 128) -> str:
-        import hashlib
         email = self.email.lower().encode('utf-8') if self.email else b""
         hash_email = hashlib.md5(email).hexdigest()
         return f"https://www.gravatar.com/avatar/{hash_email}?d=identicon&s={size}"
-    
+
+    def settings(self) -> "UserSettings":
+        res = db.session.execute(UserSettings.query.where(UserSettings.user_id == self.id)).scalar_one_or_none()
+        if not isinstance(res, UserSettings):
+            res = UserSettings()
+            res.user_id = self.id
+            db.session.add(res)
+            db.session.commit()
+        return res
+
 
 class Set(db.Model):
     __tablename__ = "sets"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key = True, autoincrement = True)
-    name: Mapped[str] = mapped_column(String(64), unique = True, nullable = False)
-    description: Mapped[str] = mapped_column(Text, default = "", nullable = False)
-    is_public: Mapped[bool] = mapped_column(Boolean, default = False, nullable = False)
-    created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default = datetime.datetime.utcnow, nullable = False)
+    id:          Mapped[int]  = mapped_column(Integer, primary_key = True, autoincrement = True)
+    name:        Mapped[str]  = mapped_column(String(64), unique = True, nullable = False)
+    description: Mapped[str]  = mapped_column(Text, default = "", nullable = False)
+    is_public:   Mapped[bool] = mapped_column(Boolean, default = False, nullable = False)
+    created_at:  Mapped[datetime.datetime] = mapped_column(DateTime, default = datetime.datetime.utcnow, nullable = False)
+    owner_id:    Mapped[int]  = mapped_column(ForeignKey("users.id"), nullable = False)
     # TODO: modified_at
-    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable = False)
 
     owner: Mapped["User"] = relationship("User", back_populates = "sets", lazy = "select")
     images: Mapped[list["Image"]] = relationship("Image", back_populates = "set", lazy = "select")
@@ -136,11 +145,11 @@ class Set(db.Model):
 class Image(db.Model):
     __tablename__ = "images"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key = True, autoincrement = True)
-    filename: Mapped[str] = mapped_column(String(128), nullable = False)
-    set_id: Mapped[int] = mapped_column(ForeignKey("sets.id"), nullable = False)
-    label: Mapped[str] = mapped_column(String(128), nullable = True)
-    draft_image_id: Mapped[int | None] = mapped_column(ForeignKey("draft_images.id"), nullable = True, default = None)
+    id:             Mapped[int]      = mapped_column(Integer, primary_key = True, autoincrement = True)
+    filename:       Mapped[str]      = mapped_column(String(128), nullable = False)
+    set_id:         Mapped[int]      = mapped_column(ForeignKey("sets.id"), nullable = False)
+    label:          Mapped[str]      = mapped_column(String(128), nullable = True)
+    draft_image_id: Mapped[int|None] = mapped_column(ForeignKey("draft_images.id"), nullable = True, default = None)
 
     set: Mapped["Set"] = relationship("Set", back_populates = "images", lazy = "select")
     draft_image: Mapped["DraftImage | None"] = relationship("DraftImage", lazy = "select")
@@ -166,14 +175,14 @@ class Image(db.Model):
 class Draft(db.Model):
     __tablename__ = "drafts"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key = True, autoincrement = True)
-    name: Mapped[str] = mapped_column(String(64), nullable = False, default = "")
-    description: Mapped[str] = mapped_column(Text, default = "", nullable = False)
-    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable = False)
-    presentations: Mapped[int] = mapped_column(Integer, default = 0, nullable = False)
-    created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default = datetime.datetime.utcnow, nullable = False)
-    is_public: Mapped[bool] = mapped_column(Boolean, default = False, nullable = False)
-    set_id: Mapped[int | None] = mapped_column(ForeignKey("sets.id"), nullable = True, default = None)
+    id:            Mapped[int]  = mapped_column(Integer, primary_key = True, autoincrement = True)
+    name:          Mapped[str]  = mapped_column(String(64), nullable = False, default = "")
+    description:   Mapped[str]  = mapped_column(Text, default = "", nullable = False)
+    owner_id:      Mapped[int]  = mapped_column(ForeignKey("users.id"), nullable = False)
+    presentations: Mapped[int]  = mapped_column(Integer, default = 0, nullable = False)
+    created_at:    Mapped[datetime.datetime] = mapped_column(DateTime, default = datetime.datetime.utcnow, nullable = False)
+    is_public:     Mapped[bool] = mapped_column(Boolean, default = False, nullable = False)
+    set_id:        Mapped[int|None]  = mapped_column(ForeignKey("sets.id"), nullable = True, default = None)
 
     images: Mapped[list["DraftImage"]] = relationship("DraftImage", back_populates = "draft", lazy = "select", cascade = "all, delete-orphan")
     labels: Mapped[list["DraftLabel"]] = relationship("DraftLabel", back_populates = "draft", lazy = "select", cascade = "all, delete-orphan")
@@ -205,11 +214,11 @@ class Draft(db.Model):
 class DraftImage(db.Model):
     __tablename__ = "draft_images"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key = True, autoincrement = True)
+    id:       Mapped[int] = mapped_column(Integer, primary_key = True, autoincrement = True)
     draft_id: Mapped[int] = mapped_column(ForeignKey("drafts.id"), nullable = False)
     filename: Mapped[str] = mapped_column(String(128), nullable = False)
-    slide: Mapped[int] = mapped_column(Integer, nullable = False)
-    label: Mapped[str] = mapped_column(String(128), nullable = True)
+    slide:    Mapped[int] = mapped_column(Integer,     nullable = False)
+    label:    Mapped[str] = mapped_column(String(128), nullable = True)
 
     draft: Mapped["Draft"] = relationship("Draft", back_populates = "images")
 
@@ -235,10 +244,10 @@ class DraftImage(db.Model):
 class DraftLabel(db.Model):
     __tablename__ = "draft_labels"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key = True, autoincrement = True)
+    id:       Mapped[int] = mapped_column(Integer, primary_key = True, autoincrement = True)
     draft_id: Mapped[int] = mapped_column(ForeignKey("drafts.id"), nullable = False)
-    label: Mapped[str] = mapped_column(String(128), nullable = False)
-    slide: Mapped[int] = mapped_column(Integer, nullable = False)
+    label:    Mapped[str] = mapped_column(String(128), nullable = False)
+    slide:    Mapped[int] = mapped_column(Integer, nullable = False)
 
     draft: Mapped["Draft"] = relationship("Draft", back_populates = "labels")
 
@@ -262,8 +271,8 @@ class DraftLabel(db.Model):
 class SkipImage(db.Model):
     __tablename__ = "skip_images"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key = True, autoincrement = True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable = False)
+    id:       Mapped[int] = mapped_column(Integer, primary_key = True, autoincrement = True)
+    user_id:  Mapped[int] = mapped_column(ForeignKey("users.id"), nullable = False)
     image_id: Mapped[int] = mapped_column(ForeignKey("images.id"), nullable = False)
 
     user: Mapped["User"] = relationship("User", lazy = "select")
@@ -288,13 +297,47 @@ class SkipImage(db.Model):
 class DraftAccess(db.Model):
     __tablename__ = "draft_access"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key = True, autoincrement = True)
+    id:       Mapped[int] = mapped_column(Integer, primary_key = True, autoincrement = True)
     draft_id: Mapped[int] = mapped_column(ForeignKey("drafts.id"), nullable = False)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable = False)
+    user_id:  Mapped[int] = mapped_column(ForeignKey("users.id"),  nullable = False)
 
-    user: Mapped["User"] = relationship("User", lazy = "select")
+    user:  Mapped["User"]  = relationship("User", lazy = "select")
     draft: Mapped["Draft"] = relationship("Draft", back_populates = "access_users", lazy = "select")
 
     def __init__(self, draft_id: int, user_id: int):
         self.draft_id = draft_id
         self.user_id = user_id
+
+
+class UserSettings(db.Model):
+    __tablename__ = "user_settings"
+
+    id:      Mapped[int] = mapped_column(Integer, primary_key = True, autoincrement = True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable = False)
+
+    theme:             Mapped[str]  = mapped_column(String(32), nullable = False, default = "dark")
+    keyboard_controls: Mapped[bool] = mapped_column(Boolean,    nullable = False, default = False)
+    mouse_controls:    Mapped[bool] = mapped_column(Boolean,    nullable = False, default = True)
+
+    user: Mapped["User"] = relationship("User", lazy = "select")
+
+    def __init__(self, user_id: int = 0):
+        self.user_id = user_id
+        self.theme = "dark"
+        self.keyboard_controls = False
+        self.mouse_controls = True
+    
+    @staticmethod
+    def all() -> list[str]:
+        return ["theme", "keyboard_controls", "mouse_controls"]
+
+    @staticmethod
+    def settings(user: User | None) -> "UserSettings":
+        if not isinstance(user, User): return UserSettings()
+        res = db.session.execute(UserSettings.query.where(UserSettings.user_id == user.id)).scalar_one_or_none()
+        if not isinstance(res, UserSettings):
+            res = UserSettings()
+            res.user_id = user.id
+            db.session.add(res)
+            db.session.commit()
+        return res
