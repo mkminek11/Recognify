@@ -54,8 +54,11 @@ Args:
                 <div class="cards-row">
                     {% for draft in drafts %}
                         <a href="/draft/{{ draft.hid() }}" class="card">
-                            <h3>{{ draft.name }}</h3>
-                            <p>{{ draft.description }}</p>
+                            <div class="card-image"></div>
+                            <div class="card-body">
+                                <h3>{{ draft.name }}</h3>
+                                <p>{{ draft.description }}</p>
+                            </div>
                         </a>
                     {% else %}
                         <p>You have no drafts.</p>
