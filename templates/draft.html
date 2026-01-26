@@ -95,7 +95,7 @@ Args:
 
             <section class="main">
                 <div class="image-main">
-                    <img :src="images[currentIndex]?.image.data" />
+                    <img class="main-image" height="" :src="images[currentIndex]?.image.data" />
 
                     <div class="image-icons">
                         <!-- <i class="icon fas fa-pen" title="Replace image"></i> -->
@@ -550,7 +550,12 @@ Args:
                 },
 
                 async publishDraft(event) {
-                    // TODO: make sure to save everything
+                    this.saveTitle();
+                    this.saveDescription();
+                    if (this.images.length > 0 && this.currentIndex >= 0) {
+                        this.saveImageLabel(this.currentIndex);
+                    }
+
                     if (event) {event.preventDefault();}
                     if (!confirm("Are you sure you want to publish this set? You will be able to edit it later.")) {return;}
 
