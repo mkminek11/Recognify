@@ -35,13 +35,6 @@ nav {
 
             & .input-wrapper {
                 box-shadow: var(--shadow-sm);
-
-                /* &:focus-within + .search-results,
-                & + .search-results:hover,
-                & .search-results:focus-within,
-                & .search-results:hover {
-                    display: flex;
-                } */
             }
         }
     }
