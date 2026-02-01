@@ -82,8 +82,8 @@ class Set(db.Model):
     description: Mapped[str]  = mapped_column(Text, default = "", nullable = False)
     is_public:   Mapped[bool] = mapped_column(Boolean, default = False, nullable = False)
     created_at:  Mapped[datetime.datetime] = mapped_column(DateTime, default = datetime.datetime.utcnow, nullable = False)
+    modified_at: Mapped[datetime.datetime] = mapped_column(DateTime, default = datetime.datetime.utcnow, onupdate = datetime.datetime.utcnow, nullable = False)
     owner_id:    Mapped[int]  = mapped_column(ForeignKey("users.id"), nullable = False)
-    # TODO: modified_at
 
     owner: Mapped["User"] = relationship("User", back_populates = "sets", lazy = "select")
     images: Mapped[list["Image"]] = relationship("Image", back_populates = "set", lazy = "select")

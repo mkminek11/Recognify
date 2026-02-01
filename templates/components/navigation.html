@@ -12,9 +12,47 @@
         <a href="/sets" class="icon-link">Browse sets</a>
     
         <div class="nav-center">
-            {% call input(placeholder="Search...", ref="searchInput", kw={"x-model": "searchQuery", "@keydown.enter": "search()"}) %}
-                <i class="icon fas fa-search" @click="search()"></i>
-            {% endcall %}
+            <div class="nav-search dropdown">
+                {% call input(placeholder="Search...", ref="searchInput", wrapper_class="dropdown-trigger", kw={"x-model": "searchQuery", "@input": "search()", "@keydown.enter": "submit()"}) %}
+                    <i class="icon fas fa-search" @click="search()"></i>
+                {% endcall %}
+
+                <div class="search-results dropdown-menu">
+                    <template x-if="loading">
+                        <p class="search-placeholder">Loading...</p>
+                    </template>
+
+                    <template x-if="!loading && !searchQuery">
+                        <p class="search-placeholder">Type to search for sets or users...</p>
+                    </template>
+
+                    <template x-if="!loading && !anySearchResults() && searchQuery">
+                        <p class="search-placeholder">No results found.</p>
+                    </template>
+
+                    <template x-if="!loading && anySearchResults()">
+                        <div class="contents">
+                            <p class="dropdown-text">Sets</p>
+
+                            <template x-for="result, index in searchResults.sets" :key="index">
+                                <a :href="result.url" class="search-result-item dropdown-item">
+                                    <i class="fas fa-book icon"></i>
+                                    <span x-text="result.name"></span>
+                                </a>
+                            </template>
+
+                            <p class="dropdown-text">Users</p>
+
+                            <template x-for="result, index in searchResults.users" :key="index">
+                                <a :href="result.url" class="search-result-item dropdown-item">
+                                    <i class="fas fa-user icon"></i>
+                                    <span x-text="result.name"></span>
+                                </a>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </div>
         </div>
     
         <a href="/sets/new" class="icon-link"><i class="fas fa-plus"></i> Create</a>
@@ -41,8 +79,33 @@
     function navigation() {
         return {
             searchQuery: "{{ search_query or '' }}",
+            searchResults: {"sets": [], "users": []},
+            loading: false,
+
             init() {},
+
             search() {
+                this.$nextTick(() => {
+                    if (this.searchQuery.trim() === "") {
+                        this.searchResults = {"sets": [], "users": []};
+                        return;
+                    }
+                    this.loading = true;
+
+                    fetch(`/api/search?q=${encodeURIComponent(this.searchQuery)}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            this.searchResults = data;
+                            this.loading = false;
+                        });
+                });
+            },
+
+            anySearchResults() {
+                return this.searchResults.sets.length > 0 || this.searchResults.users.length > 0;
+            },
+
+            submit() {
                 if (this.searchQuery.trim() === "") {return;}
                 window.location.href = `/search?q=${encodeURIComponent(this.searchQuery)}`;
             }

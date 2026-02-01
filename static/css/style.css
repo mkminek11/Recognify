@@ -62,6 +62,8 @@ body > .container {
 .hidden {display: none;}
 .hidden-fixed {position: fixed; top: 0px; display: none;}
 
+.contents {display: contents;}
+
 a {color: var(--c-primary-light);}
 
 img {display: block;}
@@ -270,9 +272,15 @@ h3 {
 
             &:hover {background-color: var(--c-grey5);}
         }
+
+        & .dropdown-text {
+            padding-left: 5px;
+            font-weight: 600;
+            color: var(--c-grey3);
+        }
     }
 
-    & .dropdown-trigger:hover + .dropdown-menu, .dropdown-menu:hover, .dropdown-menu:has(:hover) {
+    & .dropdown-trigger:hover + .dropdown-menu, & .dropdown-trigger:focus-within + .dropdown-menu, & .dropdown-menu:hover, & .dropdown-menu:has(:hover) {
         display: flex;
     }
 }

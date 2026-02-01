@@ -4,8 +4,8 @@ from flask_login import current_user
 from urllib.parse import unquote
 import os.path
 
-from app.models import Draft, Image, Set, SkipImage, User, UserSettings
-from app.app import db, UPLOAD_PATH, decode, decode_image, log_info, login_required
+from app.models import Draft, DraftAccess, Image, Set, SkipImage, User, UserSettings
+from app.app import db, UPLOAD_PATH, decode, decode_image, encode, get_data, log_info, login_required
 from app.lib.inaturalist_api import get_inaturalist_image_links
 
 
@@ -124,6 +124,52 @@ def inaturalist_links():
     links = get_inaturalist_image_links(species_list)
     return jsonify({"links": links})
 
+
+
+@bp.route('/search', methods=['GET'])
+def api_search():
+    query = request.args.get('q', '')
+
+    SET_LIMIT = 10
+    USER_LIMIT = 5
+
+    if current_user.is_authenticated:
+        sets: list[Set] = Set.query.join(Draft, Set.id == Draft.set_id)\
+            .outerjoin(DraftAccess, Draft.id == DraftAccess.draft_id)\
+            .where(
+                Set.name.ilike(f'%{query}%'),
+                (Set.is_public == True) | 
+                (Set.owner_id == current_user.id) | 
+                (Draft.owner_id == current_user.id) |
+                (DraftAccess.user_id == current_user.id)
+            ).limit(SET_LIMIT).distinct().all()
+    else:
+        sets: list[Set] = Set.query.where(
+            Set.name.ilike(f'%{query}%'),
+            Set.is_public == True
+        ).limit(SET_LIMIT).all()
+
+    users: list[User] = User.query.where(User.username.ilike(f'%{query}%')).limit(USER_LIMIT).all()
+
+    set_data = [
+        {
+            "id": set_.hid(),
+            "name": set_.name,
+            "url": f"/sets/{set_.hid()}"
+        } for set_ in sets
+    ]
+
+    user_data = [
+        {
+            "id": user.hid(),
+            "name": user.username,
+            "url": f"/profile/{user.hid()}"
+        } for user in users
+    ]
+
+    print(set_data, user_data)
+
+    return jsonify({"sets": set_data, "users": user_data}), 200
 
 
 @login_required

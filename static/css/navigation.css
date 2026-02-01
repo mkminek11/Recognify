@@ -28,10 +28,21 @@ nav {
         display: flex;
         justify-content: center;
 
-        & .input-wrapper {
+        & .nav-search {
+            position: relative;
             max-width: 500px;
             flex-grow: 1;
-            box-shadow: var(--shadow-sm);
+
+            & .input-wrapper {
+                box-shadow: var(--shadow-sm);
+
+                /* &:focus-within + .search-results,
+                & + .search-results:hover,
+                & .search-results:focus-within,
+                & .search-results:hover {
+                    display: flex;
+                } */
+            }
         }
     }
 
@@ -49,4 +60,10 @@ nav {
             right: -40px;
         }
     }
+
+    & .search-results {
+        width: 100%;
+    }
+
+    & .dropdown .dropdown-trigger:hover:not(:focus-within) + .search-results {display: none;}
 }
