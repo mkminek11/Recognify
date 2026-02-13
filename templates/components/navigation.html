@@ -13,11 +13,13 @@
     
         <div class="nav-center">
             <div class="nav-search dropdown">
-                {% call input(placeholder="Search...", ref="searchInput", wrapper_class="dropdown-trigger", kw={"x-model": "searchQuery", "@input": "search()", "@keydown.enter": "submit()"}) %}
+                {% call input(placeholder="Search...", ref="searchInput", wrapper_class="dropdown-trigger",
+                        kw={"x-model": "searchQuery", "@input": "search()", "@keydown.enter": "submit()",
+                        "@keydown.down.prevent": "focusFirstResult($event)", "@keydown.escape": "closeSearch()"}) %}
                     <i class="icon fas fa-search" @click="search()"></i>
                 {% endcall %}
 
-                <div class="search-results dropdown-menu">
+                <div class="search-results dropdown-menu no-hover" x-ref="searchResults" :class="forceOpen ? 'force-open' : ''" @blur="forceOpen = false">
                     <template x-if="loading">
                         <p class="search-placeholder">Loading...</p>
                     </template>
@@ -32,19 +34,19 @@
 
                     <template x-if="!loading && anySearchResults()">
                         <div class="contents">
-                            <p class="dropdown-text">Sets</p>
+                            <p class="dropdown-text" x-show="searchResults.sets.length > 0">Sets</p>
 
                             <template x-for="result, index in searchResults.sets" :key="index">
-                                <a :href="result.url" class="search-result-item dropdown-item">
+                                <a :href="result.url" class="search-result-item dropdown-item" @keydown="resultKeydown('sets', $event, index)">
                                     <i class="fas fa-book icon"></i>
                                     <span x-text="result.name"></span>
                                 </a>
                             </template>
 
-                            <p class="dropdown-text">Users</p>
+                            <p class="dropdown-text" x-show="searchResults.users.length > 0">Users</p>
 
                             <template x-for="result, index in searchResults.users" :key="index">
-                                <a :href="result.url" class="search-result-item dropdown-item">
+                                <a :href="result.url" class="search-result-item dropdown-item" @keydown="resultKeydown('users', $event, index)">
                                     <i class="fas fa-user icon"></i>
                                     <span x-text="result.name"></span>
                                 </a>
@@ -81,6 +83,7 @@
             searchQuery: "{{ search_query or '' }}",
             searchResults: {"sets": [], "users": []},
             loading: false,
+            forceOpen: false,
 
             init() {},
 
@@ -105,10 +108,58 @@
                 return this.searchResults.sets.length > 0 || this.searchResults.users.length > 0;
             },
 
+            searchResultsLength() {
+                return this.searchResults.sets.length + this.searchResults.users.length;
+            },
+
             submit() {
                 if (this.searchQuery.trim() === "") {return;}
                 window.location.href = `/search?q=${encodeURIComponent(this.searchQuery)}`;
-            }
+            },
+
+            focusFirstResult(event) {
+                event.preventDefault();
+
+                this.forceOpen = true;
+                this.$nextTick(() => {
+                    const firstResult = this.$refs.searchResults.querySelector('.search-result-item');
+                    if (firstResult) {firstResult.focus();}
+                    this.$nextTick(() => { this.forceOpen = false; });
+                });
+            },
+
+            resultKeydown(type, event, index) {
+                const results = this.searchResults[type];
+
+                if (event.key === "ArrowDown") {
+                    event.preventDefault();
+                    const globalIndex = this.getResultGlobalIndex(type, index + 1);
+
+                    if (globalIndex >= this.searchResultsLength()) {return;}
+                    const nextElement = this.$refs.searchResults.querySelectorAll(`.search-result-item`)[globalIndex];
+                    if (nextElement) {nextElement.focus();}
+                } else if (event.key === "ArrowUp") {
+                    event.preventDefault();
+                    const globalIndex = this.getResultGlobalIndex(type, index - 1);
+
+                    if (globalIndex < 0) {this.$refs.searchInput.focus(); return;}
+                    const prevElement = this.$refs.searchResults.querySelectorAll(`.search-result-item`)[globalIndex];
+                    if (prevElement) {prevElement.focus();}
+                } else if (event.key === "Escape") {
+                    this.closeSearch();
+                }
+            },
+
+            getResultGlobalIndex(type, localIndex) {
+                let globalIndex = localIndex;
+                if (type === "users") {globalIndex += this.searchResults.sets.length;}
+                return globalIndex;
+            },
+
+            closeSearch() {
+                this.forceOpen = false;
+                document.activeElement.blur();
+            },
         }
     }
 </script>

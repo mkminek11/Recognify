@@ -58,5 +58,5 @@ nav {
         width: 100%;
     }
 
-    & .dropdown .dropdown-trigger:hover:not(:focus-within) + .search-results {display: none;}
+    /* & .dropdown .dropdown-trigger:hover:not(:focus-within) + .search-results {display: none;} */
 }

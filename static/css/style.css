@@ -280,7 +280,12 @@ h3 {
         }
     }
 
-    & .dropdown-trigger:hover + .dropdown-menu, & .dropdown-trigger:focus-within + .dropdown-menu, & .dropdown-menu:hover, & .dropdown-menu:has(:hover) {
+    & .dropdown-trigger:hover + .dropdown-menu:not(.no-hover),
+    & .dropdown-trigger:focus-within + .dropdown-menu,
+    & .dropdown-menu.force-open,
+    & .dropdown-menu:not(.no-hover):hover,
+    & .dropdown-menu:not(.no-hover):has(:hover),
+    & .dropdown-menu:has(:focus-within) {
         display: flex;
     }
 }

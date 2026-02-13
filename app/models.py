@@ -7,7 +7,7 @@ import datetime
 import werkzeug.security
 import hashlib
 
-from app.app import db, app, decode, encode, encode_image, login
+from app.app import db, app, decode, encode, encode_image
 
 
 class User(db.Model, UserMixin):
