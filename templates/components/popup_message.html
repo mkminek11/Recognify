@@ -1,14 +1,15 @@
 
 {% macro message_list(ref="", initial=[]) %}
-    <div class="popup-list" x-ref="{{ ref }}" x-data="{ messages: {{ initial|tojson }}, hide: [] }"
+    <div class="popup-list" x-ref="{{ ref }}" x-data="{ messages: {{ initial|tojson }} }"
             @add-message.window="messages.push($event.detail)"
             @remove-message.window="hide.push($event.detail.id);">
         <!-- Message properties: id, type, text, duration -->
         <template x-for="(msg, index) in messages" :key="index">
-            <div class="popup-message" :class="`popup-message-${msg.type}`" x-show="!hide.includes(msg.id)" x-transition
-                    x-init="setTimeout(() => { hide.push(msg.id); }, msg.duration < 0 ? Infinity : (msg.duration || 30000));">
+            <div class="popup-message" :class="`popup-message-${msg.type}`" x-show="!msg.hide" x-transition
+                    x-init="if(msg.duration >= 0) setTimeout(() => { msg.hide = true; }, msg.duration || 30000);">
+                <!-- Message duration: (-∞; 0) = infinite, {0} = default 3 seconds, (0, ∞) = time in milliseconds -->
                 <p x-text="msg.text"></p>
-                <button class="btn-flat" @click="hide.push(msg.id);"><i class="fas fa-times"></i></button>
+                <button class="btn-flat" @click="msg.hide = true;"><i class="fas fa-times"></i></button>
             </div>
         </template>
     </div>

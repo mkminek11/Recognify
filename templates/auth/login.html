@@ -1,9 +1,12 @@
 
 {% extends "auth/base.html" %}
 {% from 'components/input.html' import input %}
+{% from 'components/popup_message.html' import message_list %}
 
 {% block content %}
     <h1 class="title">Welcome to Recognify</h1>
+
+    {{ message_list(ref="popupMessages") }}
 
     <div class="form-container" x-data="loginForm()">
         <div class="user-icon"><i class="fas fa-user"></i></div>
@@ -15,8 +18,6 @@
             {% call input(placeholder="Password", ref="password", kw={":type": "showPassword ? 'text' : 'password'"}) %}
                 <i @click="togglePassword()" class="icon fas" :class="showPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
             {% endcall %}
-
-            <p class="message error" x-text="message" x-show="message"></p>
         </div>
         
         <button class="btn-primary shadow" @click="submit()">Log in</button>
@@ -30,14 +31,23 @@
         function loginForm() {
             return {
                 message: '{{ message }}',
+                message_type: '{{ message_type }}',
                 showPassword: false,
                 togglePassword() {this.showPassword = !this.showPassword;},
+
+                init() {
+                    if (this.message) {
+                        let id = crypto.randomUUID();
+                        this.$dispatch('add-message', { id, type: this.message_type, text: this.message, duration: -1 });
+                    }
+                },
+
                 async submit() {
                     const username = this.$refs.username.value;
                     const password = this.$refs.password.value;
                     await axios.post('/auth/login', {username, password}).then(response => {
                         if (response.status === 200) {
-                            window.location.href = '/';
+                            window.location.assign('/');
                         } else {
                             this.message = response.data.message;
                         }

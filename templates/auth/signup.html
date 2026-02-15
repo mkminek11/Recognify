@@ -39,7 +39,7 @@
 
                     await axios.post('/auth/signup', {username, email, password, confirm_password}).then(response => {
                         if (response.status === 200) {
-                            window.location.href = '/auth/login';
+                            window.location.assign('/auth/login?message=Account created successfully. Please log in.&type=success');
                         } else {
                             this.message = response.data.message;
                         }
