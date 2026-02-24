@@ -582,7 +582,8 @@ Args:
                     this.$refs.inaturalistDialog.close();
 
                     await axios.get('/api/inaturalist/links', {
-                        params: { species: speciesNames.join(',') }
+                        params: { species: speciesNames.join(',') },
+                        timeout: 12000
                     }).then(async (response) => {
                         const imageSets = response.data.links || {};
                         this.importedImageLinks = {};
@@ -602,6 +603,11 @@ Args:
 
                         console.log("Imported image links:", this.importedImageLinks);
                         this.removeMessage(messageId);
+                    }).catch((error) => {
+                        this.removeMessage(messageId);
+                        const errorMsg = error.response?.data?.error || error.message || 'Unknown error occurred';
+                        this.addMessage('error', `Failed to import from iNaturalist: ${errorMsg}`, 5000);
+                        console.error('iNaturalist import error:', error);
                     });
                 },
             

@@ -1,11 +1,18 @@
 
 import os, re, time, requests
 from typing import Iterator
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import threading
 
 PER_PAGE = 100
+RATE_LIMIT_DELAY = 0.2  # Delay between API requests in seconds
+rate_limit_lock = threading.Lock()
+last_request_time = 0
 
+# Create session with proxy bypass to avoid proxy connection issues
 session = requests.Session()
+session.proxies = {}  # Bypass system proxy
+session.headers.update({'User-Agent': 'Recognify'})
 
 def clean(name: str) -> str:
     return re.sub(r'[^0-9A-Za-zčřžýáíéúůťďň _.-]', '_', name)[:160]
@@ -77,7 +84,7 @@ def download_photo(photo: dict, obs_id: int, downloaded: int, output: str) -> bo
 
 def download_candidate(candidate_url: str, output: str, obs_id: int, downloaded: int) -> bool:
     try:
-        response = session.get(candidate_url, stream=True, timeout=20)
+        response = session.get(candidate_url, stream=True, timeout=20, proxies={})
         if response.status_code != 200: return False
         if not response.headers.get("content-type", "").startswith("image"): return False
 

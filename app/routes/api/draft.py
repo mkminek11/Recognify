@@ -225,8 +225,10 @@ def add_image_url(draft: Draft):
     if not image_url: return jsonify({"error": "No image URL provided."}), 400
 
     try:
-        headers = {'User-Agent': 'Recognify/1.0 (Educational Tool; email@example.com)'}
-        response = requests.get(image_url, timeout=10, headers=headers)
+        headers = {'User-Agent': 'Recognify'}
+        # Bypass proxy to avoid connection issues
+        proxies = {}
+        response = requests.get(image_url, timeout=10, headers=headers, proxies=proxies)
         response.raise_for_status()
     except requests.RequestException as e:
         return jsonify({"error": f"Failed to fetch image from URL: {str(e)}"}), 400
@@ -301,8 +303,10 @@ def replace_image_from_url(draft: Draft, image_hash: str):
     print(f"Changing image (id {draft_image.id}) to url '{url}'")
     
     try:
-        headers = {'User-Agent': 'Recognify/1.0 (Educational Tool; email@example.com)'}
-        response = requests.get(url, timeout=10, headers=headers)
+        headers = {'User-Agent': 'Recognify'}
+        # Bypass proxy to avoid connection issues
+        proxies = {}
+        response = requests.get(url, timeout=10, headers=headers, proxies=proxies)
         response.raise_for_status()
     except requests.RequestException as e:
         return jsonify({"error": f"Failed to fetch image from URL: {str(e)}"}), 400

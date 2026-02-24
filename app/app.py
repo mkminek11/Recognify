@@ -197,7 +197,10 @@ def proxy_image():
     if not url: return "URL parameter is required", 400
     
     try:
-        response = requests.get(url, timeout=10)
+        # Bypass proxy to avoid connection issues
+        proxies = {}
+        headers = {'User-Agent': 'Recognify'}
+        response = requests.get(url, timeout=10, proxies=proxies, headers=headers)
         response.raise_for_status()
         
         return send_file(
