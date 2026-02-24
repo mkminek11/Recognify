@@ -1,0 +1,27 @@
+
+{#
+Args:
+  - user: User
+  - sets: list[Set]
+#}
+
+{% extends "base.html" %}
+
+{% block content %}
+    <div x-data="container" class="container">
+        {% include 'components/navigation.html' %}
+    
+        <main>
+            <h1>{{ user.username }}</h1>
+            <p>Email: {{ user.email }}</p>
+            <h2>Sets:</h2>
+            <ul>
+                {% for set in sets %}
+                    <li><a href="/sets/{{ set.hid() }}">{{ set.name }}</a></li>
+                {% else %}
+                    <li>You haven't created any sets yet.</li>
+                {% endfor %}
+            </ul>
+        </main>
+    </div>
+{% endblock %}

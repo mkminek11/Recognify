@@ -2,7 +2,7 @@
 {% macro message_list(ref="", initial=[]) %}
     <div class="popup-list" x-ref="{{ ref }}" x-data="{ messages: {{ initial|tojson }} }"
             @add-message.window="messages.push($event.detail)"
-            @remove-message.window="hide.push($event.detail.id);">
+            @remove-message.window="messages = messages.filter(m => m.id !== $event.detail.id)">
         <!-- Message properties: id, type, text, duration -->
         <template x-for="(msg, index) in messages" :key="index">
             <div class="popup-message" :class="`popup-message-${msg.type}`" x-show="!msg.hide" x-transition

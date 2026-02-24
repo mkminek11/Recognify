@@ -13,6 +13,7 @@ Args:
         <section class="title">
             <h2>{{ set.name }}</h2>
             <p>Description: {{ set.description }}</p>
+            <p>Author: <a href="/profile/{{ set.owner.hid() }}">{{ set.owner.username }}</a></p>
             <p>Created at: {{ set.created_at }}</p>
             <a href="/sets/{{ set.hid() }}/cards">Play</a>
 

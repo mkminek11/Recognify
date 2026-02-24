@@ -1,7 +1,7 @@
 
 from flask import Blueprint, jsonify, redirect, render_template, request
 from flask_login import current_user
-from app.models import Draft, Image, Set, SkipImage, User
+from app.models import Draft, DraftAccess, Image, Set, SkipImage, User
 from app.app import db, draft_access_required, encode, get_data, login_required, decode, encode, log_info, set_access_required
 from app.lib.presentation import create_draft
 
@@ -68,7 +68,19 @@ def profile(user_hash: str):
     user = db.session.execute(User.query.where(User.id == user_id)).scalar_one_or_none()
     if not isinstance(user, User): return "User not found", 404
 
-    return render_template('not_implemented.html', data = {"user": user})
+    current_user_id = current_user.id if current_user.is_authenticated else None
+
+    sets_query = Set.query.where(Set.owner_id == user.id)
+
+    if current_user.is_authenticated and current_user.id == user.id:
+        sets = sets_query.all()
+    else:
+        sets = sets_query.outerjoin(Draft, Draft.set_id == Set.id) \
+            .outerjoin(DraftAccess, DraftAccess.draft_id == Draft.id) \
+            .where((Set.is_public == True) | (DraftAccess.user_id == current_user_id)) \
+            .distinct().all()
+
+    return render_template('profile.html', user = user, sets = sets)
 
 @bp.route('/profile')
 @login_required
