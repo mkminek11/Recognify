@@ -129,7 +129,7 @@ def inaturalist_links():
 
         log_info(f"Fetching iNaturalist links for {len(species_list)} species...")
         links = get_inaturalist_image_links(species_list)
-        log_info(f"Successfully fetched links for {len([k for k, v in links.items() if v])} species")
+        log_info(f"Successfully fetched links for {len(links)} species")
         return jsonify({"links": links})
     except Exception as e:
         log_info(f"Error in inaturalist_links: {type(e).__name__}: {str(e)}")

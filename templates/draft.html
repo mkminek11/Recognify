@@ -20,28 +20,26 @@ Args:
         </dialog>
 
         <dialog x-ref="importedImagesDialog">
-            <button @click="$refs.inaturalistDialog.close()">Close</button>
-            <h2>Imported Images</h2>
+            <button @click="$refs.importedImagesDialog.close()">Close</button>
+            <h2>
+                <span>Imported Images:</span>
+                <span x-text="currentSpecies()?.species || 'No species selected'"></span>
+                <span x-text="currentImportSpeciesIndex + 1"></span>
+                <span>/</span>
+                <span x-text="importedImageLinks.length || 0"></span>
+            </h2>
 
-            <div>
-                <template x-for="([species, images], spIndex) in Object.entries(importedImageLinks)" :key="spIndex">
-                    <div>
-                        <p x-text="species"></p>
-                        <template x-for="(image, index) in images" :key="index">
-                            <div>
-                                <input type="checkbox" :id="`imported_${spIndex}_${image.id}`" x-model="image.selected" />
-                                <label x-bind:for="`imported_${spIndex}_${image.id}`">
-                                    <img :src="image.imageLink" width="100"
-                                        :class="{ 'checked': image.selected }" />
-                                </label>
-                            </div>
-                        </template>
-                        <hr>
+            <div class="imported-images">
+                <template x-for="(imageData, index) in currentSpecies()?.images || []" :key="index">
+                    <div class="imported-image">
+                        <label :for="'select_' + index"><img :src="imageData.imageLink" /></label>
+                        <input type="checkbox" :id="'select_' + index" x-model="imageData.selected" class="hidden" />
                     </div>
                 </template>
+                <h2 x-show="!currentSpecies()?.images || currentSpecies()?.images.length === 0">No images available</h2>
             </div>
 
-            <button :disabled="!anyImageSelected()" @click="insertImportedImages()">Insert</button>
+            <button @click="insertImportedImages()" x-text="anyImageSelected() ? 'Insert' : 'Skip'"></button>
         </dialog>
 
         <dialog x-ref="accessDialog">
@@ -195,9 +193,11 @@ Args:
                 images: [], // [ { image: CustomImage, slide: string } ]
                 imageLabels: {}, // { imageHash: string -> label: string }
                 labels: [], // list of { label: string, slide: string }
-                importedImageLinks: {}, // { species: string -> [
-                                        //     { imageLink: string, label: string, id: int, selected: boolean }
-                                        // ] }
+                importedImageLinks: [], // [ {
+                                        //     species: string,
+                                        //     images: { imageLink: string, label: string, id: int, selected: boolean }
+                                        // } ]
+                currentImportSpeciesIndex: 0,
                 accessUsers: JSON.parse('{{ get_data(draft.get_access_users()) }}'), // list of { id: str, name: string, email: string }
                 currentIndex: 0,
                 loadingImages: new Set(), // Track which image indices are currently being loaded
@@ -575,29 +575,36 @@ Args:
                 },
 
                 async importFromInaturalist() {
-                    let messageId = this.addMessage('loading', 'Importing images from iNaturalist. This may take a while...', 1000);
+                    let messageId = this.addMessage('loading', 'Importing images from iNaturalist. This may take a while...', -1);
 
                     const textarea = this.$refs.inaturalistTextarea;
                     const speciesNames = textarea.value.split('\n').map(name => name.trim()).filter(name => name);
                     this.$refs.inaturalistDialog.close();
+                    this.currentImportSpeciesIndex = 0;
 
                     await axios.get('/api/inaturalist/links', {
                         params: { species: speciesNames.join(',') },
                         timeout: 12000
                     }).then(async (response) => {
-                        const imageSets = response.data.links || {};
-                        this.importedImageLinks = {};
+                        const imageSets = response.data.links || [];
+                        this.importedImageLinks = [];
                         this.$refs.importedImagesDialog.showModal();
 
                         console.log("Received image sets:", imageSets);
                         
-                        for (const [species, urls] of Object.entries(imageSets)) {
+                        for (const { species, urls } of imageSets) {
+                            let speciesIndex = this.importedImageLinks.findIndex(s => s.species === species);
+                            if (speciesIndex === -1) {
+                                this.importedImageLinks.push({ species, images: [] });
+                                speciesIndex = this.importedImageLinks.length - 1;
+                            }
+
                             for (let i = 0; i < urls.length; i++) {
                                 const url = urls[i];
                                 console.log("Processing URL:", url);
-                                let id = i;
-                                this.importedImageLinks[species] = this.importedImageLinks[species] || [];
-                                this.importedImageLinks[species].push({ imageLink: url, label: species, id: id, selected: false });
+                                this.importedImageLinks[speciesIndex].images.push(
+                                    { imageLink: url, label: species, id: i, selected: false }
+                                );
                             }
                         }
 
@@ -612,46 +619,41 @@ Args:
                 },
             
                 async insertImportedImages() {
-                    this.addMessage('loading', 'Inserting selected images...', 1000);
-
-                    this.$refs.importedImagesDialog.close();
+                    let messageId = this.addMessage('loading', 'Inserting selected images...', 1000);
 
                     // Collect all selected images first
-                    const selectedImages = [];
-                    for (const species in this.importedImageLinks) {
-                        for (const imageData of this.importedImageLinks[species]) {
-                            if (imageData.selected) {
-                                selectedImages.push(imageData);
-                            }
-                        }
+                    const images = this.currentSpecies().images;
+                    const selectedImages = images.filter(image => image.selected);
+
+                    if (this.currentImportSpeciesIndex + 1 >= this.importedImageLinks.length) {
+                        this.$refs.importedImagesDialog.close();
+                    } else {
+                        this.currentImportSpeciesIndex++;
                     }
 
                     // Process all selected images in parallel
                     const imagePromises = selectedImages.map(async ({ imageLink: url, label, id }) => {
                         const cimg = await window.CustomImage.fromUrl(url);
                         await cimg.ready;
-                        return { cimg, label, url };
-                    });
-                    
-                    const imageResults = await Promise.all(imagePromises);
-                    
-                    // Add images to gallery sequentially to maintain order
-                    for (const { cimg, label, url } of imageResults) {
+
                         if (this.images.some(existing => existing.image.hash === cimg.hash)) {
                             console.log("This image is already added.");
-                            continue;
+                            return;
                         }
 
-                        const result = await axios.post('/api/draft/{{ draft.hid() }}/gallery/url', { url });
+                        const result = await axios.post('/api/draft/{{ draft.hid() }}/gallery/url', { url, label });
                         cimg.dbid = result.data.id;
 
                         this.images.push({ image: cimg, slide: "" });
                         this.imageLabels[cimg.hash] = label;
 
-                        axios.post('/api/draft/{{ draft.hid() }}/image/' + cimg.dbid, { label });
-                    }
+                        // axios.post('/api/draft/{{ draft.hid() }}/image/' + cimg.dbid, { label })
+                    });
+                    
+                    await Promise.all(imagePromises);
 
-                    this.removeMessage('loading');
+                    this.removeMessage(messageId);
+                    // this.addMessage('success', 'Selected images inserted successfully!', 5000);
                 },
 
                 changeVisibility() {
@@ -660,7 +662,12 @@ Args:
                 },
 
                 anyImageSelected() {
-                    return Object.values(this.importedImageLinks).some(images => images.some(image => image.selected));
+                    if (this.currentImportSpeciesIndex >= this.importedImageLinks.length) {return false;}
+                    return this.currentSpecies().images.some(image => image.selected);
+                },
+
+                currentSpecies() {
+                    return this.importedImageLinks[this.currentImportSpeciesIndex];
                 },
             
                 async addUserAccess() {

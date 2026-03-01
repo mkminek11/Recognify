@@ -222,6 +222,7 @@ def add_image_url(draft: Draft):
     """ Add image to draft gallery from URL """
     data: dict[str, str] = request.get_json()
     image_url = data.get('url', '').strip()
+    label = data.get('label', '').strip()
     if not image_url: return jsonify({"error": "No image URL provided."}), 400
 
     try:
@@ -251,8 +252,9 @@ def add_image_url(draft: Draft):
     with open(image_path, 'wb') as f:
         f.write(response.content)
 
-    i = DraftImage(draft.id, filename, -1, 0)
+    i = DraftImage(draft.id, filename, presentation_n = -1, slide_n = 0, label = label)
     db.session.add(i)
+    db.session.flush()
     db.session.commit()
     return jsonify({"message": "Image added successfully.", "id": i.hid()}), 200
 

@@ -104,13 +104,13 @@ def write_file(content_iter: Iterator[bytes], path: str) -> None:
             if chunk:
                 f.write(chunk)
 
-def get_inaturalist_image_links(species_list: list[str], max_images_per_species: int = 10) -> dict[str, list[str]]:
-    image_sets: dict[str, list[str]] = {}
+def get_inaturalist_image_links(species_list: list[str], max_images_per_species: int = 10) -> list[dict[str, str | list[str]]]:
+    image_sets: list[dict] = []
     with ThreadPoolExecutor(max_workers=4) as executor:
         futures = {executor.submit(get_image_links, species, max_images_per_species): species for species in species_list}
         for future in futures:
             species = futures[future]
-            image_sets[species] = future.result()
+            image_sets.append({"species": species, "urls": future.result()})
     return image_sets
 
 __all__ = ["download_photos", "get_inaturalist_image_links"]
