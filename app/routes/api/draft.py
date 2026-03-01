@@ -384,10 +384,11 @@ def publish_draft(draft: Draft):
                 db.session.add(new_img)
                 set_.images.append(new_img)
         
-        for img_id, found in set_images.items():
+        # Delete images that are in the set but not in the draft
+        for filename, found in set_images.items():
             if found: continue
 
-            img = Image.query.get(img_id)
+            img = Image.query.filter_by(set_id=set_.id, filename=filename).first()
             if not isinstance(img, Image): continue
             SkipImage.query.filter(SkipImage.image_id == img.id).delete()
             db.session.delete(img)

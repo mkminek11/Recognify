@@ -263,7 +263,13 @@ Args:
 
                 async replacePlaceholderWithImage(index, imageData) {
                     const cimg = await window.CustomImage.fromUrl('/api/draft/{{ draft.hid() }}/image/' + imageData.id, imageData.id);
-                    await cimg.ready;
+                    
+                    // Add timeout to prevent hanging forever
+                    const timeoutPromise = new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Image load timeout')), 15000)
+                    );
+                    
+                    await Promise.race([cimg.ready, timeoutPromise]);
                     cimg.dbid = imageData.id;
                     
                     const placeholderKey = 'placeholder_' + index;
@@ -293,14 +299,26 @@ Args:
                     // Mark as loading
                     this.loadingImages.add(index);
                     
-                    try {
-                        await this.replacePlaceholderWithImage(index, imageWrapper.originalData);
-                    } catch (error) {
-                        console.error('Failed to load image at index', index, error);
-                    } finally {
-                        // Remove from loading set when done (success or failure)
-                        this.loadingImages.delete(index);
+                    let attempts = 0;
+                    const maxAttempts = 2;
+                    let success = false;
+                    
+                    while (attempts < maxAttempts && !success) {
+                        try {
+                            await this.replacePlaceholderWithImage(index, imageWrapper.originalData);
+                            success = true;
+                        } catch (error) {
+                            attempts++;
+                            console.error(`Failed to load image at index ${index} (attempt ${attempts}/${maxAttempts}):`, error);
+                            
+                            if (attempts < maxAttempts) {
+                                await new Promise(resolve => setTimeout(resolve, 500));
+                            }
+                        }
                     }
+                    
+                    // Always remove from loading set when done
+                    this.loadingImages.delete(index);
                 },
 
                 removeImage(index) {
@@ -498,13 +516,30 @@ Args:
                             // Mark as loading
                             this.loadingImages.add(arrayIndex);
                             
-                            try {
-                                await this.replacePlaceholderWithImage(arrayIndex, imageData);
-                            } catch (error) {
-                                console.error('Failed to load image:', imageData.id, error);
-                            } finally {
-                                // Remove from loading set
-                                this.loadingImages.delete(arrayIndex);
+                            let attempts = 0;
+                            const maxAttempts = 3;
+                            let success = false;
+                            
+                            while (attempts < maxAttempts && !success) {
+                                try {
+                                    await this.replacePlaceholderWithImage(arrayIndex, imageData);
+                                    success = true;
+                                } catch (error) {
+                                    attempts++;
+                                    console.error(`Failed to load image (attempt ${attempts}/${maxAttempts}):`, imageData.id, error);
+                                    
+                                    if (attempts < maxAttempts) {
+                                        // Wait before retry (exponential backoff)
+                                        await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
+                                    }
+                                }
+                            }
+                            
+                            // Always remove from loading set when done
+                            this.loadingImages.delete(arrayIndex);
+                            
+                            if (!success) {
+                                console.error('Failed to load image after', maxAttempts, 'attempts:', imageData.id);
                             }
                         }
                     })();
