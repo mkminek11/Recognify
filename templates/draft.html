@@ -745,8 +745,7 @@ Args:
                     this.$refs.importDraftInput.click();
                 },
 
-                async importDraft() {
-                    
+                importDraft() {
                     const file = this.$refs.importDraftInput.files[0];
                     if (!confirm("Importing a draft will overwrite all current changes. Are you sure?") || !file) {
                         this.addMessage('error', 'Import aborted: No file selected.', 5000);
@@ -756,16 +755,21 @@ Args:
                     let fd = new FormData();
                     fd.append('file', file);
 
-                    await axios.delete('/api/draft/{{ draft.hid() }}');
-                    await axios.post('/api/draft/import', fd, {
+                    // Import first, then delete old draft only if successful
+                    axios.post('/api/draft/import', fd, {
                         headers: { 'Content-Type': 'multipart/form-data' }
                     }).then((response) => {
                         const newDraftId = response.data.draft_id;
-                        if (newDraftId) {
-                            window.location.href = '/draft/' + newDraftId;
-                        } else {
-                            this.addMessage('error', 'Failed to import draft.', 5000);
+                        if (!newDraftId) {
+                            this.addMessage('error', 'Failed to import draft: No draft ID returned.', 5000);
+                            return;
                         }
+                
+                        axios.delete('/api/draft/{{ draft.hid() }}').catch((deleteError) => {
+                            console.error('Failed to delete old draft:', deleteError);
+                        }).finally(() => {
+                            window.location.href = '/draft/' + newDraftId;
+                        });
                     }).catch((error) => {
                         const errorMsg = error.response?.data?.error || error.message || 'Unknown error occurred';
                         this.addMessage('error', `Failed to import draft: ${errorMsg}`, 5000);
