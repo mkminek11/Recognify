@@ -19,6 +19,7 @@ Args:
 
             {% if current_user.is_authenticated and current_user.has_access_to(set.get_draft()) %}
                 <a href="/draft/{{ set.hid() }}">Edit</a>
+                <a class="link" @click="exportSet()">Export</a>
             {% endif %}
         </section>
 
@@ -88,6 +89,42 @@ Args:
                         }
                     });
                 },
+
+                exportSet() {
+                    fetch(`/api/sets/{{ set.hid() }}/export`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    }).then(response => {
+                        if (!response.ok) {
+                            // Try to parse error message from JSON
+                            return response.json().then(data => {
+                                alert(data.error || 'Failed to export set.');
+                            }).catch(() => {
+                                alert('Failed to export set.');
+                            });
+                        } else {
+                            // Success - download the file automatically
+                            return response.blob().then(blob => {
+                                this.downloadFile(blob, "export.zip");
+                            });
+                        }
+                    }).catch(() => {
+                        alert('Failed to export set.');
+                    });
+                },
+
+                downloadFile(blob, filename) {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                }
             }));
         }); 
     </script>
