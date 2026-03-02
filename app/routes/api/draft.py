@@ -4,8 +4,9 @@ import os.path
 import requests
 from flask_login import current_user
 from flask import Blueprint, jsonify, request, send_file
+from app.lib.export import export_draft, import_draft
 from app.models import Draft, DraftAccess, DraftImage, DraftLabel, Image, Set, SkipImage, User
-from app.app import VALID_IMG_EXTENSIONS, db, UPLOAD_PATH, decode_image, draft_access_required, decode, encode, get_data, permission_required, log_info
+from app.app import EXPORT_PATH, VALID_IMG_EXTENSIONS, db, UPLOAD_PATH, decode_image, draft_access_required, decode, encode, get_data, permission_required, log_info
 from app.lib.presentation import extract_images, get_free_filename, get_free_index, temp_remove
 
 
@@ -428,3 +429,20 @@ def remove_draft_access(draft: Draft):
 
     print(request.get_json())
     return ""
+
+
+@bp.route('/<string:draft_hash>/export', methods=['POST'])
+@draft_access_required
+def export_draft_api(draft: Draft):
+    filename = export_draft(draft)
+    if filename == False: return jsonify({"error": "Failed to export draft."}), 500
+    return send_file(os.path.join(EXPORT_PATH, filename)), 200
+
+
+@bp.route('/import', methods=['POST'])
+def import_draft_api():
+    file = request.files.get('file')
+    if not file: return jsonify({"error": "No file provided."}), 400
+    draft_id = import_draft(file)
+    if not draft_id: return jsonify({"error": "Failed to import draft."}), 500
+    return jsonify({"message": "Draft imported successfully.", "draft_id": encode(draft_id)}), 200

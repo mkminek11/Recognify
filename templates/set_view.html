@@ -91,7 +91,7 @@ Args:
                 },
 
                 exportSet() {
-                    fetch(`/api/sets/{{ set.hid() }}/export`, {
+                    fetch(`/api/draft/{{ set.hid() }}/export`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',

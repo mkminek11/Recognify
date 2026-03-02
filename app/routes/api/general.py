@@ -112,17 +112,6 @@ def remove_skip_set_image(set_hash: str):
 
 
 
-@bp.route('/sets/<string:set_hash>/export', methods=['POST'])
-@set_access_required
-def export_set(set_: Set):
-    draft = set_.get_draft()
-    if not isinstance(draft, Draft): return jsonify({"error": "Draft not found for set."}), 404
-    filename = export_draft(draft)
-    if filename == False: return jsonify({"error": "Failed to export draft."}), 500
-    return send_file(os.path.join(EXPORT_PATH, filename)), 200
-
-
-
 @bp.route('/inaturalist/links', methods=['GET'])
 def inaturalist_links():
     try:
