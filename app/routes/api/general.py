@@ -68,7 +68,10 @@ def get_set_image(set_hash: str, image_hash: str):
 
     if not isinstance(image, Image): return jsonify({"error": "Image not found."}), 404
 
-    return send_file(os.path.join(UPLOAD_PATH, "sets", f"draft_{draft.id}", image.filename)), 200
+    return send_file(
+        os.path.join(UPLOAD_PATH, "sets", f"draft_{draft.id}", image.filename),
+        max_age=86400  # Cache for 24 hours
+    ), 200
 
 
 

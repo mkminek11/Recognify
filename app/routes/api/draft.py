@@ -138,7 +138,7 @@ def get_draft_image(draft: Draft, image_hash: str):
     image_path = os.path.join(UPLOAD_PATH, "sets", f"draft_{draft.id}", image.filename)
     if not os.path.exists(image_path): return jsonify({"error": "Image file not found."}), 404
     
-    return send_file(image_path)
+    return send_file(image_path, max_age=3600)  # Cache for 1 hour
 
 
 
