@@ -39,7 +39,7 @@ Args:
                 </div>
 
                 <div class="controls" x-show="!isEnd()">
-                    <button class="btn-primary" @click="turn()"><i class="fas fa-rotate-left"></i></button>
+                    <button class="btn-primary" @click="turn()"><i class="fas fa-question"></i></button>
                     {% if current_user.is_authenticated %}
                         <button class="btn-primary" @click="know()" title="Click this if you are already sure with this, so we won't show you this image anymore."><i class="fas fa-lightbulb"></i></button>
                     {% else %}
@@ -57,12 +57,39 @@ Args:
 
             <section class="sidebar options">
                 <div class="checkbox">
-                    <label for="mouse_controls">Enable mouse controls</label>
+                    <div>
+                        <label for="mouse_controls">Enable mouse controls</label>
+                        <span class="more-info">
+                            <i class="fas fa-info-circle" tabindex="0"></i>
+                            <div class="details">
+                                <p>When enabled, you can use your mouse to control the flashcards:</p>
+                                <ul>
+                                    <li>Click any mouse button to show the correct answer when hidden.</li>
+                                    <li>Use the left mouse button if your answer was incorrect.</li>
+                                    <li>Use the right mouse button if your answer was correct.</li>
+                                </ul>
+                            </div>
+                        </span>
+                    </div>
+
                     <input type="checkbox" id="mouse_controls" x-model="mouseControls" @change="saveSettings('mouse_controls', mouseControls)">
                 </div>
 
                 <div class="checkbox">
-                    <label for="keyboard_controls">Enable keyboard controls</label>
+                    <div>
+                        <label for="keyboard_controls">Enable keyboard controls</label>
+                        <span class="more-info">
+                            <i class="fas fa-info-circle" tabindex="0"></i>
+                            <div class="details">
+                                <p>When enabled, you can use your keyboard to control the flashcards:</p>
+                                <ul>
+                                    <li>Press any key to show the correct answer when hidden.</li>
+                                    <li>Press the left arrow key if your answer was incorrect.</li>
+                                    <li>Press the right arrow key if your answer was correct.</li>
+                                </ul>
+                            </div>
+                        </span>
+                    </div>
                     <input type="checkbox" id="keyboard_controls" x-model="keyboardControls" @change="saveSettings('keyboard_controls', keyboardControls)">
                 </div>
 

@@ -400,3 +400,36 @@ dialog {
         &.popup-message-loading {--highlight-color: var(--c-grey3); --close-button: hidden;}
     }
 }
+
+.more-info {
+    position: relative;
+    display: inline-block;
+
+    & i {
+        color: var(--c-grey4);
+        cursor: pointer;
+    }
+
+    & .details {
+        position: absolute;
+        top: 125%;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: var(--c-grey6);
+        color: var(--c-white);
+        border: 2px solid var(--c-grey3);
+        border-radius: 10px;
+        padding: 10px 15px;
+        width: max-content;
+        max-width: 300px;
+        display: none;
+        box-shadow: var(--shadow-lg);
+        z-index: 10;
+    }
+
+    & i:focus + .details,
+    & i:hover + .details,
+    & .details:hover {
+        display: block;
+    }
+}

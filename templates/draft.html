@@ -755,10 +755,13 @@ Args:
                     let fd = new FormData();
                     fd.append('file', file);
 
+                    const messageId = this.addMessage('loading', 'Importing draft. This may take a while...', -1);
+
                     // Import first, then delete old draft only if successful
                     axios.post('/api/draft/import', fd, {
                         headers: { 'Content-Type': 'multipart/form-data' }
                     }).then((response) => {
+                        this.removeMessage(messageId);
                         const newDraftId = response.data.draft_id;
                         if (!newDraftId) {
                             this.addMessage('error', 'Failed to import draft: No draft ID returned.', 5000);
