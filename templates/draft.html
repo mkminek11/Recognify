@@ -67,7 +67,7 @@ Args:
         <main class="draft-body">
             <section class="sidebar sidebar-left">
                 <div class="sidebar-header">
-                    <h3>Images</h3>
+                    <h3>Gallery</h3>
 
                     <input type="file" id="images" class="hidden" x-ref="imageInput" multiple @change="addImages($event)" />
                     <input type="file" id="pres" class="hidden" x-ref="presInput" @change="preparePres($event)" />
@@ -93,9 +93,33 @@ Args:
 
             <section class="main">
                 <div class="image-main">
-                    <img class="main-image" height="" :src="images[currentIndex]?.image.data" />
+                    <img class="main-image" :src="images[currentIndex]?.image.data" x-show="images.length > 0" />
 
-                    <div class="image-icons">
+                    <div class="no-image" x-show="images.length === 0">
+                        <h3>No images added yet.</h3>
+                        <p>Add some images to the gallery to get started.</p>
+
+                        <div class="buttons">
+                            <button class="add-image-btn" @click="$refs.imageInput.click()">
+                                <i class="icon fas fa-file-arrow-up"></i>
+                                <span>Upload Images</span>
+                            </button>
+                            <button class="add-image-btn" @click="addURL()">
+                                <i class="icon fas fa-cloud-arrow-up"></i>
+                                <span>Add from URL</span>
+                            </button>
+                            <button class="add-image-btn" @click="$refs.inaturalistDialog.showModal()">
+                                <i class="icon fas fa-dove"></i>
+                                <span>Import from iNaturalist</span>
+                            </button>
+                            <button class="add-image-btn" @click="$refs.presInput.click()">
+                                <i class="icon fas fa-person-chalkboard"></i>
+                                <span>Extract from a presentation</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="image-icons" x-show="images.length > 0">
                         <!-- <i class="icon fas fa-pen" title="Replace image"></i> -->
                         <i class="icon fas fa-trash-can" title="Delete image" @click="removeImage(currentIndex)"></i>
                     </div>
@@ -166,6 +190,7 @@ Args:
                             <option value="private">Private</option>
                             <option value="public">Public</option>
                         </select>
+                    </dd>
                 </dl>
 
                 <p class="link danger" @click="deleteSet()">Delete draft</p>

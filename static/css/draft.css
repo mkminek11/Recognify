@@ -114,6 +114,40 @@ main {
                 box-shadow: var(--shadow-lg);
             }
 
+            & .no-image {
+                width: 100%;
+                height: 100%;
+                background-color: var(--c-grey6);
+                border: 2px solid var(--c-grey3);
+                border-radius: 15px;
+                padding: 20px 30px;
+
+                & h3 {margin-bottom: 5px;}
+                & p {margin-bottom: 20px;}
+
+                & .buttons {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+
+                    & .add-image-btn {
+                        padding: 5px 0px;
+                        background-color: transparent;
+                        border: none;
+                        display: grid;
+                        grid-template-columns: 30px 1fr;
+                        gap: 10px;
+                        color: var(--c-white);
+                        text-align: left;
+
+                        & i {text-align: center;}
+                        &:hover {color: var(--c-primary);}
+                    }
+                }
+            }
+
+            &:has(.no-image) {min-width: 500px;}
+
             & .image-icons {
                 position: absolute;
                 top: 10px;
