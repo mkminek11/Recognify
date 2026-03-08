@@ -16,7 +16,7 @@ Args:
         {{ message_list(ref="popupMessages") }}
 
         <main>
-            <section class="sidebar">
+            <section class="sidebar sidebar-left">
                 <a href="/sets/{{ set.hid() }}">Back to set info</a>
                 {% if current_user.is_authenticated and current_user.has_access_to(set.get_draft()) %}
                     <a href="/draft/{{ set.hid() }}">Edit set</a>
@@ -55,7 +55,7 @@ Args:
                 </div>
             </section>
 
-            <section class="sidebar options">
+            <section class="sidebar sidebar-right options">
                 <div class="checkbox">
                     <div>
                         <label for="mouse_controls">Enable mouse controls</label>
