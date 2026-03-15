@@ -24,30 +24,38 @@ Args:
             </section>
 
             <section class="main">
-                <div class="image-wrapper">
-                    <p class="image-label" x-text="(!isEnd() && showLabel) ? label : ''"></p>
+                <div class="control-bar">
+                    <p x-text="`${index + 1} / ${images.length}`"></p>
+                    <p x-text="(!isEnd() && showLabel) ? label : '?'"></p>
+                    <abbr title="Correct / Incorrect">
+                        <span x-text="correct" class="color-primary"></span>
+                        /
+                        <span x-text="index - correct" class="color-error"></span>
+                    </abbr>
+                </div>
 
+                <div class="image-wrapper">
                     <div x-show="!isEnd()" class="image-main" @mousedown.prevent="onKeyDown($event)" @contextmenu.prevent>
-                        <img x-ref="image" :src="image" height="300">
+                        <img x-ref="image" :src="image" height="300" class="main-image">
                     </div>
 
                     <div x-show="isEnd()" class="image-main set-completed">
                         <h2>Set completed!</h2>
-                        <p>You got <span x-text="correct"></span> out of <span x-text="images.length"></span> correct.</p>
+                        <p>You got <span x-text="correct" class="color-primary"></span> out of <span x-text="images.length" class="color-primary"></span> correct.</p>
                         <a href="">Try again</a>
                     </div>
                 </div>
 
                 <div class="controls" x-show="!isEnd()">
-                    <button class="btn-primary" @click="turn()"><i class="fas fa-question"></i></button>
+                    <button class="btn-primary" @click="turn()"><i class="fas" :class="showLabel ? 'fa-eye-slash' : 'fa-eye'"></i></button>
                     {% if current_user.is_authenticated %}
                         <button class="btn-primary" @click="know()" title="Click this if you are already sure with this, so we won't show you this image anymore."><i class="fas fa-lightbulb"></i></button>
                     {% else %}
                         <button class="btn-primary btn-disabled" @click="addMessage('error', 'Please log in to skip known images.')" title="Log in to be able to skip known images."><i class="fas fa-lightbulb"></i></button>
                     {% endif %}
 
-                    <button class="btn-success" @click="nextImage(1)"><i class="fas fa-check"></i></button>
-                    <button class="btn-error  " @click="nextImage(0)"><i class="fas fa-times"></i></button>
+                    <button class="btn-primary" @click="nextImage(1)" :disabled="!showLabel"><i class="fas fa-check"></i></button>
+                    <button class="btn-primary" @click="nextImage(0)" :disabled="!showLabel"><i class="fas fa-times"></i></button>
                 </div>
 
                 <div class="controls" x-show="isEnd()">
@@ -72,7 +80,8 @@ Args:
                         </span>
                     </div>
 
-                    <input type="checkbox" id="mouse_controls" x-model="mouseControls" @change="saveSettings('mouse_controls', mouseControls)">
+                    <input type="checkbox" id="mouse_controls" x-model="mouseControls"
+                            @change="saveSettings('mouse_controls', mouseControls)">
                 </div>
 
                 <div class="checkbox">
@@ -90,7 +99,8 @@ Args:
                             </div>
                         </span>
                     </div>
-                    <input type="checkbox" id="keyboard_controls" x-model="keyboardControls" @change="saveSettings('keyboard_controls', keyboardControls)">
+                    <input type="checkbox" id="keyboard_controls" x-model="keyboardControls"
+                            @change="saveSettings('keyboard_controls', keyboardControls)">
                 </div>
 
                 {% if not current_user.is_authenticated %}
@@ -218,9 +228,17 @@ Args:
             text-align: center;
         }
 
-        .image-label {
+        .control-bar {
+            display: grid;
+            grid-template-columns: 1fr 4fr 1fr;
+            background-color: var(--c-grey7);
+            padding: 10px 20px;
+            border-radius: 5px;
+            box-shadow: var(--shadow-md);
             text-align: center;
-            height: 20px;
+
+            & > :first-child {text-align: left;}
+            & > :last-child  {text-align: right;}
         }
 
         .image-wrapper {
@@ -235,7 +253,10 @@ Args:
             justify-content: center;
             gap: 10px;
 
-            & button {padding: 8px 23px;}
+            & button {
+                padding: 8px 18px;
+                width: 60px;
+            }
 
             & > :nth-child(2) {
                 margin-right: 10px;

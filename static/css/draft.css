@@ -23,7 +23,7 @@ main {
         display: flex;
         flex-direction: column;
         gap: 20px;
-        background-color: var(--c-grey6);
+        background-color: var(--c-grey7);
         border-radius: 15px;
         border: 2px solid var(--c-grey3);
         box-shadow: var(--shadow-lg);
@@ -96,7 +96,7 @@ main {
             height: 300px;
 
             &.set-completed {
-                background-color: var(--c-grey6);
+                background-color: var(--c-grey7);
                 border: 2px solid var(--c-grey3);
                 border-radius: 15px;
                 width: 100%;
@@ -107,7 +107,7 @@ main {
                 max-width: 100%;
                 min-width: 80px;
                 max-height: 100%;
-                background-color: var(--c-grey6);
+                background-color: var(--c-grey7);
                 border: none;
                 margin: auto;
                 object-fit: contain;
@@ -118,7 +118,7 @@ main {
             & .no-image {
                 width: 100%;
                 height: 100%;
-                background-color: var(--c-grey6);
+                background-color: var(--c-grey7);
                 border: 2px solid var(--c-grey3);
                 border-radius: 15px;
                 padding: 20px 30px;
@@ -142,7 +142,7 @@ main {
                         text-align: left;
 
                         & i {text-align: center;}
-                        &:hover {color: var(--c-primary);}
+                        &:hover {color: var(--c-primary-light);}
                     }
                 }
             }
@@ -214,8 +214,7 @@ dialog {
             }
 
             &:has(input[type="checkbox"]:checked) {
-                /* border: 4px solid var(--c-primary); */
-                border-color: var(--c-primary);
+                border-color: var(--c-primary-light);
 
                 &::after {
                     content: '✓';

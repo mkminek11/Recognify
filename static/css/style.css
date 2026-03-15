@@ -1,14 +1,12 @@
 
 :root {
-    --c-primary:       #89BA8D;
     --c-primary-dark:  #74A57F;
     --c-primary-light: #9ECE9A;
-    --c-accent:        #1191CC;
 
     --c-black: #0b0b0b;
-    --c-grey7: #1b1b1b;
-    --c-grey6: #2b2b2b;
-    --c-grey55: #333333;
+    --c-grey8: #1b1b1b;
+    --c-grey7: #2b2b2b;
+    --c-grey6: #333333;
     --c-grey5: #3b3b3b;
     --c-grey4: #808080;
     --c-grey3: #c6c6c6;
@@ -43,7 +41,7 @@
 
 body {
     min-height: 100vh;
-    background-color: var(--c-grey7);
+    background-color: var(--c-grey8);
     color: var(--c-white);
     display: flex;
     flex-direction: column;
@@ -70,12 +68,15 @@ img {display: block;}
 
 .icon {cursor: pointer;}
 
+.color-primary {color: var(--c-primary-light);}
+.color-error {color: var(--c-error);}
+
 .input-wrapper {
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 0px;
-    background-color: var(--c-grey55);
+    background-color: var(--c-grey6);
     border-radius: 5px;
     border-bottom: 2px solid transparent;
     overflow: hidden;
@@ -129,8 +130,8 @@ button, .btn {
 
     &.btn-primary {
         background-color: var(--c-primary-dark);
-        color: var(--c-white);
-        &:hover {background-color: var(--c-primary);}
+        color: var(--c-black);
+        &:hover {background-color: var(--c-primary-light);}
     }
 
     &.btn-secondary {
@@ -161,10 +162,10 @@ button, .btn {
     }
 
     &:disabled, &.btn-disabled, &:disabled:hover, &.btn-disabled:hover {
-        background-color: var(--c-grey6);
+        background-color: var(--c-grey7);
         color: var(--c-grey4);
         cursor: default;
-        border-color: var(--c-grey6);
+        border-color: var(--c-grey7);
     }
 }
 
@@ -225,7 +226,7 @@ h3 {
             content: "";
             position: absolute;
             inset: 0;
-            background-color: var(--c-grey6);
+            background-color: var(--c-grey7);
             z-index: -1;
         }
     }
@@ -244,7 +245,7 @@ h3 {
         position: absolute;
         top: calc(100% + var(--menu-distance));
         right: 0px;
-        background-color: var(--c-grey6);
+        background-color: var(--c-grey7);
         border: 2px solid var(--c-grey3);
         border-radius: 10px;
         box-shadow: var(--shadow-lg);
@@ -305,7 +306,7 @@ h3 {
 }
 
 .collapse {
-    background-color: var(--c-grey55);
+    background-color: var(--c-grey6);
     border-radius: 100px;
     box-shadow: var(--shadow-md);
     display: flex;
@@ -333,7 +334,7 @@ h3 {
 
         & i {
             background-color: var(--c-grey3);
-            color: var(--c-grey55);
+            color: var(--c-grey6);
         }
     }
 
@@ -366,7 +367,7 @@ dialog {
     z-index: 1000;
 
     & .popup-message {
-        background-color: var(--c-grey6);
+        background-color: var(--c-grey7);
         padding: 15px 25px;
         border-radius: 5px;
         border: 2px solid var(--c-grey3);
@@ -401,13 +402,20 @@ dialog {
     }
 }
 
+abbr {
+    text-decoration: none;
+    cursor: help;
+}
+
 .more-info {
     position: relative;
     display: inline-block;
+    margin-left: 3px;
 
     & i {
         color: var(--c-grey4);
-        cursor: pointer;
+        cursor: help;
+        transition: var(--transition);
     }
 
     & .details {
@@ -415,7 +423,7 @@ dialog {
         top: 125%;
         left: 50%;
         transform: translateX(-50%);
-        background-color: var(--c-grey6);
+        background-color: var(--c-grey7);
         color: var(--c-white);
         border: 2px solid var(--c-grey3);
         border-radius: 10px;
@@ -432,4 +440,6 @@ dialog {
     & .details:hover {
         display: block;
     }
+
+    & i:focus, & i:hover {color: var(--c-white);}
 }
