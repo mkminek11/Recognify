@@ -60,7 +60,7 @@ Args:
 
         {% include 'components/navigation.html' %}
 
-        <h2 class="draft-title">Editing draft "<span x-text="title"></span>"</h2>
+        <h2 class="draft-title" x-text="title"></h2>
 
         {{ message_list(ref="popupMessages") }}
 
@@ -198,7 +198,7 @@ Args:
                 <p class="link" @click="importFromFile()">Import from file</p>
                 <input type="file" x-ref="importDraftInput" class="hidden" @change="importDraft()" />
 
-                <button class="btn-primary" @click="publishDraft()">Publish</button>
+                <button class="btn-primary" @click="publishDraft()" x-text="isPublished ? 'Update set' : 'Publish'"></button>
             </section>
         </main>
     </div>
@@ -229,6 +229,7 @@ Args:
                 accessUsers: JSON.parse('{{ get_data(draft.get_access_users()) }}'), // list of { id: str, name: string, email: string }
                 currentIndex: 0,
                 loadingImages: new Set(), // Track which image indices are currently being loaded
+                isPublished: '{{ draft.is_published() | int }}' === '1',
 
 
                 init() {

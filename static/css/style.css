@@ -54,7 +54,7 @@ body > .container {
     display: flex;
     flex-direction: column;
     padding: 0px 5vw 40px 5vw;
-    gap: 60px;
+    gap: min(60px, 5vh);
 }
 
 .hidden {display: none;}

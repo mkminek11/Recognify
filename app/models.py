@@ -193,6 +193,9 @@ class Draft(db.Model):
     def __init__(self):
         self.owner_id = current_user.id if current_user and current_user.is_authenticated else 0
 
+    def is_published(self) -> bool:
+        return isinstance(self.set_id, int) and self.set_id > 0
+
     def hid(self) -> str:
         return encode(self.id)
     

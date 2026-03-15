@@ -105,7 +105,7 @@ main {
 
             & img.main-image {
                 max-width: 100%;
-                min-width: 80px;
+                min-width: min(80px, 30vh);
                 max-height: 100%;
                 background-color: var(--c-grey7);
                 border: none;
