@@ -17,7 +17,7 @@ Args:
             <p>Created at: {{ set.created_at }}</p>
             <a href="/sets/{{ set.hid() }}/cards">Play Flashcards</a>
 
-            {% if current_user.is_authenticated and current_user.has_access_to(set.get_draft()) %}
+            {% if current_user.is_authenticated and current_user.has_access_to(set.draft) %}
                 <a href="/draft/{{ set.hid() }}">Edit</a>
                 <a class="link" @click="exportSet()">Export</a>
             {% endif %}

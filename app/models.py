@@ -1,3 +1,4 @@
+from flask import url_for
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from flask_login import UserMixin, current_user
 from sqlalchemy import Integer, String, Boolean, ForeignKey, DateTime, Text, Float
@@ -7,7 +8,7 @@ import datetime
 import werkzeug.security
 import hashlib
 
-from app.app import db, app, decode, encode, encode_image
+from app.app import UPLOAD_PATH, db, encode, encode_image, DEFAULT_THUMBNAIL_URL
 
 
 class User(db.Model, UserMixin):
@@ -50,7 +51,7 @@ class User(db.Model, UserMixin):
         print(f"Checking access for user {self.username} to {'Draft' if isinstance(to, Draft) else 'Set'} {to.hid()}")
         if isinstance(to, Set):
             if to.is_public: return True
-            draft = to.get_draft()
+            draft = to.draft
         if draft is None or not isinstance(draft, Draft): return False
 
         return self.id in draft.get_access_users()
@@ -84,6 +85,7 @@ class Set(db.Model):
     created_at:  Mapped[datetime.datetime] = mapped_column(DateTime, default = datetime.datetime.utcnow, nullable = False)
     modified_at: Mapped[datetime.datetime] = mapped_column(DateTime, default = datetime.datetime.utcnow, onupdate = datetime.datetime.utcnow, nullable = False)
     owner_id:    Mapped[int]  = mapped_column(ForeignKey("users.id"), nullable = False)
+    thumbnail:   Mapped[str|None] = mapped_column(String(128), nullable = True, default = None)
 
     owner: Mapped["User"] = relationship("User", back_populates = "sets", lazy = "select")
     images: Mapped[list["Image"]] = relationship("Image", back_populates = "set", lazy = "select")
@@ -124,11 +126,12 @@ class Set(db.Model):
             "is_public": self.is_public
         }
 
-    def get_draft(self) -> "Draft | None":
+    @property
+    def draft(self) -> "Draft | None":
         return db.session.execute(Draft.query.where(Draft.set_id == self.id)).scalar_one_or_none()
 
     def skip_images(self, user_id: int) -> list[str]:
-        """ Returns list of image hids skipped by the user in this set """
+        """ Returns list of image hash ids skipped by the user in this set """
         res = db.session.execute(SkipImage.query.join(Image).where(Image.set_id == self.id, SkipImage.user_id == user_id)).scalars().all()
         return [skip.hid() for skip in res if isinstance(skip, SkipImage)]
 
@@ -140,6 +143,12 @@ class Set(db.Model):
             SkipImage.query.where(SkipImage.user_id == user.id)
         ).scalars().all()}
         return [img for img in self.images if img.id not in skipped_image_ids]
+
+    @property
+    def thumbnail_url(self) -> str:
+        if self.thumbnail is None or not self.draft: return DEFAULT_THUMBNAIL_URL
+        return f"uploads/sets/draft_{self.draft.id}/{self.thumbnail}"
+
 
 
 class Image(db.Model):
@@ -183,6 +192,7 @@ class Draft(db.Model):
     created_at:    Mapped[datetime.datetime] = mapped_column(DateTime, default = datetime.datetime.utcnow, nullable = False)
     is_public:     Mapped[bool] = mapped_column(Boolean, default = False, nullable = False)
     set_id:        Mapped[int|None]  = mapped_column(ForeignKey("sets.id"), nullable = True, default = None)
+    thumbnail:     Mapped[str|None] = mapped_column(String(128), nullable = True, default = None)
 
     images: Mapped[list["DraftImage"]] = relationship("DraftImage", back_populates = "draft", lazy = "select", cascade = "all, delete-orphan")
     labels: Mapped[list["DraftLabel"]] = relationship("DraftLabel", back_populates = "draft", lazy = "select", cascade = "all, delete-orphan")
@@ -212,6 +222,15 @@ class Draft(db.Model):
 
     def get_access_users(self) -> list[User]:
         return [user for access in self.access_users if (user := access.user)]
+
+    @property
+    def path(self) -> str:
+        return os.path.join(UPLOAD_PATH, "sets", f"draft_{self.id}")
+
+    @property
+    def thumbnail_url(self) -> str:
+        if self.thumbnail is None: return DEFAULT_THUMBNAIL_URL
+        return f"uploads/sets/draft_{self.id}/{self.thumbnail}"
 
 
 class DraftImage(db.Model):

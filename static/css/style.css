@@ -202,9 +202,14 @@ h3 {
         justify-content: stretch;
         position: relative;
         overflow: hidden;
+        color: var(--c-white);
+        text-decoration: none;
 
         & .card-image {
+            position: absolute;
             overflow: hidden;
+            inset: 0;
+            z-index: -1;
 
             & img {
                 object-fit: cover;
@@ -219,7 +224,7 @@ h3 {
             display: flex;
             flex-direction: column;
             gap: 10px;
-            flex-grow: 1;
+            grid-row: 2 / 3;
         }
 
         &::before {
@@ -442,4 +447,9 @@ abbr {
     }
 
     & i:focus, & i:hover {color: var(--c-white);}
+}
+
+@media (max-width: 600px) {
+    html {font-size: 12px;}
+    body > .container {gap: 20px;}
 }

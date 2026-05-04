@@ -1,15 +1,14 @@
 
 import os.path
 
-from typing import Any, Literal
+from typing import Literal
 from werkzeug.datastructures import FileStorage
 from pptx.enum.shapes import MSO_SHAPE_TYPE as SHAPE_TYPE
 from pptx.shapes.picture import Picture as PPTXPicture
 from pptx import Presentation
-from flask_login import current_user
 
 from app.app import UPLOAD_PATH, hid
-from app.models import Draft, DraftImage, DraftLabel, Set, Image, db
+from app.models import Draft, DraftImage, DraftLabel, db
 
 TEMP_UPLOAD_PATH = os.path.join(UPLOAD_PATH, "temp")
 
@@ -38,8 +37,6 @@ def extract_images(presentation_file: FileStorage, draft_id: int) -> tuple[str, 
     address = temp_save(presentation_file)
     if not address: return False
 
-    target_directory = os.path.join(UPLOAD_PATH, "sets", f"draft_{draft_id}")
-
     pres = Presentation(address)
     draft = Draft.query.get(draft_id)
     if not isinstance(draft, Draft): return False
@@ -58,7 +55,7 @@ def extract_images(presentation_file: FileStorage, draft_id: int) -> tuple[str, 
                 if not isinstance(shape, PPTXPicture): continue
                 image = shape.image
                 try:
-                    filename = save_image(image.blob, image.ext, target_directory, start=image_n)
+                    filename = save_image(image.blob, image.ext, draft.path, start=image_n)
                 except Exception:
                     filename = False
                 if not filename: continue

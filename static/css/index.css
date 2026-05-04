@@ -43,12 +43,9 @@
     & .cards-row {
         justify-content: flex-start;
         flex-wrap: nowrap;
-        
-        & .card {
-            text-decoration: none;
-            color: var(--c-white);
-        
-            & p {height: 45px;}
-        }
     }
+}
+
+@media (max-width: 800px) {
+    .hero {padding: 30px;}
 }

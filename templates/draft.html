@@ -191,6 +191,16 @@ Args:
                             <option value="public">Public</option>
                         </select>
                     </dd>
+
+                    <dt>
+                        <span>Thumbnail</span>
+                        <i class="icon fas fa-pen" @click="$refs.thumbnailInput.click()"></i>
+                    </dt>
+                    <dd>
+                        <img src="{{ url_for('static', filename=draft.thumbnail_url) }}" alt="Thumbnail"
+                                class="thumbnail" @click="$refs.thumbnailInput.click()" x-ref="thumbnail" />
+                        <input type="file" x-ref="thumbnailInput" class="hidden" @change="updateThumbnail()" accept="image/*" />
+                    </dd>
                 </dl>
 
                 <p class="link danger" @click="deleteSet()">Delete draft</p>
@@ -802,6 +812,28 @@ Args:
                     }).catch((error) => {
                         const errorMsg = error.response?.data?.error || error.message || 'Unknown error occurred';
                         this.addMessage('error', `Failed to import draft: ${errorMsg}`, 5000);
+                    });
+                },
+
+                updateThumbnail() {
+                    const file = this.$refs.thumbnailInput.files[0];
+                    if (!file) return;
+
+                    let fd = new FormData();
+                    fd.append('thumbnail', file);
+
+                    axios.post('/api/draft/{{ draft.hid() }}/thumbnail', fd, {
+                        headers: { 'Content-Type': 'multipart/form-data' }
+                    }).then((response) => {
+                        const thumbnailUrl = response.data.thumbnail_url;
+                        if (!thumbnailUrl) { return; }
+                        this.$refs.thumbnailInput.value = '';
+                        this.$nextTick(() => {
+                            this.$refs.thumbnailInput.value = '';
+                            this.$refs.thumbnail.src = thumbnailUrl + '?t=' + new Date().getTime(); // Cache busting
+                        });
+                    }).catch((error) => {
+                        alert("Failed to update thumbnail: " + (error.response?.data?.error || error.message));
                     });
                 }
             }));

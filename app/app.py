@@ -1,5 +1,5 @@
 
-from flask import Flask, redirect, request, send_file
+from flask import Flask, redirect, request, send_file, url_for
 from flask_login import LoginManager, current_user
 from flask_cors import CORS
 
@@ -93,6 +93,7 @@ ROOT_PATH = os.path.split(app.root_path)[0]
 UPLOAD_PATH = os.path.join(ROOT_PATH, "static", "uploads")
 VALID_IMG_EXTENSIONS = ["png", "jpg", "jpeg"]
 EXPORT_PATH = os.path.join(UPLOAD_PATH, "exports")
+DEFAULT_THUMBNAIL_URL = 'img/default_thumbnail.png'
 
 def decode(hashid: str) -> int | Literal[False]:
     decoded = hid.decode(hashid)

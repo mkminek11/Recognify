@@ -17,8 +17,6 @@ main {
 
     & section.sidebar {
         width: 100%;
-        min-height: 0px;
-        max-height: 100%;
         padding: 23px;
         display: flex;
         flex-direction: column;
@@ -28,7 +26,7 @@ main {
         border: 2px solid var(--c-grey3);
         box-shadow: var(--shadow-lg);
 
-        &.sidebar-left  {grid-area: ls;}
+        &.sidebar-left  {grid-area: ls; max-height: 100%;}
         &.sidebar-right {grid-area: rs;}
 
         & .sidebar-header {
@@ -80,6 +78,24 @@ main {
 
                     &:hover {color: var(--c-white);}
                 }
+            }
+        }
+
+        & dl {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+
+            & dt {color: var(--c-grey3);}
+            & dd {margin-top: -5px;}
+
+            & .thumbnail {
+                cursor: pointer;
+                width: 64px;
+                height: 48px;
+                border-radius: 5px;
+                object-fit: cover;
+                box-shadow: var(--shadow-sm);
             }
         }
     }

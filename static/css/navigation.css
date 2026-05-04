@@ -14,14 +14,15 @@ nav {
     color: var(--c-white);
     border: 2px solid var(--c-grey3);
     box-shadow: var(--shadow-lg);
-    padding: 13px 38px; /* subtracted 2px for border as there is no easy way to include inset border in CSS */
+    padding: 13px 38px;
     border-radius: 15px;
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 60px;
+    white-space: nowrap;
 
-    & .nav-logo img {height: 50px;}
+    & .nav-logo img {height: 3rem;}
 
     & .nav-center {
         flex-grow: 1;
@@ -59,4 +60,9 @@ nav {
     }
 
     /* & .dropdown .dropdown-trigger:hover:not(:focus-within) + .search-results {display: none;} */
+}
+
+@media (max-width: 800px) {
+    header {padding-top: 20px;}
+    nav {gap: 30px; padding: 5px 15px;}
 }

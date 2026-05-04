@@ -24,7 +24,7 @@ def export_draft(draft: Draft) -> str | Literal[False]:
         zip.writestr('export.json', json.dumps(export_data))
 
         for img in draft.images:
-            img_path = os.path.join(UPLOAD_PATH, "sets", f"draft_{draft.id}", img.filename)
+            img_path = os.path.join(draft.path, img.filename)
             if os.path.exists(img_path):
                 zip.write(img_path, arcname = img.filename)
 
@@ -50,8 +50,6 @@ def import_draft(file: FileStorage) -> int | Literal[False]:
         draft.owner_id = current_user.id
         db.session.add(draft)
         db.session.commit()
-        
-        draft_upload_path = os.path.join(UPLOAD_PATH, "sets", f"draft_{draft.id}")
 
         # Extract images and create DraftImage entries
         for img_data in data.get("images", []):
@@ -59,8 +57,8 @@ def import_draft(file: FileStorage) -> int | Literal[False]:
             img_label = img_data.get("label", "")
 
             if img_filename in zip.namelist():
-                os.makedirs(draft_upload_path, exist_ok=True)
-                zip.extract(img_filename, path=draft_upload_path)
+                os.makedirs(draft.path, exist_ok=True)
+                zip.extract(img_filename, path=draft.path)
 
                 draft_image = DraftImage(draft.id, img_filename, -1, 0, img_label)
                 db.session.add(draft_image)

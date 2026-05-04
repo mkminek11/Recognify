@@ -3,7 +3,7 @@ import shutil
 import os.path
 import requests
 from flask_login import current_user
-from flask import Blueprint, jsonify, request, send_file
+from flask import Blueprint, jsonify, request, send_file, url_for
 from app.lib.export import export_draft, import_draft
 from app.models import Draft, DraftAccess, DraftImage, DraftLabel, Image, Set, SkipImage, User
 from app.app import EXPORT_PATH, VALID_IMG_EXTENSIONS, db, UPLOAD_PATH, decode_image, draft_access_required, decode, encode, get_data, permission_required, log_info
@@ -37,9 +37,8 @@ def delete_all_drafts():
 @bp.route('/<string:draft_hash>/', methods=['DELETE'])
 @draft_access_required
 def delete_draft(draft: Draft):
-    draft_path = os.path.join(UPLOAD_PATH, "sets", f"draft_{draft.id}")
-    if os.path.exists(draft_path):
-        shutil.rmtree(draft_path)
+    if os.path.exists(draft.path):
+        shutil.rmtree(draft.path)
     DraftImage.query.filter(DraftImage.draft_id == draft.id).delete()
     DraftLabel.query.filter(DraftLabel.draft_id == draft.id).delete()
     DraftAccess.query.filter(DraftAccess.draft_id == draft.id).delete()
@@ -156,7 +155,7 @@ def delete_draft_image(draft: Draft, image_hash: str):
     if not image:
         return jsonify({"error": "Image not found in draft."}), 404
 
-    image_path = os.path.join(UPLOAD_PATH, "sets", f"draft_{draft.id}", image.filename)
+    image_path = os.path.join(draft.path, image.filename)
     if os.path.exists(image_path):
         os.remove(image_path)
 
@@ -196,16 +195,15 @@ def add_image(draft: Draft):
     images = request.files.getlist('images')
     if not images: return jsonify({"error": "No image files provided."}), 400
 
-    path = os.path.join(UPLOAD_PATH, "sets", f"draft_{draft.id}")
-    index = get_free_index(path, "img", "*")
+    index = get_free_index(draft.path, "img", "*")
     added_images = []
     for image in images:
         extension = os.path.splitext(image.filename or "")[1].lower().lstrip('.')
-        os.makedirs(path, exist_ok=True)
-        filename = get_free_filename(path, extension, "img", index)
+        os.makedirs(draft.path, exist_ok=True)
+        filename = get_free_filename(draft.path, extension, "img", index)
 
         if not filename: return jsonify({"error": "Failed to generate filename."}), 500
-        image_path = os.path.join(path, filename)
+        image_path = os.path.join(draft.path, filename)
         image.save(image_path)
 
         i = DraftImage(draft.id, filename, -1, 0)
@@ -243,12 +241,11 @@ def add_image_url(draft: Draft):
     if not extension in VALID_IMG_EXTENSIONS:
         return jsonify({"error": f"Not a valid image extension: {extension}"}), 400
     
-    path = os.path.join(UPLOAD_PATH, "sets", f"draft_{draft.id}")
-    index = get_free_index(path, "img", "*")
-    filename = get_free_filename(path, extension, "img", index)
+    index = get_free_index(draft.path, "img", "*")
+    filename = get_free_filename(draft.path, extension, "img", index)
 
     if not filename: return jsonify({"error": "Failed to generate filename."}), 500
-    image_path = os.path.join(path, filename)
+    image_path = os.path.join(draft.path, filename)
 
     with open(image_path, 'wb') as f:
         f.write(response.content)
@@ -276,14 +273,13 @@ def replace_image_from_file(draft: Draft, image_hash: str):
     extension = os.path.splitext(image_file.filename or "")[1].lower().lstrip('.')
     if not extension in VALID_IMG_EXTENSIONS:
         return jsonify({"error": f"Not a valid image extension: {extension}"}), 400
-    path = os.path.join(UPLOAD_PATH, "sets", f"draft_{draft.id}")
-    index = get_free_index(path, "img", "*")
-    filename = get_free_filename(path, extension, "img", index)
+    index = get_free_index(draft.path, "img", "*")
+    filename = get_free_filename(draft.path, extension, "img", index)
 
     if not filename: return jsonify({"error": "Failed to generate filename."}), 500
-    image_path = os.path.join(path, filename)
+    image_path = os.path.join(draft.path, filename)
     image_file.save(image_path)
-    os.remove(os.path.join(path, draft_image.filename))
+    os.remove(os.path.join(draft.path, draft_image.filename))
 
     draft_image.filename = filename
     db.session.commit()
@@ -322,12 +318,11 @@ def replace_image_from_url(draft: Draft, image_hash: str):
     if not extension in VALID_IMG_EXTENSIONS:
         return jsonify({"error": f"Not a valid image extension: {extension}"}), 400
     
-    path = os.path.join(UPLOAD_PATH, "sets", f"draft_{draft.id}")
-    index = get_free_index(path, "img", "*")
-    filename = get_free_filename(path, extension, "img", index)
+    index = get_free_index(draft.path, "img", "*")
+    filename = get_free_filename(draft.path, extension, "img", index)
 
     if not filename: return jsonify({"error": "Failed to generate filename."}), 500
-    image_path = os.path.join(path, filename)
+    image_path = os.path.join(draft.path, filename)
 
     with open(image_path, 'wb') as f:
         f.write(response.content)
@@ -342,6 +337,30 @@ def replace_image_from_url(draft: Draft, image_hash: str):
 
 
 
+@bp.route('/<string:draft_hash>/thumbnail', methods=['POST'])
+@draft_access_required
+def update_thumbnail(draft: Draft):
+    thumbnail_file = request.files.get('thumbnail')
+    if not thumbnail_file: return jsonify({"error": "No thumbnail file provided."}), 400
+
+    extension = os.path.splitext(thumbnail_file.filename or "")[1].lower().lstrip('.')
+    if not extension in VALID_IMG_EXTENSIONS:
+        return jsonify({"error": f"Not a valid image extension: {extension}"}), 400
+
+    filename = get_free_filename(draft.path, extension, "thumbnail")
+    if not filename: return jsonify({"error": "Failed to generate filename."}), 500
+
+    thumbnail_path = os.path.join(draft.path, filename)
+    thumbnail_file.save(thumbnail_path)
+
+    draft.thumbnail = filename
+    db.session.commit()
+
+    url = url_for('static', filename=draft.thumbnail_url)
+    return jsonify({"message": "Thumbnail updated successfully.", "thumbnail_url": url}), 200
+
+
+
 @bp.route('/<string:draft_hash>/submit', methods=['POST'])
 @draft_access_required
 def publish_draft(draft: Draft):
@@ -351,6 +370,7 @@ def publish_draft(draft: Draft):
     if set_id is None:
         # Create new set
         set_ = Set(name = draft.name or "Untitled Set", description = draft.description or "", is_public = draft.is_public)
+        set_.thumbnail = draft.thumbnail
         db.session.add(set_)
         db.session.commit()
 
@@ -370,6 +390,8 @@ def publish_draft(draft: Draft):
             return jsonify({"error": "Associated set not found."}), 404
         set_.name = draft.name or set_.name
         set_.description = draft.description or set_.description
+        set_.thumbnail = draft.thumbnail or set_.thumbnail
+        set_.is_public = draft.is_public
 
         set_images = {img.filename: False for img in set_.images}
         for draft_img in draft.images:

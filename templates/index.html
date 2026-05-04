@@ -36,7 +36,9 @@ Args:
             <div class="cards-row">
                 {% for set in popular_sets %}
                     <a href="/sets/{{ set.hid() }}" class="card">
-                        <div class="card-image"></div>
+                        <div class="card-image">
+                            <img src="{{ url_for('static', filename=set.thumbnail_url) }}" alt="" />
+                        </div>
                         <div class="card-body">
                             <h3>{{ set.name }}</h3>
                             <p>{{ set.description }}</p>
@@ -54,7 +56,9 @@ Args:
                 <div class="cards-row">
                     {% for draft in drafts %}
                         <a href="/draft/{{ draft.hid() }}" class="card">
-                            <div class="card-image"></div>
+                            <div class="card-image">
+                                <img src="{{ url_for('static', filename=draft.thumbnail_url) }}" alt="" />
+                            </div>
                             <div class="card-body">
                                 <h3>{{ draft.name }}</h3>
                                 <p>{{ draft.description }}</p>
