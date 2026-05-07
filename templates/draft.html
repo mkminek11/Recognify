@@ -658,7 +658,7 @@ Args:
 
                     await axios.get('/api/inaturalist/links', {
                         params: { species: speciesNames.join(',') },
-                        timeout: 12000
+                        timeout: 30000, // 30 seconds timeout
                     }).then(async (response) => {
                         const imageSets = response.data.links || [];
                         this.importedImageLinks = [];
