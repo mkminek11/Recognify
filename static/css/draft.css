@@ -184,6 +184,7 @@ main {
             flex-direction: row;
             flex-wrap: wrap;
             gap: 10px;
+            width: 100%;
 
             & .suggestion-item {
                 background-color: var(--c-primary-dark);
@@ -192,13 +193,17 @@ main {
                 cursor: pointer;
                 display: flex;
                 flex-direction: row;
+                white-space: nowrap;
                 align-items: center;
                 gap: 10px;
                 border: 2px solid var(--c-primary-light);
                 box-shadow: var(--shadow-md);
+                max-width: 200px;
+                overflow: hidden;
+                text-overflow: ellipsis;
 
-                & .suggestion-index {color: var(--c-white);}
-                & .suggestion-label {color: var(--c-black);}
+                & .suggestion-index {color: var(--c-white); flex-shrink: 0;}
+                & .suggestion-label {color: var(--c-black); overflow: hidden; text-overflow: ellipsis;}
             }
         }
     }

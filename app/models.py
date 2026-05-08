@@ -158,14 +158,16 @@ class Image(db.Model):
     filename:       Mapped[str]      = mapped_column(String(128), nullable = False)
     set_id:         Mapped[int]      = mapped_column(ForeignKey("sets.id"), nullable = False)
     label:          Mapped[str]      = mapped_column(String(128), nullable = True)
+    notes:          Mapped[str]      = mapped_column(String(256), nullable = True)
     draft_image_id: Mapped[int|None] = mapped_column(ForeignKey("draft_images.id"), nullable = True, default = None)
 
     set: Mapped["Set"] = relationship("Set", back_populates = "images", lazy = "select")
     draft_image: Mapped["DraftImage | None"] = relationship("DraftImage", lazy = "select")
 
-    def __init__(self, filename: str, label: str = "", set_id: int = 0, draft_image_id: int | None = None):
+    def __init__(self, filename: str, label: str = "", notes: str = "", set_id: int = 0, draft_image_id: int | None = None):
         self.filename = filename
         self.label = label
+        self.notes = notes
         self.set_id = set_id
         self.draft_image_id = draft_image_id
 
@@ -177,6 +179,7 @@ class Image(db.Model):
             "id": self.hid(),
             "filename": self.filename,
             "label": self.label,
+            "notes": self.notes,
             "set_id": encode(self.set_id)
         }
 
@@ -241,14 +244,16 @@ class DraftImage(db.Model):
     filename: Mapped[str] = mapped_column(String(128), nullable = False)
     slide:    Mapped[int] = mapped_column(Integer,     nullable = False)
     label:    Mapped[str] = mapped_column(String(128), nullable = True)
+    notes:    Mapped[str] = mapped_column(String(256), nullable = True)
 
     draft: Mapped["Draft"] = relationship("Draft", back_populates = "images")
 
-    def __init__(self, draft_id: int, filename: str, presentation_n: int, slide_n: int, label: str = ""):
+    def __init__(self, draft_id: int, filename: str, presentation_n: int, slide_n: int, label: str = "", notes: str = ""):
         self.draft_id = draft_id
         self.filename = filename
         self.slide = presentation_n * 10_000 + slide_n
         self.label = label
+        self.notes = notes
 
     def hid(self) -> str:
         return encode_image(self.draft_id, self.id)
@@ -258,6 +263,7 @@ class DraftImage(db.Model):
             "id": self.hid(),
             "filename": self.filename,
             "label": self.label,
+            "notes": self.notes,
             "slide": self.slide,
             "draft_id": encode(self.draft_id)
         }

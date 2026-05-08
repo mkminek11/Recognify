@@ -92,10 +92,12 @@ def update_image_label(draft: Draft, image_hash: str):
 
     data: dict[str, str] = request.get_json()
     new_label = data.get('label', '').strip()
+    new_notes = data.get('notes', '').strip()
 
     image.label = new_label
+    image.notes = new_notes
     db.session.commit()
-    return jsonify({"message": "Image label updated successfully.", "new_label": image.label}), 200
+    return jsonify({"message": "Image label updated successfully.", "new_label": image.label, "new_notes": image.notes}), 200
 
 
 
@@ -376,7 +378,7 @@ def publish_draft(draft: Draft):
 
         for img in draft.images:
             if not img.label: continue
-            new_img = Image(filename = img.filename, set_id = set_.id, label = img.label, draft_image_id = img.id)
+            new_img = Image(filename = img.filename, set_id = set_.id, label = img.label, notes = img.notes, draft_image_id = img.id)
             db.session.add(new_img)
             set_.images.append(new_img)
 
@@ -395,15 +397,17 @@ def publish_draft(draft: Draft):
 
         set_images = {img.filename: False for img in set_.images}
         for draft_img in draft.images:
+            if not draft_img.label: continue
             if draft_img.filename in set_images:
-                # Existing image, update label
+                # Existing image, update label and notes
                 img = Image.query.filter_by(filename=draft_img.filename).first()
                 if not isinstance(img, Image): continue
                 img.label = draft_img.label
+                img.notes = draft_img.notes
                 set_images[draft_img.filename] = True
             else:
                 # New image, add to set
-                new_img = Image(filename = draft_img.filename, set_id = set_.id, label = draft_img.label, draft_image_id = draft_img.id)
+                new_img = Image(filename = draft_img.filename, set_id = set_.id, label = draft_img.label, notes = draft_img.notes, draft_image_id = draft_img.id)
                 db.session.add(new_img)
                 set_.images.append(new_img)
         

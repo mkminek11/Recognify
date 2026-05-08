@@ -147,11 +147,21 @@ Args:
 
                 <div class="suggestions" x-show="labels.filter(l => l.slide === images[currentIndex]?.slide).length > 0">
                     <template x-for="(label, index) in labels.filter(l => l.slide === images[currentIndex]?.slide)" :key="index">
-                        <div class="suggestion-item">
+                        <div class="suggestion-item" :title="label.label" @click="imageLabels[images[currentIndex].image.hash] = label.label; saveImageLabel(currentIndex);">
                             <span class="suggestion-index" x-text="index + 1"></span>
                             <span class="suggestion-label" x-text="label.label"></span>
                         </div>
                     </template>
+                </div>
+
+                <div class="additional-notes">
+                    {% call input(placeholder="Additional notes (optional)", kw={
+                        "x-model": "additionalNotes[images[currentIndex]?.image.hash]",
+                        "x-ref": "additionalNotesInput",
+                        "@blur": "saveImageLabel(currentIndex)",
+                        "@keydown.enter": "saveAndNext()"
+                    }) %}
+                    {% endcall %}
                 </div>
             </section>
 
@@ -231,6 +241,7 @@ Args:
                 images: [], // [ { image: CustomImage, slide: string } ]
                 imageLabels: {}, // { imageHash: string -> label: string }
                 labels: [], // list of { label: string, slide: string }
+                additionalNotes: {}, // { imageHash: string -> notes: string }
                 importedImageLinks: [], // [ {
                                         //     species: string,
                                         //     images: { imageLink: string, label: string, id: int, selected: boolean }
@@ -285,7 +296,8 @@ Args:
                     console.log("Blur");
                     const image = this.images[index].image;
                     const label = this.imageLabels[image.hash] || '';
-                    axios.post('/api/draft/{{ draft.hid() }}/image/' + image.dbid, { label });
+                    const notes = this.additionalNotes[image.hash] || '';
+                    axios.post('/api/draft/{{ draft.hid() }}/image/' + image.dbid, { label, notes });
                 },
 
                 async saveAndNext() {
@@ -301,7 +313,7 @@ Args:
                 },
 
                 async replacePlaceholderWithImage(index, imageData) {
-                    const cimg = await window.CustomImage.fromUrl('/api/draft/{{ draft.hid() }}/image/' + imageData.id, imageData.id);
+                    const cimg = await window.CustomImage.fromUrl(`/api/draft/{{ draft.hid() }}/image/${imageData.id}`, imageData.id);
                     
                     // Add timeout to prevent hanging forever
                     const timeoutPromise = new Promise((_, reject) => 
@@ -313,14 +325,16 @@ Args:
                     
                     const placeholderKey = 'placeholder_' + index;
                     const existingLabel = this.imageLabels[placeholderKey];
-                    const labelToSet = existingLabel || imageData.label || '';
+                    const existingNotes = this.additionalNotes[placeholderKey];
                     
                     // Update the image object
                     this.images[index] = { image: cimg, slide: imageData.slide };
                     
                     // Update labels - delete old key first, then add new
                     delete this.imageLabels[placeholderKey];
-                    this.imageLabels[cimg.hash] = labelToSet;
+                    delete this.additionalNotes[placeholderKey];
+                    this.imageLabels[cimg.hash] = existingLabel || imageData.label || '';
+                    this.additionalNotes[cimg.hash] = existingNotes || imageData.notes || '';
                     
                     // Force a minimal re-render by touching the images array
                     this.images = [...this.images];
@@ -369,13 +383,14 @@ Args:
                     // Then delete its label (after splice to ensure reactivity works correctly)
                     if (image && image.hash) {
                         delete this.imageLabels[image.hash];
+                        delete this.additionalNotes[image.hash];
                     }
 
                     if (this.currentIndex >= this.images.length) {
                         this.currentIndex = this.images.length - 1;
                     }
 
-                    axios.delete('/api/draft/{{ draft.hid() }}/image/' + image.dbid);
+                    axios.delete(`/api/draft/{{ draft.hid() }}/image/${image.dbid}`);
                 },
 
                 async addImages(event) {
@@ -393,6 +408,7 @@ Args:
                         if (!this.images.some(existing => existing.image.hash === cimg.hash)) {
                             this.images.push({ image: cimg, slide: "" });
                             this.imageLabels[cimg.hash] = '';
+                            this.additionalNotes[cimg.hash] = '';
                             added++;
                         }
                     }
@@ -425,7 +441,7 @@ Args:
 
                         this.images.push({ image: cimg, slide: "" });
                         this.imageLabels[cimg.hash] = '';
-
+                        this.additionalNotes[cimg.hash] = '';
                         // this.$refs.imgURL.value = '';
                     } catch (error) {
                         alert("Failed to add image from URL.");
@@ -496,6 +512,7 @@ Args:
                     const result = await axios.get('/api/draft/{{ draft.hid() }}/gallery');
                     const images = result.data.images || [];
                     const labels = result.data.labels || [];
+                    const notes = result.data.notes || [];
                     await this.addToGallery(images, labels);
                     console.log("Fetched gallery images:", images);
                 },
@@ -539,6 +556,7 @@ Args:
                     for (let i = 0; i < placeholders.length; i++) {
                         const imageData = newImages[i];
                         this.imageLabels['placeholder_' + (startIndex + i)] = imageData.label || '';
+                        this.additionalNotes['placeholder_' + (startIndex + i)] = imageData.notes || '';
                     }
                     
                     // Load actual images one by one in the background, replacing placeholders
@@ -720,6 +738,7 @@ Args:
 
                         this.images.push({ image: cimg, slide: "" });
                         this.imageLabels[cimg.hash] = label;
+                        this.additionalNotes[cimg.hash] = '';
 
                         // axios.post('/api/draft/{{ draft.hid() }}/image/' + cimg.dbid, { label })
                     });
@@ -835,7 +854,7 @@ Args:
                     }).catch((error) => {
                         alert("Failed to update thumbnail: " + (error.response?.data?.error || error.message));
                     });
-                }
+                },
             }));
         });
     </script>

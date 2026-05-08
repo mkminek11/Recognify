@@ -18,20 +18,24 @@ Args:
         <main>
             <section class="sidebar sidebar-left">
                 <a href="/sets/{{ set.hid() }}">Back to set info</a>
-                {% if current_user.is_authenticated and current_user.has_access_to(set.get_draft()) %}
+                {% if current_user.is_authenticated and current_user.has_access_to(set.draft) %}
                     <a href="/draft/{{ set.hid() }}">Edit set</a>
                 {% endif %}
             </section>
 
             <section class="main">
                 <div class="control-bar">
-                    <p x-text="`${index + 1} / ${images.length}`"></p>
+                    <p x-text="!isEnd() ? `${index + 1} / ${images.length}` : ''"></p>
                     <p x-text="(!isEnd() && showLabel) ? label : '?'"></p>
                     <abbr title="Correct / Incorrect">
                         <span x-text="correct" class="color-primary"></span>
                         /
                         <span x-text="index - correct" class="color-error"></span>
                     </abbr>
+                </div>
+
+                <div class="additional-notes-bar">
+                    <p x-text="(!isEnd() && showLabel) ? notes : '&nbsp;'"></p>
                 </div>
 
                 <div class="image-wrapper">
@@ -118,6 +122,7 @@ Args:
                 index: 0,
                 image: '',
                 label: '',
+                notes: '',
                 images: JSON.parse('{{ get_data(set.images_for(current_user))|tojson }}'),
                 correct: 0,
                 showLabel: false,
@@ -142,6 +147,7 @@ Args:
                 async loadImage() {
                     this.image = `/api/sets/{{ set.hid() }}/image/${this.images[this.index].id}`;
                     this.label = this.images[this.index].label;
+                    this.notes = this.images[this.index].notes;
                 },
 
                 nextImage(correct) {
@@ -228,17 +234,20 @@ Args:
             text-align: center;
         }
 
-        .control-bar {
+        .control-bar, .additional-notes-bar {
             display: grid;
-            grid-template-columns: 1fr 4fr 1fr;
             background-color: var(--c-grey7);
             padding: 10px 20px;
             border-radius: 5px;
             box-shadow: var(--shadow-md);
             text-align: center;
+        }
 
+        .control-bar {
+            grid-template-columns: 1fr 4fr 1fr;
             & > :first-child {text-align: left;}
             & > :last-child  {text-align: right;}
+            margin-bottom: -20px;
         }
 
         .image-wrapper {
