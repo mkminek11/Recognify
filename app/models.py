@@ -48,7 +48,6 @@ class User(db.Model, UserMixin):
         if to is None or not isinstance(to, (Draft, Set)): return False
         if to.owner_id == self.id: return True
         draft = to
-        print(f"Checking access for user {self.username} to {'Draft' if isinstance(to, Draft) else 'Set'} {to.hid()}")
         if isinstance(to, Set):
             if to.is_public: return True
             draft = to.draft

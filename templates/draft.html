@@ -60,7 +60,7 @@ Args:
 
         {% include 'components/navigation.html' %}
 
-        <h2 class="draft-title" x-text="title"></h2>
+        <h2 class="draft-title" x-text="title ? title : '&nbsp;'"></h2>
 
         {{ message_list(ref="popupMessages") }}
 
@@ -139,7 +139,8 @@ Args:
                         "x-ref": "imageLabelInput",
                         "@blur": "saveImageLabel(currentIndex)",
                         "@keydown.enter": "saveAndNext()",
-                        "@input": "imageInput()"}) %}
+                        "@input": "imageInput()",
+                        ":disabled": "images.length === 0"}) %}
 
                         <i class="icon fas fa-check"></i>
                     {% endcall %}
@@ -159,7 +160,8 @@ Args:
                         "x-model": "additionalNotes[images[currentIndex]?.image.hash]",
                         "x-ref": "additionalNotesInput",
                         "@blur": "saveImageLabel(currentIndex)",
-                        "@keydown.enter": "saveAndNext()"
+                        "@keydown.enter": "saveAndNext()",
+                        ":disabled": "images.length === 0"
                     }) %}
                     {% endcall %}
                 </div>
@@ -213,10 +215,14 @@ Args:
                     </dd>
                 </dl>
 
-                <p class="link danger" @click="deleteSet()">Delete draft</p>
-
-                <p class="link" @click="importFromFile()">Import from file</p>
-                <input type="file" x-ref="importDraftInput" class="hidden" @change="importDraft()" />
+                <div class="links">
+                    <p class="link danger" @click="deleteSet()">Delete draft</p>
+                    <p class="link" @click="importFromFile()">Import from file</p>
+                    <input type="file" x-ref="importDraftInput" class="hidden" @change="importDraft()" />
+                    {% if draft.is_published() %}
+                        <a class="link" href="/sets/{{ draft.set.hid() }}" target="_blank">View set page</a>
+                    {% endif %}
+                </div>
 
                 <button class="btn-primary" @click="publishDraft()" x-text="isPublished ? 'Update set' : 'Publish'"></button>
             </section>
@@ -269,7 +275,8 @@ Args:
                         // Scroll the selected gallery item into view if it's not visible
                         this.$nextTick(() => {
                             const galleryRect = document.querySelector('.image-gallery')?.getBoundingClientRect();
-                            const itemRect = gallery?.querySelector('.gallery-item.active').getBoundingClientRect();
+                            const activeItem = document.querySelector('.image-gallery .gallery-item.active');
+                            const itemRect = activeItem?.getBoundingClientRect();
                             if (!itemRect || !galleryRect) {return;}
 
                             // Check if item is outside visible area
@@ -676,7 +683,7 @@ Args:
 
                     await axios.get('/api/inaturalist/links', {
                         params: { species: speciesNames.join(',') },
-                        timeout: 30000, // 30 seconds timeout
+                        timeout: 1200000, // 20 minutes timeout
                     }).then(async (response) => {
                         const imageSets = response.data.links || [];
                         this.importedImageLinks = [];

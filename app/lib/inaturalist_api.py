@@ -41,13 +41,16 @@ def get_page(query: str, page_i: int) -> list[dict]:
     return res
 
 def get_image_links(species: str, max_images: int) -> list[str]:
+    print(f"[iNat] Fetching images for '{species}'...")
     image_links: list[str] = []
     saved = 0
     page_i = 0
     
     while saved < max_images:
         page = get_page(species, page_i)
-        if not page: break
+        if not page: 
+            print(f"[iNat] No more results for '{species}' (got {saved}/{max_images} images)")
+            break
 
         for observation in page:
             if saved >= max_images: break
@@ -104,13 +107,25 @@ def write_file(content_iter: Iterator[bytes], path: str) -> None:
             if chunk:
                 f.write(chunk)
 
-def get_inaturalist_image_links(species_list: list[str], max_images_per_species: int = 10) -> list[dict[str, str | list[str]]]:
+def get_inaturalist_image_links(species_list: list[str], max_images_per_species: int = 8) -> list[dict[str, str | list[str]]]:
+    """Get image URLs from iNaturalist for multiple species.
+    
+    Args:
+        species_list: List of species names
+        max_images_per_species: Maximum images per species (default 2 to avoid rate limiting)
+    """
     image_sets: list[dict] = []
-    with ThreadPoolExecutor(max_workers=4) as executor:
+    # Reduce to 2 workers to respect iNaturalist rate limiting (0.2s minimum between requests)
+    with ThreadPoolExecutor(max_workers=2) as executor:
         futures = {executor.submit(get_image_links, species, max_images_per_species): species for species in species_list}
+        completed = 0
         for future in futures:
             species = futures[future]
-            image_sets.append({"species": species, "urls": future.result()})
+            urls = future.result()
+            image_sets.append({"species": species, "urls": urls})
+            completed += 1
+            print(f"[iNat] Completed {completed}/{len(species_list)} species ({len(urls)} images for '{species}')") 
+    print(f"[iNat] Finished! Total: {len(image_sets)} species with {sum(len(item['urls']) for item in image_sets)} images")
     return image_sets
 
 __all__ = ["download_photos", "get_inaturalist_image_links"]

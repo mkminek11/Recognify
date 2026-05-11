@@ -98,6 +98,12 @@ main {
                 box-shadow: var(--shadow-sm);
             }
         }
+
+        & .links {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
     }
 
     & section.main {
