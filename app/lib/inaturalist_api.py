@@ -1,5 +1,5 @@
 
-import os, re, time, requests
+import os, re, requests
 from typing import Iterator
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
@@ -12,6 +12,7 @@ last_request_time = 0
 # Create session with proxy bypass to avoid proxy connection issues
 session = requests.Session()
 session.proxies = {}  # Bypass system proxy
+session.trust_env = False  # Ignore environment proxy variables
 session.headers.update({'User-Agent': 'Recognify'})
 
 def clean(name: str) -> str:
@@ -87,7 +88,7 @@ def download_photo(photo: dict, obs_id: int, downloaded: int, output: str) -> bo
 
 def download_candidate(candidate_url: str, output: str, obs_id: int, downloaded: int) -> bool:
     try:
-        response = session.get(candidate_url, stream=True, timeout=20, proxies={})
+        response = session.get(candidate_url, stream=True, timeout=20)
         if response.status_code != 200: return False
         if not response.headers.get("content-type", "").startswith("image"): return False
 

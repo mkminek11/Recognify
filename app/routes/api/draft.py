@@ -1,12 +1,14 @@
 
 import shutil
 import os.path
+from urllib.parse import unquote
 import requests
 from flask_login import current_user
 from flask import Blueprint, jsonify, request, send_file, url_for
 from app.lib.export import export_draft, import_draft
+from app.lib.inaturalist_api import get_image_links
 from app.models import Draft, DraftAccess, DraftImage, DraftLabel, Image, Set, SkipImage, User
-from app.app import EXPORT_PATH, VALID_IMG_EXTENSIONS, db, UPLOAD_PATH, decode_image, draft_access_required, decode, encode, get_data, permission_required, log_info
+from app.app import EXPORT_PATH, VALID_IMG_EXTENSIONS, db, UPLOAD_PATH, decode_image, draft_access_required, encode, get_data, permission_required, log_info
 from app.lib.presentation import extract_images, get_free_filename, get_free_index, temp_remove
 
 
@@ -229,8 +231,7 @@ def add_image_url(draft: Draft):
     try:
         headers = {'User-Agent': 'Recognify'}
         # Bypass proxy to avoid connection issues
-        proxies = {}
-        response = requests.get(image_url, timeout=10, headers=headers, proxies=proxies)
+        response = requests.get(image_url, timeout=10, headers=headers, proxies={})
         response.raise_for_status()
     except requests.RequestException as e:
         return jsonify({"error": f"Failed to fetch image from URL: {str(e)}"}), 400
@@ -306,8 +307,7 @@ def replace_image_from_url(draft: Draft, image_hash: str):
     try:
         headers = {'User-Agent': 'Recognify'}
         # Bypass proxy to avoid connection issues
-        proxies = {}
-        response = requests.get(url, timeout=10, headers=headers, proxies=proxies)
+        response = requests.get(url, timeout=10, headers=headers, proxies={})
         response.raise_for_status()
     except requests.RequestException as e:
         return jsonify({"error": f"Failed to fetch image from URL: {str(e)}"}), 400

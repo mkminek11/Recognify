@@ -200,9 +200,8 @@ def proxy_image():
     
     try:
         # Bypass proxy to avoid connection issues
-        proxies = {}
         headers = {'User-Agent': 'Recognify'}
-        response = requests.get(url, timeout=10, proxies=proxies, headers=headers)
+        response = requests.get(url, timeout=10, proxies={}, headers=headers)
         response.raise_for_status()
         
         return send_file(
