@@ -6,12 +6,13 @@
 <header>
     <nav x-data="navigation()">
         <div class="nav-logo">
+            <button class="btn btn-flat mobile-only" @click="open = !open"><i class="fas fa-bars"></i></button>
             <a href="/"><img src="/static/img/logo_text_color.svg" alt="Recognify."></a>
         </div>
     
-        <a href="/sets" class="icon-link">Browse sets</a>
+        <a href="/sets" class="icon-link" :class="{'pc-only': !open}"><i class="fas fa-rectangle-list"></i> Browse sets</a>
     
-        <div class="nav-center">
+        <div class="nav-center" :class="{'pc-only': !open}">
             <div class="nav-search dropdown">
                 {% call input(placeholder="Search...", ref="searchInput", wrapper_class="dropdown-trigger",
                         kw={"x-model": "searchQuery", "@input": "search()", "@keydown.enter": "submit()",
@@ -19,7 +20,7 @@
                     <i class="icon fas fa-search" @click="search()"></i>
                 {% endcall %}
 
-                <div class="search-results dropdown-menu no-hover" x-ref="searchResults" :class="forceOpen ? 'force-open' : ''" @blur="forceOpen = false">
+                <div class="search-results dropdown-menu no-hover" x-ref="searchResults" :class="forceOpenSearch ? 'force-open' : ''" @blur="forceOpenSearch = false">
                     <template x-if="loading">
                         <p class="search-placeholder">Loading...</p>
                     </template>
@@ -57,8 +58,8 @@
             </div>
         </div>
     
-        <a href="/sets/new" class="icon-link"><i class="fas fa-plus"></i> Create</a>
-        <a href="/settings" class="icon-link"><i class="fas fa-cog"></i> Settings</a>
+        <a href="/sets/new" class="icon-link" :class="{'pc-only': !open}"><i class="fas fa-plus"></i> Create</a>
+        <a href="/settings" class="icon-link" :class="{'pc-only': !open}"><i class="fas fa-cog" ></i> Settings</a>
     
         {% if current_user.is_authenticated %}
             <div class="dropdown nav-user-dropdown">
@@ -72,7 +73,7 @@
                 </div>
             </div>
         {% else %}
-            <a href="/auth/login" class="btn btn-primary">Log in</a>
+            <a href="/auth/login" class="btn btn-primary" :class="{'pc-only': !open}">Log in</a>
         {% endif %}
     </nav>
 </header>
@@ -83,7 +84,8 @@
             searchQuery: "{{ search_query or '' }}",
             searchResults: {"sets": [], "users": []},
             loading: false,
-            forceOpen: false,
+            open: false,
+            forceOpenSearch: false,
 
             init() {},
 
@@ -120,11 +122,11 @@
             focusFirstResult(event) {
                 event.preventDefault();
 
-                this.forceOpen = true;
+                this.forceOpenSearch = true;
                 this.$nextTick(() => {
                     const firstResult = this.$refs.searchResults.querySelector('.search-result-item');
                     if (firstResult) {firstResult.focus();}
-                    this.$nextTick(() => { this.forceOpen = false; });
+                    this.$nextTick(() => { this.forceOpenSearch = false; });
                 });
             },
 
@@ -157,7 +159,7 @@
             },
 
             closeSearch() {
-                this.forceOpen = false;
+                this.forceOpenSearch = false;
                 document.activeElement.blur();
             },
         }

@@ -4,9 +4,8 @@ from flask_login import current_user
 from urllib.parse import unquote
 import os.path
 
-from app.lib.export import export_draft
 from app.models import Draft, DraftAccess, Image, Set, SkipImage, User, UserSettings
-from app.app import EXPORT_PATH, db, UPLOAD_PATH, decode, decode_image, encode, get_data, log_info, login_required, set_access_required
+from app.app import db, UPLOAD_PATH, decode, decode_image, log_info, login_required
 from app.lib.inaturalist_api import get_inaturalist_image_links
 
 

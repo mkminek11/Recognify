@@ -1,12 +1,10 @@
 
 import shutil
 import os.path
-from urllib.parse import unquote
 import requests
 from flask_login import current_user
 from flask import Blueprint, jsonify, request, send_file, url_for
 from app.lib.export import export_draft, import_draft
-from app.lib.inaturalist_api import get_image_links
 from app.models import Draft, DraftAccess, DraftImage, DraftLabel, Image, Set, SkipImage, User
 from app.app import EXPORT_PATH, VALID_IMG_EXTENSIONS, db, UPLOAD_PATH, decode_image, draft_access_required, encode, get_data, permission_required, log_info
 from app.lib.presentation import extract_images, get_free_filename, get_free_index, temp_remove

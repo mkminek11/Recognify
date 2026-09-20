@@ -35,7 +35,7 @@ Args:
                 </div>
 
                 <div class="additional-notes-bar">
-                    <p x-text="(!isEnd() && showLabel) ? notes : '&nbsp;'"></p>
+                    <p x-text="(!isEnd() && showLabel) ? (notes || '&nbsp;') : '&nbsp;'"></p>
                 </div>
 
                 <div class="image-wrapper">
@@ -283,6 +283,31 @@ Args:
         .sidebar .info {
             color: var(--c-grey3);
             font-style: italic;
+        }
+
+        @media (max-width: 600px) {
+            main {
+                grid-template-columns: 1fr;
+                grid-template-rows: initial;
+                grid-template-areas:
+                    "ls"
+                    "main"
+                    "rs";
+                gap: 20px;
+            }
+
+            .sidebar.sidebar-right {
+                display: none !important;
+            }
+
+            .sidebar.sidebar-left {
+                border: none;
+                background-color: transparent;
+                box-shadow: none;
+                padding: 0px;
+                border-radius: 0px;
+                gap: 5px;
+            }
         }
     </style>
 {% endblock %}

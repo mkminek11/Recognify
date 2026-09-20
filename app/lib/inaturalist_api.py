@@ -1,7 +1,7 @@
 
-import os, re, requests
+import os, requests
 from typing import Iterator
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor
 import threading
 
 PER_PAGE = 100
@@ -14,9 +14,6 @@ session = requests.Session()
 session.proxies = {}  # Bypass system proxy
 session.trust_env = False  # Ignore environment proxy variables
 session.headers.update({'User-Agent': 'Recognify'})
-
-def clean(name: str) -> str:
-    return re.sub(r'[^0-9A-Za-zčřžýáíéúůťďň _.-]', '_', name)[:160]
 
 def img_candidates(url: str) -> list[str]:
     u = url.split('?')[0]

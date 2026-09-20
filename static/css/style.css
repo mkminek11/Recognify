@@ -57,7 +57,7 @@ body > .container {
     gap: min(60px, 5vh);
 }
 
-.hidden {display: none;}
+.hidden {display: none !important;}
 .hidden-fixed {position: fixed; top: 0px; display: none;}
 
 .contents {display: contents;}
@@ -70,6 +70,8 @@ img {display: block;}
 
 .color-primary {color: var(--c-primary-light);}
 .color-error {color: var(--c-error);}
+
+.mobile-only {display: none;}
 
 .input-wrapper {
     display: flex;
@@ -451,5 +453,7 @@ abbr {
 
 @media (max-width: 600px) {
     html {font-size: 12px;}
-    body > .container {gap: 20px;}
+    body > .container {gap: 20px; padding: 0px 20px 20px 20px;}
+    .mobile-only {display: initial;}
+    .pc-only {display: none !important;}
 }
