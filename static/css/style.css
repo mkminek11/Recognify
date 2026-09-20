@@ -193,8 +193,8 @@ h3 {
     overflow-x: auto;
 
     & .card {
-        width: 200px;
-        height: 240px;
+        width: 12.5rem;
+        height: 15rem;
         border-radius: 15px;
         background-image: linear-gradient(to bottom, transparent, var(--c-black-50));
         border: 2px solid var(--c-grey3);

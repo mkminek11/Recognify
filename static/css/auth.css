@@ -1,6 +1,6 @@
 body {
-    gap: 120px;
-    padding: 80px 100px 60px;
+    gap: 8rem;
+    padding: 80px 2rem 60px;
 }
 
 .title {
@@ -11,6 +11,7 @@ body {
 .form-container {
     background-color: var(--c-grey7);
     width: 400px;
+    max-width: 100%;
     padding: 100px 25px 25px;
     border-radius: 20px;
     border: 2px solid var(--c-grey3);
@@ -57,6 +58,6 @@ body {
 
     & i {
         color: var(--c-white);
-        font-size: 5.5rem;
+        font-size: 88px;
     }
 }
