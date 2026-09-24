@@ -19,7 +19,7 @@ Args:
             <section class="sidebar sidebar-left">
                 <a href="/sets/{{ set.hid() }}">Back to set info</a>
                 {% if current_user.is_authenticated and current_user.has_access_to(set.draft) %}
-                    <a href="/draft/{{ set.hid() }}">Edit set</a>
+                    <a href="/draft/{{ set.draft.hid() }}">Edit set</a>
                 {% endif %}
             </section>
 
