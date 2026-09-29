@@ -8,7 +8,7 @@ Args:
 {% from 'components/popup_message.html' import message_list %}
 
 {% block content %}
-    <div x-data="container" class="container" @keydown="onKeyDown($event)" tabindex="0">
+    <div x-data="container" class="container" tabindex="0">
         {% include 'components/navigation.html' %}
 
         <h2>{{ set.name }}</h2>
@@ -132,6 +132,7 @@ Args:
                 init() {
                     this.shuffle(this.images);
                     this.loadImage();
+                    document.addEventListener('keydown', (event) => this.onKeyDown(event));
                 },
 
                 isEnd() {return this.index >= this.images.length;},
@@ -172,7 +173,7 @@ Args:
                 onKeyDown(event) {
                     if (this.isEnd()) {return;}
 
-                    console.log(event.button, event.key);
+                    console.log(event.button, event.key, this.keyboardControls, event.key !== undefined, event.key);
 
                     if (this.mouseControls && event.button !== undefined) {
                         event.preventDefault();
@@ -188,8 +189,9 @@ Args:
                             this.turn();
                         }
                     } else if (this.keyboardControls && event.key !== undefined) {
-                        if (event.key.length > 1) {return;}
+                        if (event.key.length > 1 && !event.key.startsWith('Arrow')) {return;}
                         event.preventDefault();
+                        console.log("AAAA");
                         
                         if (this.showLabel) {
                             if (event.key === 'ArrowRight') {
