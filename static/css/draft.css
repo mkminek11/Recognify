@@ -216,49 +216,98 @@ main {
 }
 
 dialog {
-    border: none;
-    border-radius: 15px;
+    background-color: var(--c-grey7);
+    color: var(--c-white);
+    border: 2px solid var(--c-grey3);
+    border-radius: 10px;
     box-shadow: var(--shadow-lg);
-    padding: 20px 30px;
+    padding: 25px 30px;
+    max-width: min(90vw, 700px);
 
-    &::backdrop {background-color: #00000080;}
+    &[open] {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    & .dialog-close {
+        align-self: flex-end;
+        margin-bottom: -10px;
+    }
+
+    & textarea {
+        min-height: 150px;
+        padding: 15px 20px;
+        background-color: var(--c-grey6);
+        color: var(--c-grey3);
+        border: none;
+        border-bottom: 2px solid transparent;
+        border-radius: 5px;
+        font-size: var(--fs-medium);
+        resize: vertical;
+        transition: var(--transition);
+
+        &::placeholder {color: var(--c-grey4);}
+        &:focus {outline: none; border-bottom-color: var(--c-primary-light);}
+    }
+
+    & .dialog-row {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    & .dialog-row .input-wrapper {flex-grow: 1;}
 
     & .imported-images {
         display: flex;
         flex-direction: row;
         flex-wrap: wrap;
+        align-items: flex-start;
         gap: 10px;
 
         & .imported-image {
             border-radius: 10px;
             overflow: hidden;
-            border-bottom: 10px solid transparent;
+            border: 3px solid transparent;
             position: relative;
+            cursor: pointer;
+            transition: var(--transition);
 
             & img {
                 max-width: 300px;
                 max-height: 300px;
+                opacity: 0.6;
+                transition: var(--transition);
             }
+
+            &:hover img {opacity: 0.85;}
 
             &:has(input[type="checkbox"]:checked) {
                 border-color: var(--c-primary-light);
 
+                & img {opacity: 1;}
+
                 &::after {
-                    content: '✓';
+                    content: '\f00c';
+                    font-family: 'Font Awesome 6 Free', 'Font Awesome 5 Free';
+                    font-weight: 900;
                     position: absolute;
-                    top: 5px;
-                    right: 5px;
-                    background-color: var(--c-black);
-                    color: var(--c-white);
-                    width: 24px;
-                    height: 24px;
+                    top: 8px;
+                    right: 8px;
+                    background-color: var(--c-primary-dark);
+                    color: var(--c-black);
+                    width: 26px;
+                    height: 26px;
                     border-radius: 50%;
-                    font-weight: bold;
+                    box-shadow: var(--shadow-md);
 
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    font-size: 16px;
+                    font-size: 13px;
                 }
             }
         }

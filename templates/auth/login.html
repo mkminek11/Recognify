@@ -49,11 +49,15 @@
                         if (response.status === 200) {
                             window.location.assign('/');
                         } else {
-                            this.message = response.data.message;
+                            this.showError(response.data.message);
                         }
                     }).catch(error => {
-                        this.message = error.response.data.message || 'An error occurred. Please try again.';
+                        this.showError(error.response?.data?.message);
                     });
+                },
+
+                showError(text) {
+                    this.$dispatch('add-message', { id: crypto.randomUUID(), type: 'error', text: text || 'An error occurred. Please try again.', duration: 5000 });
                 }
             }
         }

@@ -12,15 +12,15 @@ Args:
 {% block content %}
     <div x-data="formHandler" class="container">
         <dialog x-ref="imageImportDialog">
-            <button @click="$refs.imageImportDialog.close()">Close</button>
+            <button class="btn-flat dialog-close" @click="$refs.imageImportDialog.close()"><i class="fas fa-times"></i></button>
             <h2>Import from iNaturalist</h2>
             <p>Write species names here, each on a new line.</p>
             <textarea x-ref="imageImportTextarea"></textarea>
-            <button @click="importFromInaturalist()">Import</button>
+            <button class="btn-primary" @click="importFromInaturalist()">Import</button>
         </dialog>
 
         <dialog x-ref="importedImagesDialog">
-            <button @click="$refs.importedImagesDialog.close()">Close</button>
+            <button class="btn-flat dialog-close" @click="$refs.importedImagesDialog.close()"><i class="fas fa-times"></i></button>
             <h2>
                 <span>Imported Images:</span>
                 <span x-text="currentSpecies()?.species || 'No species selected'"></span>
@@ -36,23 +36,27 @@ Args:
                         <input type="checkbox" :id="'select_' + index" x-model="imageData.selected" class="hidden" />
                     </div>
                 </template>
-                <h2 x-show="!currentSpecies()?.images || currentSpecies()?.images.length === 0">No images available</h2>
+                <p x-show="!currentSpecies()?.images || currentSpecies()?.images.length === 0">No images available</p>
             </div>
 
-            <button @click="insertImportedImages()" x-text="anyImageSelected() ? 'Insert' : 'Skip'"></button>
+            <button class="btn-primary" @click="insertImportedImages()" x-text="anyImageSelected() ? 'Insert' : 'Skip'"></button>
         </dialog>
 
         <dialog x-ref="accessDialog">
-            <button @click="$refs.accessDialog.close()">Close</button>
+            <button class="btn-flat dialog-close" @click="$refs.accessDialog.close()"><i class="fas fa-times"></i></button>
             <h2>Set Access</h2>
             <p>Who can access this set?</p>
-            <input x-ref="accessAddInput" type="text" placeholder="Add user by email or name" />
-            <button @click="addUserAccess()">Add</button>
+            <div class="dialog-row">
+                <div class="input-wrapper">
+                    <input x-ref="accessAddInput" type="text" placeholder="Add user by email or name" />
+                </div>
+                <button class="btn-primary" @click="addUserAccess()">Add</button>
+            </div>
             <div>
                 <template x-for="(user, index) in accessUsers" :key="index">
-                    <div>
+                    <div class="dialog-row">
                         <span x-text="user.username"></span>
-                        <button @click="removeUserAccess(index)">Remove</button>
+                        <button class="btn-secondary" @click="removeUserAccess(index)">Remove</button>
                     </div>
                 </template>
             </div>
