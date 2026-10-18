@@ -173,8 +173,6 @@ Args:
                 onKeyDown(event) {
                     if (this.isEnd()) {return;}
 
-                    console.log(event.button, event.key, this.keyboardControls, event.key !== undefined, event.key);
-
                     if (this.mouseControls && event.button !== undefined) {
                         event.preventDefault();
                         if (this.showLabel) {
@@ -191,7 +189,6 @@ Args:
                     } else if (this.keyboardControls && event.key !== undefined) {
                         if (event.key.length > 1 && !event.key.startsWith('Arrow')) {return;}
                         event.preventDefault();
-                        console.log("AAAA");
                         
                         if (this.showLabel) {
                             if (event.key === 'ArrowRight') {
@@ -313,4 +310,3 @@ Args:
         }
     </style>
 {% endblock %}
-

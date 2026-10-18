@@ -4,6 +4,7 @@ from flask_login import current_user
 from urllib.parse import unquote
 import os.path
 
+from app.lib import wikipedia_api
 from app.models import Draft, DraftAccess, Image, Set, SkipImage, User, UserSettings
 from app.app import db, UPLOAD_PATH, decode, decode_image, log_info, login_required
 from app.lib.inaturalist_api import get_inaturalist_image_links
@@ -111,34 +112,6 @@ def remove_skip_set_image(set_hash: str):
     db.session.add(si)
     db.session.commit()
     return jsonify({"message": "Image marked as skipped."}), 200
-
-
-
-@bp.route('/inaturalist/links', methods=['GET'])
-def inaturalist_links():
-    try:
-        species_param = request.args.get('species', '')
-        if not species_param:
-            return jsonify({"error": "No species provided."}), 400
-
-        species_list = [unquote(s.strip()) for s in species_param.split(',') if s.strip()]
-        if not species_list:
-            return jsonify({"error": "No valid species provided."}), 400
-
-        # Limit to prevent timeout issues
-        MAX_SPECIES = 50
-        if len(species_list) > MAX_SPECIES:
-            return jsonify({"error": f"Too many species requested. Maximum is {MAX_SPECIES}, you requested {len(species_list)}. Please split into smaller batches."}), 400
-
-        log_info(f"Fetching iNaturalist links for {len(species_list)} species...")
-        links = get_inaturalist_image_links(species_list)
-        log_info(f"Successfully fetched links for {len(links)} species")
-        return jsonify({"links": links})
-    except Exception as e:
-        log_info(f"Error in inaturalist_links: {type(e).__name__}: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({"error": f"Failed to fetch iNaturalist links: {str(e)}"}), 500
 
 
 

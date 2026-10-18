@@ -11,11 +11,11 @@ Args:
 
 {% block content %}
     <div x-data="formHandler" class="container">
-        <dialog x-ref="inaturalistDialog">
-            <button @click="$refs.inaturalistDialog.close()">Close</button>
+        <dialog x-ref="imageImportDialog">
+            <button @click="$refs.imageImportDialog.close()">Close</button>
             <h2>Import from iNaturalist</h2>
             <p>Write species names here, each on a new line.</p>
-            <textarea x-ref="inaturalistTextarea"></textarea>
+            <textarea x-ref="imageImportTextarea"></textarea>
             <button @click="importFromInaturalist()">Import</button>
         </dialog>
 
@@ -75,7 +75,7 @@ Args:
                     {% call collapse() %}
                         <label for="images" class="collapse-item" title="Add image from file"><i class="icon fas fa-file-arrow-up"></i></label>
                         <div class="collapse-item" title="Add from URL" @click="addURL()"><i class="icon fas fa-cloud-arrow-up"></i></div>
-                        <div class="collapse-item" title="Import from iNaturalist" @click="$refs.inaturalistDialog.showModal()"><i class="icon fas fa-dove"></i></div>
+                        <div class="collapse-item" title="Import from iNaturalist" @click="$refs.imageImportDialog.showModal()"><i class="icon fas fa-dove"></i></div>
                         <label for="pres" class="collapse-item" title="Extract from a presentation"><i class="icon fas fa-person-chalkboard"></i></label>
                     {% endcall %}
                 </div>
@@ -102,15 +102,15 @@ Args:
                         <div class="buttons">
                             <button class="add-image-btn" @click="$refs.imageInput.click()">
                                 <i class="icon fas fa-file-arrow-up"></i>
-                                <span>Upload Images</span>
+                                <span>Upload images</span>
                             </button>
                             <button class="add-image-btn" @click="addURL()">
                                 <i class="icon fas fa-cloud-arrow-up"></i>
                                 <span>Add from URL</span>
                             </button>
-                            <button class="add-image-btn" @click="$refs.inaturalistDialog.showModal()">
+                            <button class="add-image-btn" @click="$refs.imageImportDialog.showModal()">
                                 <i class="icon fas fa-dove"></i>
-                                <span>Import from iNaturalist</span>
+                                <span>Import images</span>
                             </button>
                             <button class="add-image-btn" @click="$refs.presInput.click()">
                                 <i class="icon fas fa-person-chalkboard"></i>
@@ -674,14 +674,14 @@ Args:
                 },
 
                 async importFromInaturalist() {
-                    let messageId = this.addMessage('loading', 'Importing images from iNaturalist. This may take a while...', -1);
+                    let messageId = this.addMessage('loading', 'Importing images. This may take a while...', -1);
 
-                    const textarea = this.$refs.inaturalistTextarea;
+                    const textarea = this.$refs.imageImportTextarea;
                     const speciesNames = textarea.value.split('\n').map(name => name.trim()).filter(name => name);
-                    this.$refs.inaturalistDialog.close();
+                    this.$refs.imageImportDialog.close();
                     this.currentImportSpeciesIndex = 0;
 
-                    await axios.get('/api/inaturalist/links', {
+                    await axios.get('/api/draft/import-images', {
                         params: { species: speciesNames.join(',') },
                         timeout: 1200000, // 20 minutes timeout
                     }).then(async (response) => {

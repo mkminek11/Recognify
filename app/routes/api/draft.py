@@ -1,9 +1,11 @@
 
 import shutil
 import os.path
+from urllib.parse import unquote
 import requests
 from flask_login import current_user
 from flask import Blueprint, jsonify, request, send_file, url_for
+from app.lib import wikipedia_api
 from app.lib.export import export_draft, import_draft
 from app.models import Draft, DraftAccess, DraftImage, DraftLabel, Image, Set, SkipImage, User
 from app.app import EXPORT_PATH, VALID_IMG_EXTENSIONS, db, UPLOAD_PATH, decode_image, draft_access_required, encode, get_data, permission_required, log_info
@@ -470,3 +472,22 @@ def import_draft_api():
     draft_id = import_draft(file)
     if not draft_id: return jsonify({"error": "Failed to import draft."}), 500
     return jsonify({"message": "Draft imported successfully.", "draft_id": encode(draft_id)}), 200
+
+
+@bp.route('/import-images', methods=['GET'])
+def import_images():
+    try:
+        species_param = request.args.get('species', '')
+        if not species_param:
+            return jsonify({"error": "No species provided."}), 400
+
+        species_list = [unquote(s.strip()) for s in species_param.split(',') if s.strip()]
+        if not species_list:
+            return jsonify({"error": "No valid species provided."}), 400
+
+        return jsonify({"links": wikipedia_api.get_links(species_list, lang="cs")}), 200
+    except Exception as e:
+        log_info(f"Error in inaturalist_links: {type(e).__name__}: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": f"Failed to fetch iNaturalist links: {str(e)}"}), 500
