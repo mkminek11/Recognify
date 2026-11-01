@@ -14,7 +14,7 @@ import json
 def export_draft(draft: Draft) -> str | Literal[False]:
     export_data = {
         "name": draft.name,
-        "images": [{ "filename": img.filename, "label": img.label } for img in draft.images]
+        "images": [{ "filename": img.filename, "label": img.label, "notes": img.notes } for img in draft.images]
     }
 
     os.makedirs(EXPORT_PATH, exist_ok=True)
@@ -55,12 +55,13 @@ def import_draft(file: FileStorage) -> int | Literal[False]:
         for img_data in data.get("images", []):
             img_filename = img_data.get("filename")
             img_label = img_data.get("label", "")
+            img_notes = img_data.get("notes", "")
 
             if img_filename in zip.namelist():
                 os.makedirs(draft.path, exist_ok=True)
                 zip.extract(img_filename, path=draft.path)
 
-                draft_image = DraftImage(draft.id, img_filename, -1, 0, img_label)
+                draft_image = DraftImage(draft.id, img_filename, -1, 0, img_label, img_notes)
                 db.session.add(draft_image)
         db.session.commit()
 
